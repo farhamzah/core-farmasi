@@ -1,0 +1,307 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Department;
+use App\Models\Employee;
+use App\Models\Lecturer;
+use App\Models\Role;
+use App\Models\Student;
+use App\Models\StudyProgram;
+use App\Models\User;
+use App\Models\UserActivityLog;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
+
+class CoreProfilePortalTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_guest_is_redirected_to_official_admin_login(): void
+    {
+        $this->get('/profile')->assertRedirect('/admin/login');
+    }
+
+    public function test_authenticated_non_admin_can_access_profile_but_not_admin_panel(): void
+    {
+        $user = User::factory()->create(['active' => true]);
+        $role = Role::create(['name' => 'mahasiswa', 'label' => 'Mahasiswa', 'active' => true]);
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)->get('/profile')
+            ->assertOk()
+            ->assertSee('Profil Saya')
+            ->assertSee($user->name);
+
+        $this->actingAs($user)->get('/admin')->assertForbidden();
+    }
+
+    public function test_profile_page_shows_student_summary_with_safe_fields(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        Student::create([
+            'user_id' => $user->id,
+            'student_number' => 'MHS-001',
+            'name' => 'Mahasiswa Uji',
+            'email' => 'student@example.test',
+            'phone' => '0812345678',
+            'address' => 'Alamat Mahasiswa',
+            'study_program_id' => $studyProgram->id,
+            'status' => 'active',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->get('/profile')
+            ->assertOk()
+            ->assertSee('Mahasiswa')
+            ->assertSee('MHS-001')
+            ->assertSee($studyProgram->name)
+            ->assertSee('0812345678')
+            ->assertSee('Alamat Mahasiswa')
+            ->assertSee('Kelengkapan Profil')
+            ->assertDontSee($user->password)
+            ->assertDontSee((string) $user->api_token)
+            ->assertDontSee('remember_token')
+            ->assertDontSee('secret_hash');
+    }
+
+    public function test_profile_page_shows_lecturer_summary(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        Lecturer::create([
+            'user_id' => $user->id,
+            'lecturer_number' => 'DSN-001',
+            'name' => 'Dosen Uji',
+            'email' => 'lecturer@example.test',
+            'department_id' => $department->id,
+            'study_program_id' => $studyProgram->id,
+            'phone' => '0811111111',
+            'address' => 'Ruang Dosen',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->get('/profile')
+            ->assertOk()
+            ->assertSee('Dosen')
+            ->assertSee('DSN-001')
+            ->assertSee('0811111111')
+            ->assertSee('Ruang Dosen');
+    }
+
+    public function test_profile_page_shows_employee_summary(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        Employee::create([
+            'user_id' => $user->id,
+            'employee_number' => 'EMP-001',
+            'name' => 'Pegawai Uji',
+            'staff_type' => 'staf_tu',
+            'department_id' => $department->id,
+            'study_program_id' => $studyProgram->id,
+            'position_title' => 'Admin TU',
+            'phone' => '0822222222',
+            'email' => 'employee@example.test',
+            'address' => 'Gedung Farmasi',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->get('/profile')
+            ->assertOk()
+            ->assertSee('Tendik / Staf / Laboran')
+            ->assertSee('EMP-001')
+            ->assertSee('Gedung Farmasi');
+    }
+
+    public function test_user_can_update_own_safe_contact_fields_only(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser([
+            'identity_number' => 'ID-ORIGINAL',
+        ]);
+
+        $employee = Employee::create([
+            'user_id' => $user->id,
+            'employee_number' => 'EMP-002',
+            'name' => 'Pegawai Kontak',
+            'staff_type' => 'laboran',
+            'department_id' => $department->id,
+            'study_program_id' => $studyProgram->id,
+            'phone' => '0800000000',
+            'email' => 'contact@example.test',
+            'address' => 'Alamat Lama',
+            'status' => 'active',
+        ]);
+
+        $role = Role::create(['name' => 'employee', 'label' => 'Employee', 'active' => true]);
+
+        $this->actingAs($user)->put('/profile', [
+            'phone' => '0899999999',
+            'address' => 'Alamat Baru',
+            'identity_number' => 'ID-HACKED',
+            'role_id' => $role->id,
+            'active' => false,
+            'employee_number' => 'EMP-HACKED',
+        ])->assertRedirect('/profile');
+
+        $employee->refresh();
+        $user->refresh();
+
+        $this->assertSame('0899999999', $employee->phone);
+        $this->assertSame('Alamat Baru', $employee->address);
+        $this->assertSame('ID-ORIGINAL', $user->identity_number);
+        $this->assertSame('EMP-002', $employee->employee_number);
+        $this->assertTrue($user->active);
+        $this->assertFalse($user->roles()->where('name', 'employee')->exists());
+        $this->assertDatabaseHas('user_activity_logs', [
+            'user_id' => $user->id,
+            'action' => 'profile.updated',
+        ]);
+
+        $log = UserActivityLog::where('user_id', $user->id)->where('action', 'profile.updated')->latest('id')->first();
+
+        $this->assertSame(['phone', 'address'], $log->meta['changed_fields']);
+        $this->assertStringNotContainsString('Alamat Baru', json_encode($log->meta));
+        $this->assertStringNotContainsString('0899999999', json_encode($log->meta));
+    }
+
+    public function test_students_table_has_safe_contact_fields(): void
+    {
+        $this->assertTrue(Schema::hasColumn('students', 'phone'));
+        $this->assertTrue(Schema::hasColumn('students', 'address'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'address'));
+    }
+
+    public function test_student_can_update_phone_and_address(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        $student = Student::create([
+            'user_id' => $user->id,
+            'student_number' => 'MHS-002',
+            'name' => 'Mahasiswa Kontak',
+            'email' => 'student-contact@example.test',
+            'phone' => '0800000003',
+            'address' => 'Alamat Lama Mahasiswa',
+            'study_program_id' => $studyProgram->id,
+            'status' => 'active',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'phone' => '0819999999',
+            'address' => 'Alamat Baru Mahasiswa',
+            'study_program_id' => $studyProgram->id + 100,
+            'student_number' => 'MHS-HACKED',
+        ])->assertRedirect('/profile');
+
+        $student->refresh();
+
+        $this->assertSame('0819999999', $student->phone);
+        $this->assertSame('Alamat Baru Mahasiswa', $student->address);
+        $this->assertSame('MHS-002', $student->student_number);
+        $this->assertSame($studyProgram->id, $student->study_program_id);
+    }
+
+    public function test_lecturer_can_update_phone_and_address(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        $lecturer = Lecturer::create([
+            'user_id' => $user->id,
+            'lecturer_number' => 'DSN-002',
+            'name' => 'Dosen Kontak',
+            'email' => 'lecturer-contact@example.test',
+            'department_id' => $department->id,
+            'study_program_id' => $studyProgram->id,
+            'phone' => '0800000004',
+            'address' => 'Alamat Lama Dosen',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'phone' => '0828888888',
+            'address' => 'Alamat Baru Dosen',
+            'lecturer_number' => 'DSN-HACKED',
+            'department_id' => $department->id + 100,
+        ])->assertRedirect('/profile');
+
+        $lecturer->refresh();
+
+        $this->assertSame('0828888888', $lecturer->phone);
+        $this->assertSame('Alamat Baru Dosen', $lecturer->address);
+        $this->assertSame('DSN-002', $lecturer->lecturer_number);
+        $this->assertSame($department->id, $lecturer->department_id);
+    }
+
+    public function test_profile_update_does_not_change_another_users_profile(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+        [$otherUser] = $this->createAcademicUser();
+
+        Employee::create([
+            'user_id' => $user->id,
+            'employee_number' => 'EMP-003',
+            'name' => 'Pemilik Profil',
+            'staff_type' => 'staf_tu',
+            'department_id' => $department->id,
+            'study_program_id' => $studyProgram->id,
+            'phone' => '0800000001',
+            'email' => 'owner@example.test',
+            'address' => 'Alamat Pemilik',
+            'status' => 'active',
+        ]);
+
+        $otherEmployee = Employee::create([
+            'user_id' => $otherUser->id,
+            'employee_number' => 'EMP-004',
+            'name' => 'Profil Lain',
+            'staff_type' => 'staf_tu',
+            'phone' => '0800000002',
+            'email' => 'other@example.test',
+            'address' => 'Alamat Lain',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'phone' => '0877777777',
+            'address' => 'Alamat Update',
+        ])->assertRedirect('/profile');
+
+        $otherEmployee->refresh();
+
+        $this->assertSame('0800000002', $otherEmployee->phone);
+        $this->assertSame('Alamat Lain', $otherEmployee->address);
+    }
+
+    /**
+     * @return array{0: User, 1: Department, 2: StudyProgram}
+     */
+    private function createAcademicUser(array $attributes = []): array
+    {
+        $user = User::factory()->create(array_merge([
+            'active' => true,
+            'username' => 'user-'.uniqid(),
+            'identity_type' => 'internal',
+            'identity_number' => 'ID-'.uniqid(),
+            'api_token' => hash('sha256', uniqid()),
+        ], $attributes));
+
+        $department = Department::create([
+            'code' => 'FF-'.uniqid(),
+            'name' => 'Fakultas Farmasi',
+            'active' => true,
+        ]);
+
+        $studyProgram = StudyProgram::create([
+            'department_id' => $department->id,
+            'code' => 'S1-FAR-'.uniqid(),
+            'name' => 'S1 Farmasi',
+            'active' => true,
+        ]);
+
+        return [$user, $department, $studyProgram];
+    }
+}

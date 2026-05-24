@@ -1,0 +1,233 @@
+@import '../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+:root {
+    color-scheme: light;
+    --core-pharmacy-blue: #2563eb;
+    --core-pharmacy-blue-soft: #dbeafe;
+    --core-pharmacy-sky-soft: #f0f9ff;
+    --core-border: #dbeafe;
+    --core-text: #0f172a;
+    --core-muted: #475569;
+}
+
+html,
+body {
+    background: #f8fbff;
+    color: var(--core-text);
+}
+
+.fi-body {
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 32rem),
+        linear-gradient(180deg, #ffffff 0%, #f8fbff 44%, #f1f7ff 100%);
+    color: var(--core-text);
+}
+
+.fi-simple-layout {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(14, 165, 233, 0.16), transparent 24rem),
+        linear-gradient(135deg, #ffffff 0%, #eff6ff 48%, #f8fbff 100%);
+}
+
+.fi-sidebar,
+.fi-topbar > nav {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: var(--core-border);
+    color: var(--core-text);
+    backdrop-filter: blur(14px);
+}
+
+.fi-sidebar-header {
+    background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+    border-color: var(--core-border);
+}
+
+.fi-sidebar-item-active > .fi-sidebar-item-button,
+.fi-sidebar-item-button:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.fi-sidebar-item-active .fi-sidebar-item-icon,
+.fi-sidebar-item-button:hover .fi-sidebar-item-icon {
+    color: var(--core-pharmacy-blue);
+}
+
+.fi-sidebar-group-label {
+    color: #2563eb;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.fi-main {
+    background: transparent;
+}
+
+.fi-section,
+.fi-fo-component-ctn,
+.fi-ta-ctn,
+.fi-wi-widget,
+.fi-modal-window {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: #dbeafe;
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
+}
+
+.fi-section-header {
+    background: linear-gradient(90deg, rgba(239, 246, 255, 0.85), rgba(255, 255, 255, 0));
+}
+
+.fi-ta-header,
+.fi-ta-content,
+.fi-ta-table thead,
+.fi-ta-table tbody,
+.fi-ta-table tr {
+    background-color: #ffffff;
+}
+
+.fi-ta-table thead {
+    background: #f8fbff;
+}
+
+.fi-ta-table th {
+    color: #334155;
+    font-weight: 700;
+}
+
+.fi-ta-table td,
+.fi-input,
+.fi-select-input,
+.fi-textarea {
+    color: var(--core-text);
+}
+
+.fi-input,
+.fi-select-input,
+.fi-textarea,
+.fi-fo-field-wrp > div > div {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+}
+
+.fi-input:focus,
+.fi-select-input:focus,
+.fi-textarea:focus {
+    border-color: var(--core-pharmacy-blue);
+    box-shadow: 0 0 0 1px var(--core-pharmacy-blue);
+}
+
+.fi-btn-color-primary {
+    background: linear-gradient(135deg, #2563eb, #0284c7);
+}
+
+.fi-btn-color-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #0369a1);
+}
+
+.fi-badge {
+    border-radius: 0.5rem;
+    font-weight: 700;
+}
+
+.fi-dropdown-panel {
+    background: #ffffff;
+    border-color: var(--core-border);
+}
+
+.fi-ta {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.fi-main,
+.fi-page,
+.fi-page-content,
+.fi-ta-ctn {
+    min-width: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    html,
+    body,
+    .fi-body,
+    .fi-main,
+    .fi-page,
+    .fi-simple-layout {
+        color-scheme: light;
+        color: var(--core-text) !important;
+    }
+
+    .fi-body {
+        background:
+            radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 32rem),
+            linear-gradient(180deg, #ffffff 0%, #f8fbff 44%, #f1f7ff 100%) !important;
+    }
+
+    .fi-simple-layout {
+        background:
+            radial-gradient(circle at 20% 0%, rgba(14, 165, 233, 0.16), transparent 24rem),
+            linear-gradient(135deg, #ffffff 0%, #eff6ff 48%, #f8fbff 100%) !important;
+    }
+
+    .fi-sidebar,
+    .fi-sidebar-header,
+    .fi-topbar > nav,
+    .fi-section,
+    .fi-fo-component-ctn,
+    .fi-ta-ctn,
+    .fi-wi-widget,
+    .fi-modal-window,
+    .fi-dropdown-panel,
+    .fi-main section,
+    .fi-main [class*='dark:bg-gray-950'],
+    .fi-main [class*='dark:bg-gray-900'],
+    .fi-main [class*='dark:via-gray-950'],
+    .fi-main [class*='dark:from-blue-950'],
+    .fi-main [class*='dark:to-sky-950'],
+    .fi-main [class*='dark:to-cyan-950'] {
+        background-color: #ffffff !important;
+        border-color: var(--core-border) !important;
+        color: var(--core-text) !important;
+    }
+
+    .fi-sidebar-header,
+    .fi-section-header,
+    .fi-main [class*='bg-gradient-to-r'] {
+        background:
+            linear-gradient(90deg, rgba(239, 246, 255, 0.95), rgba(255, 255, 255, 0.98)) !important;
+    }
+
+    .fi-main [class*='dark:text-white'],
+    .fi-main [class*='dark:text-gray-200'],
+    .fi-main [class*='dark:text-gray-300'],
+    .fi-main [class*='dark:text-gray-400'] {
+        color: var(--core-text) !important;
+    }
+
+    .fi-main [class*='dark:text-blue-200'],
+    .fi-main [class*='dark:text-blue-300'],
+    .fi-main [class*='dark:text-sky-200'],
+    .fi-main [class*='dark:text-sky-300'] {
+        color: #1d4ed8 !important;
+    }
+
+    .fi-input,
+    .fi-select-input,
+    .fi-textarea,
+    .fi-ta-table thead,
+    .fi-ta-table tbody,
+    .fi-ta-table tr {
+        background-color: #ffffff !important;
+        color: var(--core-text) !important;
+    }
+}

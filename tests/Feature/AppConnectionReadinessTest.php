@@ -20,7 +20,7 @@ class AppConnectionReadinessTest extends TestCase
     {
         $this->seed(CoreApplicationSeeder::class);
 
-        foreach (['ta-farmasi' => 'TA Farmasi', 'lab-farmasi' => 'Lab Farmasi', 'helpdesk-farmasi' => 'Helpdesk Farmasi'] as $appCode => $name) {
+        foreach (['ta-farmasi' => 'TA Farmasi UBP', 'lab-farmasi' => 'Lab Farmasi', 'helpdesk-farmasi' => 'Helpdesk Farmasi'] as $appCode => $name) {
             $application = CoreApplication::where('app_code', $appCode)->firstOrFail();
 
             $this->assertSame($name, $application->name);

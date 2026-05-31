@@ -82,5 +82,9 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
                 'activated_at' => now(),
             ]));
+
+        if (app()->environment(['local', 'testing'])) {
+            $this->call(LabFarmasiDevUserSeeder::class);
+        }
     }
 }

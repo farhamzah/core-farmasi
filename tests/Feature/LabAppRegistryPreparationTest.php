@@ -6,6 +6,7 @@ use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
 use App\Models\UserAppAccess;
 use Database\Seeders\CoreApplicationSeeder;
+use Database\Seeders\LabFarmasiDevUserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -53,12 +54,38 @@ class LabAppRegistryPreparationTest extends TestCase
         $this->assertSame(0, UserAppAccess::where('app_code', 'lab-farmasi')->count());
     }
 
+    public function test_local_lab_demo_users_are_seeded_one_role_each(): void
+    {
+        $this->seed(LabFarmasiDevUserSeeder::class);
+        $this->seed(LabFarmasiDevUserSeeder::class);
+
+        foreach ($this->demoUsers() as $email => $roleSlug) {
+            $this->assertDatabaseHas('users', [
+                'email' => $email,
+                'active' => true,
+                'identity_type' => 'dev_lab_demo',
+            ]);
+
+            $this->assertDatabaseHas('user_app_accesses', [
+                'app_code' => 'lab-farmasi',
+                'role_slug' => $roleSlug,
+                'is_active' => true,
+            ]);
+        }
+
+        $this->assertSame(7, UserAppAccess::where('app_code', 'lab-farmasi')
+            ->whereIn('role_slug', array_values($this->demoUsers()))
+            ->count());
+    }
+
     /**
      * @return array<int, string>
      */
     protected function requiredRoles(): array
     {
         return [
+            'admin_lab',
+            'koordinator_lab',
             'lab-admin',
             'lab-koordinator',
             'lab-kepala-lab',
@@ -68,6 +95,22 @@ class LabAppRegistryPreparationTest extends TestCase
             'lab-mahasiswa',
             'lab-teknisi',
             'lab-viewer',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function demoUsers(): array
+    {
+        return [
+            'lab.demo.mahasiswa@example.test' => 'mahasiswa',
+            'lab.demo.dosen@example.test' => 'dosen',
+            'lab.demo.laboran@example.test' => 'laboran',
+            'lab.demo.teknisi@example.test' => 'teknisi',
+            'lab.demo.koordinator@example.test' => 'koordinator_lab',
+            'lab.demo.admin@example.test' => 'admin_lab',
+            'lab.demo.viewer@example.test' => 'viewer',
         ];
     }
 }

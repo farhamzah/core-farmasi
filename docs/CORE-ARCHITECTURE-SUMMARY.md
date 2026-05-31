@@ -3,6 +3,10 @@
 ## Purpose
 Core Farmasi UBP adalah aplikasi internal yang menjadi pusat data dan integrasi untuk aplikasi Farmasi UBP. Core dirancang sebagai Master Data Center, Identity Center, Role & App Access Center, Excel Import Center, Internal Integration Center, Audit Center, dan Data Quality Center.
 
+Kontrak data pusat dan matriks manual CRUD terbaru:
+- `docs/CORE-CENTRAL-DATA-CONTRACT.md`
+- `docs/CORE-MASTER-CRUD-MATRIX.md`
+
 ## Module Overview
 ### Identity
 - `users` menyimpan akun canonical.

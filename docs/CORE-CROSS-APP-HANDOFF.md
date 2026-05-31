@@ -3,6 +3,10 @@
 ## Current Status
 Core Farmasi UBP is ready for real staging smoke preparation as the source of truth for identity, master profile, app access, leadership, import, data quality, and internal API.
 
+Current Core source-of-truth contract:
+- `docs/CORE-CENTRAL-DATA-CONTRACT.md`
+- `docs/CORE-MASTER-CRUD-MATRIX.md`
+
 KP Farmasi and TU Farmasi already have read-only Core HTTP adapter skeletons. Both remain default safe:
 - KP keeps legacy mode.
 - TU keeps disabled mode.
@@ -116,6 +120,9 @@ Latest release candidate baseline from CORE-QA-5:
 
 Release candidate summary:
 - `docs/reports/CORE-QA-5-RELEASE-CANDIDATE-REPORT.md`
+
+Current state audit:
+- `docs/reports/CORE-CURRENT-STATE-2026-06-REPORT.md`
 
 ## What Is Ready
 - Core local/staging integration baseline.

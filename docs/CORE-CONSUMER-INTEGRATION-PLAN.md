@@ -2,6 +2,10 @@
 
 Dokumen ini merancang integrasi read-only aplikasi consumer pertama ke Core Farmasi API. Fokus awal adalah KP Farmasi dan TU Farmasi.
 
+Rujukan kontrak data pusat:
+- `docs/CORE-CENTRAL-DATA-CONTRACT.md`
+- `docs/CORE-MASTER-CRUD-MATRIX.md`
+
 ## Tujuan
 - Menghubungkan consumer app ke Core sebagai source of truth secara read-only.
 - Menggunakan API internal Core dengan app client credentials.

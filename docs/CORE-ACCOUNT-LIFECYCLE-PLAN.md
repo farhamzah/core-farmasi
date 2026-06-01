@@ -16,7 +16,8 @@ Core sudah memiliki:
 - Password hashed di Core.
 - `must_change_password`, timestamp password, dan reset metadata.
 - Admin panel `/admin` hanya untuk user aktif dengan role global `super-admin` atau `admin-core`.
-- Profile Portal `/profile` untuk authenticated user melihat profil sendiri, mengubah safe contact fields, dan mengganti password Core.
+- Profile Portal punya login terpisah `/profile/login` untuk user biasa, lalu `/profile` untuk authenticated user melihat profil sendiri, mengubah safe contact fields, dan mengganti password Core.
+- Guest yang membuka `/profile`, `/profile/edit`, atau `/profile/change-password` diarahkan ke `/profile/login`, bukan ke login admin.
 - Change password page Filament `/admin/change-password` untuk user yang bisa masuk panel.
 - User, student, lecturer, employee, role, app registry, app role, dan user app access CRUD.
 - Excel Import Center untuk master data.
@@ -253,19 +254,23 @@ Current state:
 - Profile Portal punya `/profile/change-password` untuk authenticated user, termasuk non-admin.
 - Profile password change memvalidasi current password, confirmation, minimal 8, dan tidak boleh sama dengan password lama.
 - Password baru langsung hashed, `must_change_password=false`, `password_changed_at` diisi, dan audit `profile.password_changed` dibuat tanpa menyimpan nilai password.
+- User dengan `must_change_password=true` dipaksa mengganti password sebelum membuka `/profile` atau `/profile/edit`.
+- Setelah password awal diganti, user yang profilnya belum lengkap diarahkan ke `/profile/edit`; user yang profilnya lengkap diarahkan ke `/profile`.
 - Non-admin tetap tidak bisa membuka `/admin`.
 
 ## Profile Completion Policy
 
 Profile Portal saat ini:
 
-- Route `/profile`, `/profile/edit`, `PUT /profile`, `/profile/change-password`, `PUT /profile/change-password`.
+- Route `/profile/login`, `POST /profile/login`, `/profile/logout`, `/profile`, `/profile/edit`, `PUT /profile`, `/profile/change-password`, `PUT /profile/change-password`.
 - Self-only.
 - Editable safe fields:
   - phone.
   - address.
   - alternate_email jika kolom tersedia.
-- Completion summary menampilkan linked profile, email, phone, address, birth date recorded indicator tanpa menampilkan full birth date.
+- Completion summary menampilkan linked profile, email, official identifier, phone, dan address.
+- Completion indicator menampilkan status `Profil lengkap` atau `Profil belum lengkap`.
+- Birth date tidak menjadi syarat completion dan tidak ditampilkan sebagai nilai penuh di Profile Portal.
 
 User tidak boleh edit:
 

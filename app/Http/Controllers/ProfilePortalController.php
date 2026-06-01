@@ -18,8 +18,12 @@ class ProfilePortalController extends Controller
     ) {
     }
 
-    public function show(Request $request): View
+    public function show(Request $request): View|RedirectResponse
     {
+        if ($request->user()->must_change_password) {
+            return redirect()->route('profile.password.edit');
+        }
+
         $profile = $this->profiles->summaryFor($request->user());
 
         return view('profile.show', [
@@ -28,8 +32,12 @@ class ProfilePortalController extends Controller
         ]);
     }
 
-    public function edit(Request $request): View
+    public function edit(Request $request): View|RedirectResponse
     {
+        if ($request->user()->must_change_password) {
+            return redirect()->route('profile.password.edit');
+        }
+
         $profile = $this->profiles->summaryFor($request->user());
 
         return view('profile.edit', [
@@ -91,13 +99,19 @@ class ProfilePortalController extends Controller
             ],
         ]);
 
+        $redirectRoute = $this->profiles->isComplete($user) ? 'profile.show' : 'profile.edit';
+
         return redirect()
-            ->route('profile.show')
+            ->route($redirectRoute)
             ->with('status', 'Password berhasil diganti.');
     }
 
     public function update(Request $request): RedirectResponse
     {
+        if ($request->user()->must_change_password) {
+            return redirect()->route('profile.password.edit');
+        }
+
         $validated = $request->validate([
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:1000'],

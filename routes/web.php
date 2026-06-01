@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountRequestController;
+use App\Http\Controllers\ProfileAuthController;
 use App\Http\Controllers\ProfilePortalController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,7 +16,12 @@ Route::post('/account-request', [AccountRequestController::class, 'store'])
 Route::get('/account-request/success', [AccountRequestController::class, 'success'])->name('account-request.success');
 Route::redirect('/register', '/account-request')->name('register');
 
+Route::get('/profile/login', [ProfileAuthController::class, 'showLoginForm'])->name('profile.login');
+Route::post('/profile/login', [ProfileAuthController::class, 'login'])->middleware('throttle:10,1')->name('profile.login.store');
+Route::redirect('/profil-saya/login', '/profile/login')->name('profile.login.local');
+
 Route::middleware('auth')->group(function (): void {
+    Route::post('/profile/logout', [ProfileAuthController::class, 'logout'])->name('profile.logout');
     Route::get('/profile', [ProfilePortalController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfilePortalController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfilePortalController::class, 'update'])->name('profile.update');

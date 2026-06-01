@@ -9,11 +9,21 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
     <main class="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <header class="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-            <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Core Farmasi UBP</p>
-            <h1 class="mt-2 text-3xl font-bold text-slate-950">Ganti Password</h1>
-            <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Password ini berlaku untuk aplikasi Farmasi yang menggunakan verifikasi Core. Jangan bagikan password kepada siapa pun.
-            </p>
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Core Farmasi UBP</p>
+                    <h1 class="mt-2 text-3xl font-bold text-slate-950">Ganti Password</h1>
+                    <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                        Password ini berlaku untuk aplikasi Farmasi yang menggunakan verifikasi Core. Jangan bagikan password kepada siapa pun.
+                    </p>
+                </div>
+                <form method="POST" action="{{ route('profile.logout') }}">
+                    @csrf
+                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                        Keluar
+                    </button>
+                </form>
+            </div>
         </header>
 
         @if ($errors->any())

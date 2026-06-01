@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Application;
 use App\Console\Commands\AppConnectionReadinessCommand;
+use App\Console\Commands\CoreManualQaAccountsCommand;
 use App\Console\Commands\GrantTuApiClientAbilityCommand;
 use App\Console\Commands\ImportKpMasterDataCommand;
 use App\Console\Commands\IssueTuApiClientCommand;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         AppConnectionReadinessCommand::class,
+        CoreManualQaAccountsCommand::class,
         GrantTuApiClientAbilityCommand::class,
         ImportKpMasterDataCommand::class,
         IssueTuApiClientCommand::class,
@@ -36,7 +38,9 @@ return Application::configure(basePath: dirname(__DIR__))
         TuConnectionReadinessCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->redirectGuestsTo(fn () => '/admin/login');
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('profile*') || $request->is('profil-saya*')
+            ? '/profile/login'
+            : '/admin/login');
 
         $middleware->alias([
             'auth.api' => AuthenticateApiToken::class,

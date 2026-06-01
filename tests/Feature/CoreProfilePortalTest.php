@@ -19,14 +19,95 @@ class CoreProfilePortalTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_is_redirected_to_official_admin_login(): void
+    public function test_guest_is_redirected_to_profile_login(): void
     {
-        $this->get('/profile')->assertRedirect('/admin/login');
+        $this->get('/profile')->assertRedirect('/profile/login');
+    }
+
+    public function test_guest_can_view_profile_login_form(): void
+    {
+        $this->get('/profile/login')
+            ->assertOk()
+            ->assertSee('Portal Profil Core Farmasi')
+            ->assertSee('Username / Email / Nomor Identitas')
+            ->assertDontSee('remember_token')
+            ->assertDontSee('api_token')
+            ->assertDontSee('password_hash');
+    }
+
+    public function test_logged_in_user_is_redirected_away_from_profile_login(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile/login')
+            ->assertRedirect('/profile');
+    }
+
+    public function test_profile_login_accepts_username_and_redirects_incomplete_user_to_edit(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'username' => '20260001',
+            'email' => 'student-login@example.test',
+            'password' => Hash::make('initial-password'),
+            'must_change_password' => false,
+        ]);
+
+        $this->post('/profile/login', [
+            'login' => '20260001',
+            'password' => 'initial-password',
+        ])->assertRedirect('/profile/edit');
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_profile_login_redirects_must_change_user_to_change_password(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'username' => '0012345678',
+            'password' => Hash::make('initial-password'),
+            'must_change_password' => true,
+        ]);
+
+        $this->post('/profile/login', [
+            'login' => '0012345678',
+            'password' => 'initial-password',
+        ])->assertRedirect('/profile/change-password');
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_profile_login_rejects_invalid_credentials_with_generic_error(): void
+    {
+        User::factory()->create([
+            'active' => true,
+            'username' => 'TENDIK001',
+            'password' => Hash::make('correct-password'),
+        ]);
+
+        $this->from('/profile/login')
+            ->post('/profile/login', [
+                'login' => 'TENDIK001',
+                'password' => 'wrong-password',
+            ])
+            ->assertRedirect('/profile/login')
+            ->assertSessionHasErrors('login');
+
+        $this->assertGuest();
+        $this->assertSame(
+            'Login gagal. Periksa username dan password.',
+            session('errors')->get('login')[0]
+        );
     }
 
     public function test_authenticated_non_admin_can_access_profile_but_not_admin_panel(): void
     {
-        $user = User::factory()->create(['active' => true]);
+        $user = User::factory()->create(['active' => true, 'must_change_password' => false]);
         $role = Role::create(['name' => 'mahasiswa', 'label' => 'Mahasiswa', 'active' => true]);
         $user->roles()->attach($role);
 
@@ -40,7 +121,7 @@ class CoreProfilePortalTest extends TestCase
 
     public function test_guest_cannot_access_profile_change_password(): void
     {
-        $this->get('/profile/change-password')->assertRedirect('/admin/login');
+        $this->get('/profile/change-password')->assertRedirect('/profile/login');
     }
 
     public function test_authenticated_user_can_view_profile_change_password(): void
@@ -75,10 +156,10 @@ class CoreProfilePortalTest extends TestCase
             ->from('/profile/change-password')
             ->put('/profile/change-password', [
                 'current_password' => 'old-password',
-                'password' => 'new-secure-password',
-                'password_confirmation' => 'new-secure-password',
-            ])
-            ->assertRedirect('/profile');
+            'password' => 'new-secure-password',
+            'password_confirmation' => 'new-secure-password',
+        ])
+            ->assertRedirect('/profile/edit');
 
         $user->refresh();
 
@@ -156,16 +237,16 @@ class CoreProfilePortalTest extends TestCase
             ->put('/profile/change-password', [
                 'user_id' => $otherUser->id,
                 'current_password' => 'old-password',
-                'password' => 'new-secure-password',
-                'password_confirmation' => 'new-secure-password',
-            ])
-            ->assertRedirect('/profile');
+            'password' => 'new-secure-password',
+            'password_confirmation' => 'new-secure-password',
+        ])
+            ->assertRedirect('/profile/edit');
 
         $this->assertTrue(Hash::check('new-secure-password', $user->fresh()->password));
         $this->assertTrue(Hash::check('other-password', $otherUser->fresh()->password));
     }
 
-    public function test_profile_shows_change_password_link_and_must_change_warning(): void
+    public function test_must_change_password_user_cannot_access_profile_or_edit_before_change(): void
     {
         $user = User::factory()->create([
             'active' => true,
@@ -174,10 +255,41 @@ class CoreProfilePortalTest extends TestCase
 
         $this->actingAs($user)
             ->get('/profile')
+            ->assertRedirect('/profile/change-password');
+
+        $this->actingAs($user)
+            ->get('/profile/edit')
+            ->assertRedirect('/profile/change-password');
+    }
+
+    public function test_profile_change_password_page_shows_must_change_warning(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile/change-password')
+            ->assertOk()
+            ->assertSee('Anda wajib mengganti password awal sebelum menggunakan layanan.')
+            ->assertDontSee($user->password);
+    }
+
+    public function test_profile_page_shows_change_password_link_and_completion_warning(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile')
             ->assertOk()
             ->assertSee('Ganti Password')
             ->assertSee('/profile/change-password')
-            ->assertSee('Anda wajib mengganti password awal sebelum menggunakan layanan.')
+            ->assertSee('Profil Anda belum lengkap.')
+            ->assertSee('Profil belum lengkap')
             ->assertDontSee($user->password);
     }
 
@@ -431,6 +543,7 @@ class CoreProfilePortalTest extends TestCase
             'identity_type' => 'internal',
             'identity_number' => 'ID-'.uniqid(),
             'api_token' => hash('sha256', uniqid()),
+            'must_change_password' => false,
         ], $attributes));
 
         $department = Department::create([

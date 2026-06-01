@@ -31,9 +31,12 @@ Other apps own:
 
 ## C. Access Model
 - Core Admin Panel hanya untuk `super-admin` dan `admin-core` aktif.
+- Profile Portal punya login terpisah `/profile/login` untuk user biasa agar tidak bercampur dengan `/admin/login`.
 - Profile Portal untuk authenticated user non-admin agar bisa melihat profil sendiri.
 - User hanya boleh melihat dan mengedit safe contact fields miliknya sendiri.
 - User boleh mengganti password miliknya sendiri melalui Profile Portal.
+- User dengan `must_change_password=true` wajib mengganti password sebelum membuka `/profile` atau `/profile/edit`.
+- User yang password awalnya sudah diganti tetapi profilnya belum lengkap diarahkan ke `/profile/edit`.
 - Other apps menampilkan profil secara read-only dan menyediakan link "Ubah Profil di Core".
 - Profile Portal tidak membuka akses ke `/admin`.
 - Pembuatan akun aktif dilakukan oleh Admin Core lewat CRUD/import. Registrasi publik/account request disabled by default dan tidak membuat user/app access otomatis.
@@ -62,14 +65,18 @@ Tidak boleh edit sendiri:
 
 ## E. Profile Portal Pages
 - `/profile` untuk view profile.
+- `/profile/login` untuk login Profile Portal.
+- `/profile/logout` untuk keluar dari Profile Portal.
 - `/profile/edit` untuk edit safe contact fields.
 - `/profile/change-password` untuk ganti password Core sendiri.
+- `/profil-saya/login` redirect ke `/profile/login`.
 - `/profil-saya` redirect ke `/profile`.
 - `/profil-saya/ganti-password` redirect ke `/profile/change-password`.
 - View profile menampilkan identitas akun, profil tertaut, dan security notice.
 - Edit profile hanya menampilkan field kontak aman.
 - Change password profile portal meminta current password, password baru, dan confirmation.
-- User dengan `must_change_password=true` melihat warning dan tombol ganti password di `/profile`.
+- User dengan `must_change_password=true` diarahkan ke `/profile/change-password`.
+- View profile menampilkan indikator `Profil lengkap` atau `Profil belum lengkap`.
 - Admin yang bisa masuk panel tetap dapat memakai `/admin/change-password`; Profile Portal tidak membuka akses `/admin`.
 - App launcher tetap menjadi fitur admin/authorized app context, bukan SSO.
 
@@ -98,4 +105,5 @@ Tidak boleh edit sendiri:
 - CORE-PROFILE-2 editable safe contact fields and profile completion workflow: implemented for student, lecturer, and employee contact fields.
 - CORE-PROFILE-3 profile completion/data quality indicators.
 - CORE-PROFILE-4 self-service change password di Profile Portal untuk authenticated user tanpa membuka akses `/admin`: implemented.
+- CORE-PROFILE-5 Profile Portal login, first password change gate, logout, dan completion warning: implemented.
 - CORE-INTEGRATION update KP/TU read-only profile display and link to Core profile.

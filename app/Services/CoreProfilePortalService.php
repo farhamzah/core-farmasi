@@ -112,6 +112,13 @@ class CoreProfilePortalService
         ];
     }
 
+    public function isComplete(User $user): bool
+    {
+        $summary = $this->summaryFor($user);
+
+        return (bool) ($summary['completion']['is_complete'] ?? false);
+    }
+
     /**
      * @return array<string, string|null>
      */
@@ -131,7 +138,6 @@ class CoreProfilePortalService
     private function completionFor(User $user, array $profiles): array
     {
         $contact = $this->contactValuesFor($user);
-        $hasBirthDate = (bool) ($user->student?->birth_date ?? $user->lecturer?->birth_date ?? $user->employee?->birth_date);
 
         $items = [
             [
@@ -147,6 +153,12 @@ class CoreProfilePortalService
                 'sensitive' => false,
             ],
             [
+                'key' => 'official_identifier',
+                'label' => 'Nomor identitas resmi tersedia',
+                'complete' => collect($profiles)->contains(fn (array $profile): bool => filled($profile['identifier'] ?? null)),
+                'sensitive' => false,
+            ],
+            [
                 'key' => 'phone',
                 'label' => 'Telepon tersedia',
                 'complete' => filled($contact['phone']),
@@ -158,12 +170,6 @@ class CoreProfilePortalService
                 'complete' => filled($contact['address']),
                 'sensitive' => false,
             ],
-            [
-                'key' => 'birth_date',
-                'label' => 'Tanggal lahir tercatat',
-                'complete' => $hasBirthDate,
-                'sensitive' => true,
-            ],
         ];
 
         $completed = collect($items)->where('complete', true)->count();
@@ -174,6 +180,7 @@ class CoreProfilePortalService
             'completed' => $completed,
             'total' => $total,
             'items' => $items,
+            'is_complete' => $completed === $total,
         ];
     }
 

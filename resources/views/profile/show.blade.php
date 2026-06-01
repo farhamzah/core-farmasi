@@ -24,6 +24,12 @@
                     <a href="{{ route('profile.edit') }}" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
                         Edit Kontak Aman
                     </a>
+                    <form method="POST" action="{{ route('profile.logout') }}">
+                        @csrf
+                        <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                            Keluar
+                        </button>
+                    </form>
                 </div>
             </div>
         </header>
@@ -32,6 +38,13 @@
             <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
                 Anda wajib mengganti password awal sebelum menggunakan layanan.
                 <a href="{{ route('profile.password.edit') }}" class="ml-1 font-bold text-amber-950 underline underline-offset-4">Ganti password sekarang</a>
+            </div>
+        @endif
+
+        @if (! ($profile['completion']['is_complete'] ?? false))
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+                Profil Anda belum lengkap. Lengkapi nomor kontak dan alamat agar data Core siap dipakai oleh layanan Farmasi.
+                <a href="{{ route('profile.edit') }}" class="ml-1 font-bold text-amber-950 underline underline-offset-4">Lengkapi profil</a>
             </div>
         @endif
 
@@ -75,6 +88,9 @@
                     <span class="text-4xl font-bold text-blue-700">{{ $profile['completion']['percentage'] }}%</span>
                     <span class="pb-1 text-sm font-semibold text-slate-600">{{ $profile['completion']['completed'] }}/{{ $profile['completion']['total'] }} item</span>
                 </div>
+                <span class="mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ ($profile['completion']['is_complete'] ?? false) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                    {{ ($profile['completion']['is_complete'] ?? false) ? 'Profil lengkap' : 'Profil belum lengkap' }}
+                </span>
                 <div class="mt-4 h-2 overflow-hidden rounded-full bg-white">
                     <div class="h-full rounded-full bg-blue-600" style="width: {{ $profile['completion']['percentage'] }}%"></div>
                 </div>

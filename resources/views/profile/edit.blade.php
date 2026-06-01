@@ -13,12 +13,28 @@
 
     <main class="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <header class="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-            <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Core Farmasi UBP</p>
-            <h1 class="mt-2 text-3xl font-bold text-slate-950">Edit Kontak Aman</h1>
-            <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                Hanya field kontak yang aman dan tersedia di profil tertaut yang dapat diperbarui. Data resmi tetap admin-only.
-            </p>
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Core Farmasi UBP</p>
+                    <h1 class="mt-2 text-3xl font-bold text-slate-950">Edit Kontak Aman</h1>
+                    <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                        Hanya field kontak yang aman dan tersedia di profil tertaut yang dapat diperbarui. Data resmi tetap admin-only.
+                    </p>
+                </div>
+                <form method="POST" action="{{ route('profile.logout') }}">
+                    @csrf
+                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                        Keluar
+                    </button>
+                </form>
+            </div>
         </header>
+
+        @if (! ($profile['completion']['is_complete'] ?? false))
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+                Profil Anda belum lengkap. Isi field kontak yang tersedia, terutama telepon dan alamat.
+            </div>
+        @endif
 
         @if ($errors->any())
             <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

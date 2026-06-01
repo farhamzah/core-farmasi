@@ -139,6 +139,8 @@ class CoreChangePasswordFlowTest extends TestCase
 
     public function test_initial_password_reset_action_fails_without_birth_date(): void
     {
+        config(['core_identity.initial_password_strategy' => 'birth_date']);
+
         $operator = $this->coreAdmin();
         $target = User::factory()->create([
             'password' => Hash::make('existing-password'),
@@ -159,6 +161,8 @@ class CoreChangePasswordFlowTest extends TestCase
 
     public function test_initial_password_reset_action_uses_employee_birth_date(): void
     {
+        config(['core_identity.initial_password_strategy' => 'birth_date']);
+
         $operator = $this->coreAdmin();
         $target = User::factory()->create([
             'password' => Hash::make('existing-password'),
@@ -195,6 +199,8 @@ class CoreChangePasswordFlowTest extends TestCase
 
     public function test_initial_password_reset_action_uses_student_birth_date(): void
     {
+        config(['core_identity.initial_password_strategy' => 'birth_date']);
+
         $operator = $this->coreAdmin();
         $target = User::factory()->create([
             'password' => Hash::make('existing-password'),
@@ -230,6 +236,8 @@ class CoreChangePasswordFlowTest extends TestCase
 
     public function test_initial_password_reset_action_uses_lecturer_birth_date(): void
     {
+        config(['core_identity.initial_password_strategy' => 'birth_date']);
+
         $operator = $this->coreAdmin();
         $target = User::factory()->create([
             'password' => Hash::make('existing-password'),

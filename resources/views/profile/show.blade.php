@@ -17,11 +17,23 @@
                         Profil utama dikelola terpusat di Core. Data resmi seperti identitas, nomor akademik/pegawai, status, role, akses aplikasi, dan jabatan hanya dapat diubah oleh admin Core.
                     </p>
                 </div>
-                <a href="{{ route('profile.edit') }}" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
-                    Edit Kontak Aman
-                </a>
+                <div class="flex flex-col gap-3 sm:flex-row">
+                    <a href="{{ route('profile.password.edit') }}" class="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50">
+                        Ganti Password
+                    </a>
+                    <a href="{{ route('profile.edit') }}" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                        Edit Kontak Aman
+                    </a>
+                </div>
             </div>
         </header>
+
+        @if ($user->must_change_password)
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+                Anda wajib mengganti password awal sebelum menggunakan layanan.
+                <a href="{{ route('profile.password.edit') }}" class="ml-1 font-bold text-amber-950 underline underline-offset-4">Ganti password sekarang</a>
+            </div>
+        @endif
 
         @if (session('status'))
             <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
@@ -89,7 +101,7 @@
             <ul class="mt-4 grid gap-3 text-sm leading-6 text-slate-700 md:grid-cols-3">
                 <li class="rounded-xl bg-blue-50 p-4">Halaman ini hanya untuk profil milik akun yang sedang login.</li>
                 <li class="rounded-xl bg-blue-50 p-4">Role, app access, status aktif, jabatan, dan data resmi tidak bisa diedit mandiri.</li>
-                <li class="rounded-xl bg-blue-50 p-4">Password tetap dikelola melalui alur Change Password resmi, bukan form profil kontak.</li>
+                <li class="rounded-xl bg-blue-50 p-4">Password dikelola melalui halaman Ganti Password Core dan berlaku untuk aplikasi yang memverifikasi ke Core.</li>
             </ul>
         </section>
 

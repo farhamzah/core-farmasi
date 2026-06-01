@@ -445,8 +445,10 @@ class CoreImportCenterTest extends TestCase
         $this->assertSame($beforeAccesses, UserAppAccess::count());
     }
 
-    public function test_users_import_execute_requires_safe_birth_date_password_source(): void
+    public function test_users_import_execute_requires_birth_date_when_birth_date_strategy_is_configured(): void
     {
+        config(['core_identity.initial_password_strategy' => 'birth_date']);
+
         Storage::fake('local');
 
         $admin = $this->coreAdmin();
@@ -467,7 +469,7 @@ class CoreImportCenterTest extends TestCase
         $this->assertSame($beforeUsers, User::count());
     }
 
-    public function test_execute_users_create_update_and_missing_birth_date_safety(): void
+    public function test_execute_users_create_update_and_name_based_initial_password(): void
     {
         Storage::fake('local');
 
@@ -483,7 +485,7 @@ class CoreImportCenterTest extends TestCase
             ->assertSet('executionSummary.users_created_count', 0);
 
         $user = User::where('username', 'USR-IMP-001')->firstOrFail();
-        $this->assertTrue(Hash::check('01/01/1990', $user->password));
+        $this->assertTrue(Hash::check('Import User', $user->password));
         $this->assertTrue($user->must_change_password);
 
         $existing = User::factory()->create([
@@ -531,17 +533,16 @@ class CoreImportCenterTest extends TestCase
         $this->assertSame('usr-upd-001-updated@example.test', $existing->email);
         $this->assertSame($oldPassword, $existing->password);
 
-        $beforeUsers = User::count();
-
         Livewire::test(CoreImportCenter::class)
             ->set('importType', 'users')
             ->set('importFile', $this->csv('users-no-birth.csv', "name,username,identity_type,identity_number,email\nNo Birth User,USR-NO-BIRTH,admin,USR-NO-BIRTH,usr-no-birth@example.test\n"))
             ->call('uploadAndPreview')
             ->call('executeImport')
-            ->assertSet('executionSummary.failed_count', 1);
+            ->assertSet('executionSummary.created_count', 1);
 
-        $this->assertSame($beforeUsers, User::count());
-        $this->assertFalse(User::where('username', 'USR-NO-BIRTH')->exists());
+        $noBirthUser = User::where('username', 'USR-NO-BIRTH')->firstOrFail();
+        $this->assertTrue(Hash::check('No Birth User', $noBirthUser->password));
+        $this->assertTrue($noBirthUser->must_change_password);
     }
 
     public function test_execute_user_role_assignment_and_rollback_only_import_created_assignment(): void
@@ -933,8 +934,8 @@ class CoreImportCenterTest extends TestCase
         $this->assertSame('student', $user->identity_type);
         $this->assertSame('230050', $user->identity_number);
         $this->assertTrue($user->must_change_password);
-        $this->assertTrue(Hash::check('07/08/2001', $user->password));
-        $this->assertNotSame('07/08/2001', $user->password);
+        $this->assertTrue(Hash::check('Execute Student', $user->password));
+        $this->assertNotSame('Execute Student', $user->password);
         $this->assertSame('executed', CoreImportRecord::latest('id')->first()->execution_status);
     }
 
@@ -1062,7 +1063,7 @@ class CoreImportCenterTest extends TestCase
         $lecturer = Lecturer::where('lecturer_number', '99887766')->firstOrFail();
         $this->assertSame('Execute Lecturer', $lecturer->name);
         $this->assertTrue($lecturer->user->must_change_password);
-        $this->assertTrue(Hash::check('09/10/1988', $lecturer->user->password));
+        $this->assertTrue(Hash::check('Execute Lecturer', $lecturer->user->password));
 
         Livewire::test(CoreImportCenter::class)
             ->set('importType', 'employees')
@@ -1074,10 +1075,10 @@ class CoreImportCenterTest extends TestCase
         $employee = Employee::where('employee_number', 'EMP-EXEC-001')->firstOrFail();
         $this->assertSame('Execute Employee', $employee->name);
         $this->assertTrue($employee->user->must_change_password);
-        $this->assertTrue(Hash::check('11/12/1991', $employee->user->password));
+        $this->assertTrue(Hash::check('Execute Employee', $employee->user->password));
     }
 
-    public function test_execute_employee_update_existing_and_missing_birth_date_does_not_create_weak_password(): void
+    public function test_execute_employee_update_existing_can_create_user_with_name_based_initial_password(): void
     {
         Storage::fake('local');
 
@@ -1090,8 +1091,6 @@ class CoreImportCenterTest extends TestCase
         ]);
 
         $this->actingAs($this->coreAdmin());
-        $beforeUsers = User::count();
-
         $component = Livewire::test(CoreImportCenter::class)
             ->set('importType', 'employees')
             ->set('importFile', $this->csv('employees.csv', "name,staff_type,employee_number,email,position_title\nUpdated Employee,tendik,EMP-UPD-001,updated-employee@example.test,Staff Akademik\n"))
@@ -1104,14 +1103,15 @@ class CoreImportCenterTest extends TestCase
             ->call('saveImportDecisions')
             ->call('executeImport')
             ->assertSet('executionSummary.updated_count', 1)
-            ->assertSet('executionSummary.users_created_count', 0);
+            ->assertSet('executionSummary.users_created_count', 1);
 
         $employee->refresh();
 
         $this->assertSame('Updated Employee', $employee->name);
         $this->assertSame('Staff Akademik', $employee->position_title);
-        $this->assertNull($employee->user_id);
-        $this->assertSame($beforeUsers, User::count());
+        $this->assertNotNull($employee->user_id);
+        $this->assertTrue(Hash::check('Updated Employee', $employee->user->password));
+        $this->assertTrue($employee->user->must_change_password);
     }
 
     public function test_execute_does_not_modify_user_app_access_or_leadership_assignments(): void

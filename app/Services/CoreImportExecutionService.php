@@ -208,7 +208,7 @@ class CoreImportExecutionService
 
         $this->assertIdentityType($identityType);
 
-        if (blank($data['birth_date'] ?? null)) {
+        if (! $this->passwords->usesNameStrategy() && blank($data['birth_date'] ?? null)) {
             throw new InvalidArgumentException('birth_date wajib untuk membuat initial password user baru.');
         }
 
@@ -230,7 +230,10 @@ class CoreImportExecutionService
             'username' => $username,
             'identity_type' => $identityType,
             'identity_number' => $identityNumber,
-            'password' => $this->passwords->hashFromBirthDate($data['birth_date']),
+            'password' => $this->passwords->hashForUser(
+                new User(['name' => $this->required($data, 'name')]),
+                $data['birth_date'] ?? null,
+            ),
             'active' => $this->booleanValue($data['is_active'] ?? $data['status'] ?? true),
             'must_change_password' => true,
             'password_changed_at' => null,
@@ -241,7 +244,7 @@ class CoreImportExecutionService
         $this->logActivity($actor, 'import.user_created', [
             'target_user_id' => $user->id,
             'identity_type' => $identityType,
-            'method' => 'birth_date_based',
+            'method' => $this->passwords->strategy().'_based',
         ]);
 
         return $this->result('users', User::class, $user->id, 'created', ['user' => null, 'user_created' => false, 'user_linked' => false], 'User created from import.');
@@ -552,7 +555,7 @@ class CoreImportExecutionService
         $email = $data['email'] ?? null;
         $identityNumber = $data['identity_number'] ?? $fallbackIdentifier;
 
-        if (blank($username) || blank($email) || blank($data['birth_date'] ?? null)) {
+        if (blank($username) || blank($email) || (! $this->passwords->usesNameStrategy() && blank($data['birth_date'] ?? null))) {
             return ['user' => null, 'user_created' => false, 'user_linked' => false];
         }
 
@@ -581,7 +584,10 @@ class CoreImportExecutionService
             'username' => $username,
             'identity_type' => $identityType,
             'identity_number' => $identityNumber,
-            'password' => $this->passwords->hashFromBirthDate($data['birth_date']),
+            'password' => $this->passwords->hashForUser(
+                new User(['name' => $this->required($data, 'name')]),
+                $data['birth_date'] ?? null,
+            ),
             'active' => true,
             'must_change_password' => true,
             'password_changed_at' => null,
@@ -592,7 +598,7 @@ class CoreImportExecutionService
         $this->logActivity($actor, 'import.user_created', [
             'target_user_id' => $user->id,
             'identity_type' => $identityType,
-            'method' => 'birth_date_based',
+            'method' => $this->passwords->strategy().'_based',
         ]);
 
         return ['user' => $user, 'user_created' => true, 'user_linked' => false];

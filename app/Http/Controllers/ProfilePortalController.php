@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Services\CoreProfilePortalService;
+use App\Models\UserActivityLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProfilePortalController extends Controller
@@ -32,6 +36,64 @@ class ProfilePortalController extends Controller
             'profile' => $profile,
             'user' => $request->user(),
         ]);
+    }
+
+    public function changePassword(Request $request): View
+    {
+        return view('profile.change-password', [
+            'user' => $request->user(),
+        ]);
+    }
+
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'confirmed', Password::default(), 'min:8'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => 'Password saat ini tidak sesuai.',
+            ]);
+        }
+
+        if (Hash::check($validated['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => 'Password baru tidak boleh sama dengan password saat ini.',
+            ]);
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
+            'password_changed_at' => now(),
+        ])->save();
+
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+            $request->session()->put([
+                'password_hash_web' => $user->password,
+            ]);
+        }
+
+        UserActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'profile.password_changed',
+            'ip_address' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            'meta' => [
+                'target_user_id' => $user->id,
+                'changed_by' => $user->id,
+                'source' => 'profile_portal',
+            ],
+        ]);
+
+        return redirect()
+            ->route('profile.show')
+            ->with('status', 'Password berhasil diganti.');
     }
 
     public function update(Request $request): RedirectResponse

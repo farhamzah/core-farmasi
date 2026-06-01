@@ -81,18 +81,24 @@ class CoreAuthIdentityTest extends TestCase
         $this->assertNotNull($user->password_changed_at);
     }
 
-    public function test_initial_password_service_formats_and_hashes_birth_date_password(): void
+    public function test_initial_password_strategy_defaults_to_name(): void
+    {
+        $this->assertSame('name', config('core_identity.initial_password_strategy'));
+    }
+
+    public function test_initial_password_service_hashes_name_strategy_password(): void
     {
         $service = app(CoreInitialPasswordService::class);
         $operator = User::factory()->create();
         $user = User::factory()->create([
+            'name' => 'Nama Sementara',
             'must_change_password' => false,
             'password_changed_at' => now(),
         ]);
 
-        $temporaryPassword = $service->generateFromBirthDate('2001-08-07');
+        $temporaryPassword = $service->generateForUser($user, '2001-08-07');
 
-        $this->assertSame('07/08/2001', $temporaryPassword);
+        $this->assertSame('Nama Sementara', $temporaryPassword);
 
         $service->setInitialPassword($user, '2001-08-07', $operator);
         $user->refresh();
@@ -103,6 +109,19 @@ class CoreAuthIdentityTest extends TestCase
         $this->assertNull($user->password_changed_at);
         $this->assertNotNull($user->last_password_reset_at);
         $this->assertSame($operator->id, $user->password_reset_by);
+    }
+
+    public function test_initial_password_service_can_still_use_birth_date_strategy_when_configured(): void
+    {
+        config(['core_identity.initial_password_strategy' => 'birth_date']);
+
+        $service = app(CoreInitialPasswordService::class);
+        $user = User::factory()->create(['name' => 'Nama User']);
+
+        $temporaryPassword = $service->generateForUser($user, '2001-08-07');
+
+        $this->assertSame('07/08/2001', $temporaryPassword);
+        $this->assertTrue(Hash::check('07/08/2001', $service->hashForUser($user, '2001-08-07')));
     }
 
     public function test_super_admin_can_open_users_resource_after_identity_fields_added(): void

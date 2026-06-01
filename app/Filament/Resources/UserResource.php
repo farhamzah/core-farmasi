@@ -60,7 +60,7 @@ class UserResource extends Resource
                             ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(fn (?User $record) => ! $record)
-                            ->helperText('Kosongkan saat edit jika tidak ingin mengganti password. Password tidak pernah ditampilkan di tabel.'),
+                            ->helperText('Password awal bersifat sementara. Kosongkan saat edit jika tidak ingin mengganti password. Password tidak pernah ditampilkan di tabel.'),
                         Forms\Components\Toggle::make('active')
                             ->label('Active')
                             ->default(true),
@@ -78,7 +78,7 @@ class UserResource extends Resource
                             ->label('Username')
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->helperText('Dipakai untuk login dan mapping identitas.'),
+                            ->helperText('Mahasiswa memakai NIM. Dosen memakai NIDN/NIP/nomor dosen. Tendik/staf/laboran memakai nomor kepegawaian.'),
                         Forms\Components\Select::make('identity_type')
                             ->label('Identity Type')
                             ->options(self::identityTypeOptions())
@@ -87,7 +87,8 @@ class UserResource extends Resource
                             ->maxLength(255),
                         Forms\Components\Toggle::make('must_change_password')
                             ->label('Must Change Password')
-                            ->default(false),
+                            ->default(true)
+                            ->helperText('User baru wajib mengganti password sementara saat login pertama.'),
                         Forms\Components\DateTimePicker::make('password_changed_at')
                             ->label('Password Changed At')
                             ->disabled()
@@ -157,13 +158,13 @@ class UserResource extends Resource
                     ->icon('heroicon-o-key')
                     ->requiresConfirmation()
                     ->modalHeading('Reset Password Awal')
-                    ->modalDescription('Password akan diset dari tanggal lahir format dd/mm/yyyy. User wajib mengganti password saat login berikutnya. Password tidak akan ditampilkan.')
+                    ->modalDescription('Password awal akan diset sesuai strategi kebijakan Core saat ini. User wajib mengganti password saat login berikutnya. Password tidak akan ditampilkan.')
                     ->modalSubmitActionLabel('Reset Password Awal')
                     ->action(function (User $record): void {
                         $initialPasswordService = app(CoreInitialPasswordService::class);
                         $birthDate = $initialPasswordService->resolveBirthDateForUser($record);
 
-                        if (blank($birthDate)) {
+                        if (! $initialPasswordService->usesNameStrategy() && blank($birthDate)) {
                             Notification::make()
                                 ->danger()
                                 ->title('Tanggal lahir belum tersedia.')
@@ -187,7 +188,7 @@ class UserResource extends Resource
                                 'meta' => [
                                     'target_user_id' => $record->id,
                                     'reset_by' => $operator->id,
-                                    'method' => 'birth_date_based',
+                                    'method' => $initialPasswordService->strategy().'_based',
                                 ],
                             ]);
                         }

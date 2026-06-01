@@ -37,10 +37,36 @@ class CoreInitialPasswordService
         return Hash::make($this->generateFromBirthDate($birthDate));
     }
 
+    public function generateFromName(?string $name): string
+    {
+        if (blank($name)) {
+            throw new InvalidArgumentException('Name is required to generate an initial password.');
+        }
+
+        return trim((string) $name);
+    }
+
+    public function hashFromName(?string $name): string
+    {
+        return Hash::make($this->generateFromName($name));
+    }
+
+    public function generateForUser(User $user, DateTimeInterface|string|null $birthDate = null): string
+    {
+        return $this->usesNameStrategy()
+            ? $this->generateFromName($user->name)
+            : $this->generateFromBirthDate($birthDate ?? $this->resolveBirthDateForUser($user));
+    }
+
+    public function hashForUser(User $user, DateTimeInterface|string|null $birthDate = null): string
+    {
+        return Hash::make($this->generateForUser($user, $birthDate));
+    }
+
     public function setInitialPassword(User $user, DateTimeInterface|string|null $birthDate, ?User $resetBy = null): void
     {
         $user->forceFill([
-            'password' => $this->hashFromBirthDate($birthDate),
+            'password' => $this->hashForUser($user, $birthDate),
             'must_change_password' => true,
             'password_changed_at' => null,
             'last_password_reset_at' => now(),
@@ -51,6 +77,22 @@ class CoreInitialPasswordService
     public function setInitialPasswordFromUserBirthDate(User $user, ?User $resetBy = null): void
     {
         $this->setInitialPassword($user, $this->resolveBirthDateForUser($user), $resetBy);
+    }
+
+    public function strategy(): string
+    {
+        $strategy = (string) config('core_identity.initial_password_strategy', 'name');
+
+        if (! in_array($strategy, ['name', 'birth_date'], true)) {
+            throw new InvalidArgumentException('Unsupported initial password strategy.');
+        }
+
+        return $strategy;
+    }
+
+    public function usesNameStrategy(): bool
+    {
+        return $this->strategy() === 'name';
     }
 
     protected function parseBirthDate(string $birthDate): Carbon

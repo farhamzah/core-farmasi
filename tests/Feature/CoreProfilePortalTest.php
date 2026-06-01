@@ -11,6 +11,7 @@ use App\Models\StudyProgram;
 use App\Models\User;
 use App\Models\UserActivityLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -35,6 +36,149 @@ class CoreProfilePortalTest extends TestCase
             ->assertSee($user->name);
 
         $this->actingAs($user)->get('/admin')->assertForbidden();
+    }
+
+    public function test_guest_cannot_access_profile_change_password(): void
+    {
+        $this->get('/profile/change-password')->assertRedirect('/admin/login');
+    }
+
+    public function test_authenticated_user_can_view_profile_change_password(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'password' => Hash::make('current-password'),
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile/change-password')
+            ->assertOk()
+            ->assertSee('Ganti Password')
+            ->assertSee('Password ini berlaku untuk aplikasi Farmasi yang menggunakan verifikasi Core.')
+            ->assertDontSee($user->password)
+            ->assertDontSee('remember_token')
+            ->assertDontSee('api_token');
+    }
+
+    public function test_non_admin_user_can_change_own_password_from_profile_portal(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'password' => Hash::make('old-password'),
+            'must_change_password' => true,
+            'password_changed_at' => null,
+        ]);
+        $role = Role::create(['name' => 'mahasiswa', 'label' => 'Mahasiswa', 'active' => true]);
+        $user->roles()->attach($role);
+
+        $this->actingAs($user)
+            ->from('/profile/change-password')
+            ->put('/profile/change-password', [
+                'current_password' => 'old-password',
+                'password' => 'new-secure-password',
+                'password_confirmation' => 'new-secure-password',
+            ])
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertFalse(Hash::check('old-password', $user->password));
+        $this->assertTrue(Hash::check('new-secure-password', $user->password));
+        $this->assertNotSame('new-secure-password', $user->password);
+        $this->assertFalse($user->must_change_password);
+        $this->assertNotNull($user->password_changed_at);
+        $this->assertDatabaseHas('user_activity_logs', [
+            'user_id' => $user->id,
+            'action' => 'profile.password_changed',
+        ]);
+
+        $log = UserActivityLog::where('user_id', $user->id)->where('action', 'profile.password_changed')->latest('id')->first();
+
+        $this->assertSame('profile_portal', $log->meta['source']);
+        $this->assertStringNotContainsString('new-secure-password', json_encode($log->meta));
+        $this->assertStringNotContainsString('old-password', json_encode($log->meta));
+    }
+
+    public function test_profile_password_change_rejects_wrong_current_password(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'password' => Hash::make('old-password'),
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->from('/profile/change-password')
+            ->put('/profile/change-password', [
+                'current_password' => 'wrong-password',
+                'password' => 'new-secure-password',
+                'password_confirmation' => 'new-secure-password',
+            ])
+            ->assertRedirect('/profile/change-password')
+            ->assertSessionHasErrors('current_password');
+
+        $this->assertTrue(Hash::check('old-password', $user->fresh()->password));
+        $this->assertTrue($user->fresh()->must_change_password);
+    }
+
+    public function test_profile_password_change_requires_confirmation(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $this->actingAs($user)
+            ->from('/profile/change-password')
+            ->put('/profile/change-password', [
+                'current_password' => 'old-password',
+                'password' => 'new-secure-password',
+                'password_confirmation' => 'different-password',
+            ])
+            ->assertRedirect('/profile/change-password')
+            ->assertSessionHasErrors('password');
+
+        $this->assertTrue(Hash::check('old-password', $user->fresh()->password));
+    }
+
+    public function test_profile_password_change_cannot_change_another_users_password(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'password' => Hash::make('old-password'),
+        ]);
+        $otherUser = User::factory()->create([
+            'active' => true,
+            'password' => Hash::make('other-password'),
+        ]);
+
+        $this->actingAs($user)
+            ->put('/profile/change-password', [
+                'user_id' => $otherUser->id,
+                'current_password' => 'old-password',
+                'password' => 'new-secure-password',
+                'password_confirmation' => 'new-secure-password',
+            ])
+            ->assertRedirect('/profile');
+
+        $this->assertTrue(Hash::check('new-secure-password', $user->fresh()->password));
+        $this->assertTrue(Hash::check('other-password', $otherUser->fresh()->password));
+    }
+
+    public function test_profile_shows_change_password_link_and_must_change_warning(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertSee('Ganti Password')
+            ->assertSee('/profile/change-password')
+            ->assertSee('Anda wajib mengganti password awal sebelum menggunakan layanan.')
+            ->assertDontSee($user->password);
     }
 
     public function test_profile_page_shows_student_summary_with_safe_fields(): void

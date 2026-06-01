@@ -15,6 +15,7 @@ Kontrak ini dipakai oleh aplikasi consumer seperti KP, TU, TA, Lab, SAFA, dan ap
 - Consumer app tidak membuat SSO, auto-login, token URL, atau cross-app session tanpa tahap desain terpisah.
 - Consumer app tidak menyimpan secret di repo, report, URL, atau log.
 - Perubahan master data dilakukan melalui admin Core, Excel Import Center Core, atau Profile Portal Core untuk field self-service yang aman.
+- Registrasi publik/account request disabled by default. Akun aktif dibuat oleh Admin Core melalui CRUD/import.
 - Field transaksi consumer tetap memakai ID legacy/domain masing-masing sampai ada cutover eksplisit.
 
 ## Core-Owned Data
@@ -51,7 +52,7 @@ Consumer app boleh menyimpan snapshot untuk kebutuhan historis, audit, atau doku
 
 | Mutasi | Jalur resmi | Catatan |
 | --- | --- | --- |
-| Create/edit user | Filament `UserResource` | Password tidak pernah ditampilkan; reset password awal memakai birth date bila tersedia. |
+| Create/edit user | Filament `UserResource` | Password tidak pernah ditampilkan; password awal sementara mengikuti strategi Core dan wajib diganti user. |
 | Assign global role | `UserResource` / `RoleResource` | Role global berbeda dari app role. |
 | Assign app access | `UserAppAccessResource` | App access memakai `app_code` dan `role_slug`. |
 | Create/edit student | `StudentResource` atau Import Center | NIM/student number adalah identifier utama mahasiswa. |
@@ -81,6 +82,7 @@ Aturan import:
 
 - File upload disimpan private/local.
 - Password column ditolak/diabaikan sesuai tipe import.
+- User baru dari import memakai password awal sementara sesuai `CORE_INITIAL_PASSWORD_STRATEGY`, default `name`, selalu hashed, dan `must_change_password=true`.
 - Import profile tidak otomatis membuat app access.
 - App role dan global role tidak dibuat otomatis dari profile import.
 - Row invalid/skip tidak dieksekusi.
@@ -145,7 +147,7 @@ Consumer app tidak boleh:
 - API internal dan public baseline tersedia.
 - Import Center tersedia dan dites.
 - Profile Portal tersedia dan dites.
-- Test suite terakhir: `220 passed, 1130 assertions`.
+- Test suite terakhir: `247 passed, 1384 assertions`.
 
 ## Open Guardrails
 

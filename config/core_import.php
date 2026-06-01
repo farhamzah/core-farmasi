@@ -23,7 +23,7 @@ return [
             ],
             'notes' => [
                 'Password tidak ditulis di template.',
-                'Initial password akan dihitung dari birth_date pada tahap execute import.',
+                'Initial password mengikuti CORE_INITIAL_PASSWORD_STRATEGY; default name, opsi birth_date tetap tersedia.',
                 'User hasil import nanti wajib mengganti password.',
                 'Role global dan app access memakai template terpisah.',
             ],
@@ -39,7 +39,7 @@ return [
                 ['230001', 'Nama Mahasiswa', 'S1-FAR', 'student@example.test', '081234567891', '07/08/2001', 'female', 'active', '230001', '230001'],
             ],
             'notes' => [
-                'birth_date dipakai untuk initial password pada tahap execute import.',
+                'Password awal import default mengikuti nama mahasiswa; birth_date tetap data profil dan opsi strategi lama.',
                 'Password tidak boleh ditulis di template.',
             ],
             'is_enabled' => true,

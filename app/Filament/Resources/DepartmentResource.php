@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\BooleanColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use BackedEnum;
 use UnitEnum;
@@ -26,16 +27,22 @@ class DepartmentResource extends Resource
 
     protected static ?int $navigationSort = 50;
 
-    protected static ?string $modelLabel = 'Department';
+    protected static ?string $modelLabel = 'Departemen';
 
-    protected static ?string $pluralModelLabel = 'Departments';
+    protected static ?string $pluralModelLabel = 'Departemen';
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
-                Section::make('Department')
+                Section::make('Departemen')
                     ->schema([
+                        Forms\Components\Select::make('faculty_id')
+                            ->label('Fakultas')
+                            ->relationship('faculty', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Departemen berada di bawah fakultas. Untuk saat ini gunakan Fakultas Farmasi.'),
                         Forms\Components\TextInput::make('code')
                             ->label('Kode')
                             ->required()
@@ -64,18 +71,22 @@ class DepartmentResource extends Resource
             ->columns([
                 TextColumn::make('code')->label('Kode')->sortable()->searchable()->badge()->color('info'),
                 TextColumn::make('name')->label('Nama')->sortable()->searchable(),
+                TextColumn::make('faculty.name')->label('Fakultas')->sortable(),
                 BooleanColumn::make('active')->label('Active'),
-                TextColumn::make('created_at')->dateTime('d MMM Y')->sortable(),
+                TextColumn::make('created_at')->dateTime('d M Y')->sortable(),
             ])
             ->filters([
+                SelectFilter::make('faculty_id')
+                    ->label('Fakultas')
+                    ->relationship('faculty', 'name')
+                    ->searchable()
+                    ->preload(),
                 TernaryFilter::make('active')->label('Active'),
             ])
             ->actions([
                 \Filament\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                \Filament\Actions\DeleteBulkAction::make(),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getPages(): array

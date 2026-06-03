@@ -68,6 +68,18 @@ class CoreDataQualityDashboardTest extends TestCase
             'role_slug' => 'unknown-role',
             'is_active' => true,
         ]);
+        User::factory()->create([
+            'username' => '230001',
+            'email' => 'student-username-conflict@example.test',
+            'identity_type' => 'student',
+            'identity_number' => '230001',
+        ]);
+        User::factory()->create([
+            'username' => 'student-email-conflict',
+            'email' => 'student-missing-user@example.test',
+            'identity_type' => 'student',
+            'identity_number' => 'student-email-conflict',
+        ]);
         Student::create([
             'student_number' => '230001',
             'name' => 'Student Missing User',

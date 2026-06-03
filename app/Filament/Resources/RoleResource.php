@@ -63,7 +63,7 @@ class RoleResource extends Resource
                 TextColumn::make('name')->label('Slug')->sortable()->searchable()->badge()->color('info'),
                 TextColumn::make('label')->sortable()->searchable(),
                 BooleanColumn::make('active')->label('Active'),
-                TextColumn::make('created_at')->dateTime('d MMM Y')->sortable(),
+                TextColumn::make('created_at')->dateTime('d M Y')->sortable(),
             ])
             ->filters([
                 TernaryFilter::make('active')->label('Active'),

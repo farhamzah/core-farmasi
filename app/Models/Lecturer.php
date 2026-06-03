@@ -14,6 +14,11 @@ class Lecturer extends Model
     protected $fillable = [
         'user_id',
         'lecturer_number',
+        'national_id_number',
+        'nip',
+        'nidn',
+        'nidk',
+        'nuptk',
         'name',
         'email',
         'birth_date',

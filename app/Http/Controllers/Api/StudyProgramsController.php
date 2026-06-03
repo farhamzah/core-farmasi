@@ -10,7 +10,7 @@ class StudyProgramsController extends Controller
 {
     public function index(Request $request)
     {
-        return StudyProgram::with('department')
+        return StudyProgram::with(['faculty', 'department'])
             ->where('active', true)
             ->orderBy('name')
             ->get()
@@ -18,13 +18,14 @@ class StudyProgramsController extends Controller
                 'id' => $program->id,
                 'code' => $program->code,
                 'name' => $program->name,
-                'department' => $program->department->name,
+                'faculty' => $program->faculty?->name,
+                'department' => $program->department?->name,
             ]);
     }
 
     public function show(Request $request, int $id)
     {
-        $program = StudyProgram::with('department')->findOrFail($id);
+        $program = StudyProgram::with(['faculty', 'department'])->findOrFail($id);
 
         return response()->json([
             'id' => $program->id,
@@ -32,11 +33,16 @@ class StudyProgramsController extends Controller
             'name' => $program->name,
             'description' => $program->description,
             'active' => $program->active,
-            'department' => [
+            'faculty' => $program->faculty ? [
+                'id' => $program->faculty->id,
+                'code' => $program->faculty->code,
+                'name' => $program->faculty->name,
+            ] : null,
+            'department' => $program->department ? [
                 'id' => $program->department->id,
                 'code' => $program->department->code,
                 'name' => $program->department->name,
-            ],
+            ] : null,
         ]);
     }
 }

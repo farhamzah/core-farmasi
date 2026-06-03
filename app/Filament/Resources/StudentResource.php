@@ -99,11 +99,11 @@ class StudentResource extends Resource
                 TextColumn::make('status')->badge()->searchable(),
                 TextColumn::make('birth_date')
                     ->label('Tanggal Lahir')
-                    ->date('d MMM Y')
+                    ->date('d M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 BooleanColumn::make('active')->label('Active'),
-                TextColumn::make('created_at')->dateTime('d MMM Y')->sortable(),
+                TextColumn::make('created_at')->dateTime('d M Y')->sortable(),
             ])
             ->filters([
                 SelectFilter::make('study_program_id')

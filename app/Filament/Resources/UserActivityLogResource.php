@@ -47,7 +47,7 @@ class UserActivityLogResource extends Resource
                 TextColumn::make('action')->sortable()->searchable()->badge()->color('info'),
                 TextColumn::make('ip_address')->label('IP Address'),
                 TextColumn::make('user_agent')->limit(60),
-                TextColumn::make('created_at')->dateTime('d MMM Y H:i')->sortable(),
+                TextColumn::make('created_at')->dateTime('d M Y H:i')->sortable(),
             ])
             ->actions([])
             ->bulkActions([]);

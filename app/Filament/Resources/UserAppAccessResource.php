@@ -88,8 +88,8 @@ class UserAppAccessResource extends Resource
                 TextColumn::make('role_slug')->sortable()->searchable()->badge()->color('primary'),
                 TextColumn::make('application_role_name')->label('Nama Role'),
                 BooleanColumn::make('is_active')->label('Active'),
-                TextColumn::make('activated_at')->dateTime('d MMM Y H:i')->sortable(),
-                TextColumn::make('deactivated_at')->dateTime('d MMM Y H:i')->sortable(),
+                TextColumn::make('activated_at')->dateTime('d M Y H:i')->sortable(),
+                TextColumn::make('deactivated_at')->dateTime('d M Y H:i')->sortable(),
             ])
             ->filters([
                 SelectFilter::make('app_code')

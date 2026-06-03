@@ -6,169 +6,240 @@
     <title>Profil Saya - Core Farmasi UBP</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900">
-    <main class="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
-        <header class="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div>
-                    <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Core Farmasi UBP</p>
-                    <h1 class="mt-2 text-3xl font-bold text-slate-950">Profil Saya</h1>
-                    <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                        Profil utama dikelola terpusat di Core. Data resmi seperti identitas, nomor akademik/pegawai, status, role, akses aplikasi, dan jabatan hanya dapat diubah oleh admin Core.
-                    </p>
-                </div>
-                <div class="flex flex-col gap-3 sm:flex-row">
-                    <a href="{{ route('profile.password.edit') }}" class="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50">
-                        Ganti Password
-                    </a>
-                    <a href="{{ route('profile.edit') }}" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
-                        Edit Kontak Aman
-                    </a>
-                    <form method="POST" action="{{ route('profile.logout') }}">
-                        @csrf
-                        <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                            Keluar
-                        </button>
-                    </form>
-                </div>
+<body class="min-h-screen bg-[#f4f8ff] text-slate-950">
+    @php
+        $completion = $profile['completion'];
+        $contact = $profile['contact_values'];
+        $linkedProfiles = collect($profile['profiles'] ?? []);
+        $primaryProfile = $linkedProfiles->first();
+        $roleLabel = $primaryProfile['label'] ?? ucfirst((string) ($profile['user']['identity_type'] ?? 'Akun Core'));
+        $contactComplete = filled($contact['phone'] ?? null) && filled($contact['address'] ?? null);
+    @endphp
+
+    <main class="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <header class="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-[0_24px_70px_rgba(30,64,175,0.12)]">
+            <div class="grid gap-0 lg:grid-cols-[1fr_360px]">
+                <section class="relative p-6 sm:p-8">
+                    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-700 via-cyan-500 to-emerald-400"></div>
+                    <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Core Farmasi UBP</p>
+                            <h1 class="mt-3 text-3xl font-black tracking-normal text-slate-950 sm:text-4xl">Profil Saya</h1>
+                            <div class="mt-4 flex flex-wrap items-center gap-2">
+                                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{{ $roleLabel }}</span>
+                                <span class="rounded-full {{ ($profile['user']['active'] ?? false) ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }} px-3 py-1 text-xs font-bold">
+                                    {{ ($profile['user']['active'] ?? false) ? 'Akun aktif' : 'Akun inactive' }}
+                                </span>
+                                <span class="rounded-full {{ $completion['is_complete'] ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }} px-3 py-1 text-xs font-bold">
+                                    {{ $completion['is_complete'] ? 'Profil lengkap' : 'Profil belum lengkap' }}
+                                </span>
+                            </div>
+                            <p class="mt-5 max-w-3xl text-sm leading-7 text-slate-600">
+                                Data resmi dikelola terpusat oleh Admin Core. Kontak pribadi bisa diperbarui mandiri, sementara identitas akademik/kepegawaian, role, app access, dan jabatan tetap terkunci.
+                            </p>
+                        </div>
+
+                        <div class="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                            <a href="{{ route('profile.edit') }}" class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
+                                Edit Kontak
+                            </a>
+                            <a href="{{ route('profile.password.edit') }}" class="inline-flex items-center justify-center rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50">
+                                Ganti Password
+                            </a>
+                            <form method="POST" action="{{ route('profile.logout') }}">
+                                @csrf
+                                <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                                    Keluar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <aside class="border-t border-blue-100 bg-gradient-to-br from-blue-700 to-sky-600 p-6 text-white lg:border-l lg:border-t-0 sm:p-8">
+                    <p class="text-sm font-semibold text-blue-100">Kelengkapan Profil</p>
+                    <div class="mt-3 flex items-end gap-3">
+                        <span class="text-5xl font-black">{{ $completion['percentage'] }}%</span>
+                        <span class="pb-2 text-sm font-semibold text-blue-100">{{ $completion['completed'] }}/{{ $completion['total'] }} item</span>
+                    </div>
+                    <div class="mt-5 h-2 overflow-hidden rounded-full bg-white/20">
+                        <div class="h-full rounded-full bg-white" style="width: {{ $completion['percentage'] }}%"></div>
+                    </div>
+                    <dl class="mt-6 grid grid-cols-2 gap-3 text-sm">
+                        <div class="rounded-2xl bg-white/12 p-4">
+                            <dt class="text-blue-100">Kontak</dt>
+                            <dd class="mt-1 font-bold">{{ $contactComplete ? 'Lengkap' : 'Belum lengkap' }}</dd>
+                        </div>
+                        <div class="rounded-2xl bg-white/12 p-4">
+                            <dt class="text-blue-100">Profil Resmi</dt>
+                            <dd class="mt-1 font-bold">{{ $linkedProfiles->isNotEmpty() ? 'Tertaut' : 'Belum tertaut' }}</dd>
+                        </div>
+                    </dl>
+                </aside>
             </div>
         </header>
 
         @if ($user->must_change_password)
-            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-900 shadow-sm">
                 Anda wajib mengganti password awal sebelum menggunakan layanan.
-                <a href="{{ route('profile.password.edit') }}" class="ml-1 font-bold text-amber-950 underline underline-offset-4">Ganti password sekarang</a>
+                <a href="{{ route('profile.password.edit') }}" class="ml-1 font-black text-amber-950 underline underline-offset-4">Ganti password sekarang</a>
             </div>
         @endif
 
-        @if (! ($profile['completion']['is_complete'] ?? false))
-            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-                Profil Anda belum lengkap. Lengkapi nomor kontak dan alamat agar data Core siap dipakai oleh layanan Farmasi.
-                <a href="{{ route('profile.edit') }}" class="ml-1 font-bold text-amber-950 underline underline-offset-4">Lengkapi profil</a>
+        @if (! $completion['is_complete'])
+            <div class="rounded-2xl border border-amber-200 bg-white px-5 py-4 text-sm font-semibold text-amber-900 shadow-sm">
+                Profil Anda belum lengkap. Lengkapi telepon dan alamat agar layanan Farmasi dapat memakai kontak terbaru.
+                <a href="{{ route('profile.edit') }}" class="ml-1 font-black text-amber-950 underline underline-offset-4">Lengkapi profil</a>
             </div>
         @endif
 
         @if (session('status'))
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-800 shadow-sm">
                 {{ session('status') }}
             </div>
         @endif
 
-        <section class="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-            <article class="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-                <h2 class="text-lg font-bold text-slate-950">Identitas Akun</h2>
-                <dl class="mt-5 grid gap-4 sm:grid-cols-2">
+        <section class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <article class="rounded-3xl border border-blue-100 bg-white p-6 shadow-[0_18px_48px_rgba(15,23,42,0.06)] sm:p-7">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nama</dt>
-                        <dd class="mt-1 text-sm font-semibold text-slate-900">{{ $profile['user']['name'] ?? '-' }}</dd>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Identitas Akun</p>
+                        <h2 class="mt-2 text-xl font-black text-slate-950">{{ $profile['user']['name'] ?? '-' }}</h2>
                     </div>
-                    <div>
-                        <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Username</dt>
-                        <dd class="mt-1 text-sm text-slate-900">{{ $profile['user']['username'] ?? '-' }}</dd>
+                    <span class="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">{{ $profile['user']['identity_type'] ?? 'internal' }}</span>
+                </div>
+
+                <dl class="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div class="rounded-2xl bg-slate-50 p-4">
+                        <dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Username</dt>
+                        <dd class="mt-1 break-words text-sm font-semibold text-slate-950">{{ $profile['user']['username'] ?? '-' }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Email Utama</dt>
-                        <dd class="mt-1 text-sm text-slate-900">{{ $profile['user']['email'] ?? '-' }}</dd>
+                    <div class="rounded-2xl bg-slate-50 p-4">
+                        <dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Email Utama</dt>
+                        <dd class="mt-1 break-words text-sm font-semibold text-slate-950">{{ $profile['user']['email'] ?? '-' }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Identitas</dt>
-                        <dd class="mt-1 text-sm text-slate-900">
-                            {{ $profile['user']['identity_type'] ?? '-' }}
-                            @if ($profile['user']['identity_number_masked'])
-                                <span class="text-slate-500">({{ $profile['user']['identity_number_masked'] }})</span>
-                            @endif
-                        </dd>
+                    <div class="rounded-2xl bg-slate-50 p-4">
+                        <dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Identitas Login</dt>
+                        <dd class="mt-1 text-sm font-semibold text-slate-950">{{ $profile['user']['identity_number_masked'] ?? '-' }}</dd>
+                    </div>
+                    <div class="rounded-2xl bg-slate-50 p-4">
+                        <dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Status Akses</dt>
+                        <dd class="mt-1 text-sm font-semibold text-slate-950">{{ ($profile['user']['active'] ?? false) ? 'Aktif' : 'Inactive' }}</dd>
                     </div>
                 </dl>
             </article>
 
-            <aside class="rounded-2xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
-                <h2 class="text-lg font-bold text-slate-950">Kelengkapan Profil</h2>
-                <div class="mt-4 flex items-end gap-2">
-                    <span class="text-4xl font-bold text-blue-700">{{ $profile['completion']['percentage'] }}%</span>
-                    <span class="pb-1 text-sm font-semibold text-slate-600">{{ $profile['completion']['completed'] }}/{{ $profile['completion']['total'] }} item</span>
-                </div>
-                <span class="mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ ($profile['completion']['is_complete'] ?? false) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                    {{ ($profile['completion']['is_complete'] ?? false) ? 'Profil lengkap' : 'Profil belum lengkap' }}
-                </span>
-                <div class="mt-4 h-2 overflow-hidden rounded-full bg-white">
-                    <div class="h-full rounded-full bg-blue-600" style="width: {{ $profile['completion']['percentage'] }}%"></div>
-                </div>
-                <ul class="mt-5 space-y-3 text-sm leading-6 text-slate-700">
-                    @foreach ($profile['completion']['items'] as $item)
-                        <li class="flex items-start gap-3">
-                            <span class="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full {{ $item['complete'] ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
-                                {{ $item['complete'] ? 'OK' : '!' }}
-                            </span>
-                            <span>
-                                {{ $item['label'] }}
-                                @if ($item['sensitive'])
-                                    <span class="text-slate-500">(status saja, nilai tidak ditampilkan)</span>
-                                @endif
-                            </span>
-                        </li>
-                    @endforeach
-                </ul>
-            </aside>
-        </section>
-
-        <section class="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-            <h2 class="text-lg font-bold text-slate-950">Keamanan Profil</h2>
-            <ul class="mt-4 grid gap-3 text-sm leading-6 text-slate-700 md:grid-cols-3">
-                <li class="rounded-xl bg-blue-50 p-4">Halaman ini hanya untuk profil milik akun yang sedang login.</li>
-                <li class="rounded-xl bg-blue-50 p-4">Role, app access, status aktif, jabatan, dan data resmi tidak bisa diedit mandiri.</li>
-                <li class="rounded-xl bg-blue-50 p-4">Password dikelola melalui halaman Ganti Password Core dan berlaku untuk aplikasi yang memverifikasi ke Core.</li>
-            </ul>
-        </section>
-
-        <section class="grid gap-6">
-            @forelse ($profile['profiles'] as $linkedProfile)
-                <article class="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-sm font-semibold text-blue-700">{{ $linkedProfile['label'] }}</p>
-                            <h2 class="mt-1 text-xl font-bold text-slate-950">{{ $linkedProfile['name'] }}</h2>
-                        </div>
-                        <span class="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                            {{ $linkedProfile['status'] ?? 'status tidak tersedia' }}
-                        </span>
+            <article class="rounded-3xl border border-blue-100 bg-white p-6 shadow-[0_18px_48px_rgba(15,23,42,0.06)] sm:p-7">
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Kontak Aman</p>
+                <h2 class="mt-2 text-xl font-black text-slate-950">Kontak Saya</h2>
+                <dl class="mt-6 space-y-4">
+                    <div class="rounded-2xl bg-blue-50 p-4">
+                        <dt class="text-xs font-bold uppercase tracking-wide text-blue-700">Telepon</dt>
+                        <dd class="mt-1 break-words text-sm font-semibold text-slate-950">{{ $contact['phone'] ?? '-' }}</dd>
                     </div>
+                    <div class="rounded-2xl bg-blue-50 p-4">
+                        <dt class="text-xs font-bold uppercase tracking-wide text-blue-700">Alamat</dt>
+                        <dd class="mt-1 whitespace-pre-line break-words text-sm font-semibold text-slate-950">{{ $contact['address'] ?? '-' }}</dd>
+                    </div>
+                    @if (filled($contact['alternate_email'] ?? null))
+                        <div class="rounded-2xl bg-blue-50 p-4">
+                            <dt class="text-xs font-bold uppercase tracking-wide text-blue-700">Email Alternatif</dt>
+                            <dd class="mt-1 break-words text-sm font-semibold text-slate-950">{{ $contact['alternate_email'] }}</dd>
+                        </div>
+                    @endif
+                </dl>
+            </article>
+        </section>
 
-                    <dl class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <div>
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $linkedProfile['identifier_label'] }}</dt>
-                            <dd class="mt-1 text-sm text-slate-900">{{ $linkedProfile['identifier'] ?? '-' }}</dd>
+        <section class="grid gap-6 xl:grid-cols-[1fr_360px]">
+            <div class="grid gap-6">
+                @forelse ($linkedProfiles as $linkedProfile)
+                    <article class="rounded-3xl border border-blue-100 bg-white p-6 shadow-[0_18px_48px_rgba(15,23,42,0.06)] sm:p-7">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">{{ $linkedProfile['label'] }}</p>
+                                <h2 class="mt-2 text-2xl font-black text-slate-950">{{ $linkedProfile['name'] }}</h2>
+                                <p class="mt-2 text-sm text-slate-600">{{ $linkedProfile['unit'] ?? $linkedProfile['unit_secondary'] ?? 'Unit belum tersedia' }}</p>
+                            </div>
+                            <span class="w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{{ $linkedProfile['status'] ?? 'status tidak tersedia' }}</span>
                         </div>
-                        <div>
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Email Profil</dt>
-                            <dd class="mt-1 text-sm text-slate-900">{{ $linkedProfile['email'] ?? '-' }}</dd>
+
+                        <div class="mt-6 flex flex-wrap gap-2">
+                            @foreach ($linkedProfile['official_identifiers'] ?? [] as $identifier)
+                                @if (filled($identifier['value'] ?? null))
+                                    <span class="rounded-full {{ ($identifier['sensitive'] ?? false) ? 'bg-slate-100 text-slate-700' : 'bg-blue-50 text-blue-700' }} px-3 py-1 text-xs font-bold">
+                                        {{ $identifier['label'] }}: {{ $identifier['value'] }}
+                                    </span>
+                                @endif
+                            @endforeach
                         </div>
-                        <div>
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Unit</dt>
-                            <dd class="mt-1 text-sm text-slate-900">{{ $linkedProfile['unit'] ?? $linkedProfile['unit_secondary'] ?? '-' }}</dd>
+
+                        <div class="mt-6 grid gap-4 lg:grid-cols-3">
+                            @foreach ($linkedProfile['profile_sections'] ?? [] as $sectionTitle => $items)
+                                <section class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                    <h3 class="text-sm font-black text-slate-950">{{ $sectionTitle }}</h3>
+                                    <dl class="mt-4 space-y-3">
+                                        @foreach ($items as $label => $value)
+                                            <div>
+                                                <dt class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ $label }}</dt>
+                                                <dd class="mt-1 break-words text-sm font-semibold text-slate-900">{{ filled($value) ? $value : '-' }}</dd>
+                                            </div>
+                                        @endforeach
+                                    </dl>
+                                </section>
+                            @endforeach
                         </div>
-                        <div>
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Telepon</dt>
-                            <dd class="mt-1 text-sm text-slate-900">{{ $linkedProfile['phone'] ?? '-' }}</dd>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Alamat</dt>
-                            <dd class="mt-1 text-sm text-slate-900">{{ $linkedProfile['address'] ?? '-' }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tanggal Lahir</dt>
-                            <dd class="mt-1 text-sm text-slate-900">
-                                {{ ($linkedProfile['birth_date_recorded'] ?? false) ? 'Tercatat' : 'Belum tercatat' }}
-                            </dd>
-                        </div>
-                    </dl>
-                </article>
-            @empty
-                <article class="rounded-2xl border border-dashed border-blue-200 bg-white p-8 text-center shadow-sm">
-                    <h2 class="text-lg font-bold text-slate-950">Belum ada profil tertaut</h2>
-                    <p class="mt-2 text-sm text-slate-600">Akun Anda belum terhubung ke profil mahasiswa, dosen, atau pegawai. Hubungi admin Core jika ini tidak sesuai.</p>
-                </article>
-            @endforelse
+                    </article>
+                @empty
+                    <article class="rounded-3xl border border-dashed border-blue-200 bg-white p-8 text-center shadow-sm">
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Profil Resmi</p>
+                        <h2 class="mt-3 text-xl font-black text-slate-950">Belum ada profil tertaut</h2>
+                        <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">Akun ini belum terhubung ke profil mahasiswa, dosen, atau tendik. Kontak tetap bisa disimpan di akun Core sambil menunggu Admin Core menautkan data resmi.</p>
+                        <a href="{{ route('profile.edit') }}" class="mt-5 inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
+                            Isi Kontak Aman
+                        </a>
+                    </article>
+                @endforelse
+            </div>
+
+            <aside class="grid gap-6">
+                <section class="rounded-3xl border border-blue-100 bg-white p-6 shadow-[0_18px_48px_rgba(15,23,42,0.06)]">
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Checklist</p>
+                    <h2 class="mt-2 text-xl font-black text-slate-950">Kelengkapan</h2>
+                    <ul class="mt-5 space-y-3">
+                        @foreach ($completion['items'] as $item)
+                            <li class="flex gap-3 rounded-2xl bg-slate-50 p-3 text-sm text-slate-700">
+                                <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black {{ $item['complete'] ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
+                                    {{ $item['complete'] ? 'OK' : '!' }}
+                                </span>
+                                <span class="pt-0.5 font-semibold">{{ $item['label'] }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+
+                <section class="rounded-3xl border border-blue-100 bg-white p-6 shadow-[0_18px_48px_rgba(15,23,42,0.06)]">
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Standar Profil</p>
+                    <h2 class="mt-2 text-xl font-black text-slate-950">Data Utama</h2>
+                    <div class="mt-5 space-y-4 text-sm">
+                        @foreach ($profile['profile_standards'] as $type => $items)
+                            <div>
+                                <h3 class="font-black text-slate-900">{{ $type }}</h3>
+                                <p class="mt-1 leading-6 text-slate-600">{{ implode(', ', $items) }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+
+                <section class="rounded-3xl border border-blue-100 bg-blue-50 p-6">
+                    <h2 class="text-lg font-black text-slate-950">Keamanan Profil</h2>
+                    <ul class="mt-4 space-y-3 text-sm leading-6 text-slate-700">
+                        <li>Password bisa diganti kapan saja dari halaman Ganti Password.</li>
+                        <li>NIK/KTP dimasking di portal karena termasuk data sensitif.</li>
+                        <li>Role, app access, status, dan jabatan hanya diubah oleh Admin Core.</li>
+                    </ul>
+                </section>
+            </aside>
         </section>
     </main>
 </body>

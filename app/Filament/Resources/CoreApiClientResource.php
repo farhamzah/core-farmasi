@@ -119,15 +119,15 @@ class CoreApiClientResource extends Resource
                     ->label('Aktif'),
                 TextColumn::make('revoked_at')
                     ->label('Revoked')
-                    ->dateTime('d MMM Y H:i')
+                    ->dateTime('d M Y H:i')
                     ->sortable(),
                 TextColumn::make('last_used_at')
                     ->label('Last Used')
-                    ->dateTime('d MMM Y H:i')
+                    ->dateTime('d M Y H:i')
                     ->sortable(),
                 TextColumn::make('last_rotated_at')
                     ->label('Last Rotated')
-                    ->dateTime('d MMM Y H:i')
+                    ->dateTime('d M Y H:i')
                     ->sortable(),
             ])
             ->filters([

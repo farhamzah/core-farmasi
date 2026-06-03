@@ -235,6 +235,40 @@ CORE-ACCOUNT-2B mengunci keputusan operasional bahwa registrasi publik tidak dib
 - Password awal selalu hashed dan user baru dipaksa `must_change_password=true`.
 - App access tetap diberikan manual/eksplisit melalui resource atau import app access; tidak ada akses aplikasi otomatis dari request publik.
 
+## Master Profile Auto User Provisioning
+
+Core dapat otomatis membuat akun user saat master profile mahasiswa, dosen, atau tendik/staf/laboran dibuat tanpa `user_id`.
+
+Aturan username:
+
+- Mahasiswa: `students.student_number` / NIM.
+- Dosen: `lecturers.lecturer_number` / NIDN/NIP/nomor dosen.
+- Tendik/staf/laboran: `employees.employee_number`.
+
+Aturan password awal:
+
+- Format: `NamaDepan + 4 karakter akhir identifier + !`.
+- Contoh `Andi nurjanah` dengan NIM `221011402637`: `Andi2637!`.
+- Contoh nama empat kata `Muhammad Rizky Aditya Pratama` dengan NIM `221011409999`: `Muhammad9999!`.
+- Password tetap langsung di-hash di database.
+- User baru selalu `must_change_password=true`.
+
+Aturan keamanan:
+
+- Jika profile sudah punya `user_id`, Core tidak membuat user baru.
+- Jika user existing cocok berdasarkan username/email/identity, profile akan ditautkan ke user tersebut.
+- Jika ada lebih dari satu matching user, provisioning ditahan sebagai blocker dan tidak membuat duplikat.
+- Jika identifier, nama, atau email kosong, provisioning dilewati.
+- Tidak ada role admin otomatis.
+- Tidak ada app access otomatis.
+
+Backfill data lama:
+
+- Default dry-run: `php artisan core:provision-master-users`.
+- Apply terkontrol: `php artisan core:provision-master-users --apply`.
+- Batasi per tipe/identifier bila perlu, contoh:
+  `php artisan core:provision-master-users --apply --only=students --identifier=221011402637`.
+
 ## Password Policy
 
 Prinsip:

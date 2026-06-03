@@ -7,6 +7,7 @@ use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Faculty;
 use App\Models\LeadershipAssignment;
 use App\Models\Lecturer;
 use App\Models\Role;
@@ -104,6 +105,7 @@ class CoreManualCrudResourceTest extends TestCase
             ['key' => 'student', 'index' => '/admin/students', 'create' => '/admin/students/create', 'edit' => '/admin/students/{id}/edit'],
             ['key' => 'lecturer', 'index' => '/admin/lecturers', 'create' => '/admin/lecturers/create', 'edit' => '/admin/lecturers/{id}/edit'],
             ['key' => 'employee', 'index' => '/admin/employees', 'create' => '/admin/employees/create', 'edit' => '/admin/employees/{id}/edit'],
+            ['key' => 'faculty', 'index' => '/admin/faculties', 'create' => '/admin/faculties/create', 'edit' => '/admin/faculties/{id}/edit'],
             ['key' => 'department', 'index' => '/admin/departments', 'create' => '/admin/departments/create', 'edit' => '/admin/departments/{id}/edit'],
             ['key' => 'study_program', 'index' => '/admin/study-programs', 'create' => '/admin/study-programs/create', 'edit' => '/admin/study-programs/{id}/edit'],
             ['key' => 'core_application', 'index' => '/admin/core-applications', 'create' => '/admin/core-applications/create', 'edit' => '/admin/core-applications/{id}/edit'],
@@ -132,13 +134,21 @@ class CoreManualCrudResourceTest extends TestCase
      */
     private function createEditableRecords(): array
     {
+        $faculty = Faculty::create([
+            'code' => 'CRUD-FAC',
+            'name' => 'CRUD Faculty',
+            'active' => true,
+        ]);
+
         $department = Department::create([
+            'faculty_id' => $faculty->id,
             'code' => 'CRUD-DEP',
             'name' => 'CRUD Department',
             'active' => true,
         ]);
 
         $studyProgram = StudyProgram::create([
+            'faculty_id' => $faculty->id,
             'department_id' => $department->id,
             'code' => 'CRUD-SP',
             'name' => 'CRUD Study Program',
@@ -229,6 +239,7 @@ class CoreManualCrudResourceTest extends TestCase
             'student' => $student->id,
             'lecturer' => $lecturer->id,
             'employee' => $employee->id,
+            'faculty' => $faculty->id,
             'department' => $department->id,
             'study_program' => $studyProgram->id,
             'core_application' => $application->id,

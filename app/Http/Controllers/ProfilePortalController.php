@@ -122,8 +122,8 @@ class ProfilePortalController extends Controller
 
         if ($result['updated'] === []) {
             return redirect()
-                ->route('profile.edit')
-                ->with('status', 'Belum ada field kontak yang dapat diperbarui untuk profil ini.');
+                ->route('profile.show')
+                ->with('status', 'Tidak ada perubahan kontak yang perlu disimpan.');
         }
 
         return redirect()

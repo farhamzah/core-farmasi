@@ -447,6 +447,11 @@ class CoreImportExecutionService
         $lecturer = Lecturer::create([
             'user_id' => $userResult['user']?->id,
             'lecturer_number' => $identifier,
+            'national_id_number' => $data['identity_number'] ?? null,
+            'nip' => $data['nip'] ?? null,
+            'nidn' => $data['nidn'] ?? null,
+            'nidk' => $data['nidk'] ?? null,
+            'nuptk' => $data['nuptk'] ?? null,
             'name' => $this->required($data, 'name'),
             'email' => $email,
             'birth_date' => $this->dateValue($data['birth_date'] ?? null),
@@ -467,6 +472,11 @@ class CoreImportExecutionService
             'name' => $data['name'] ?? null,
             'email' => $data['email'] ?? null,
             'birth_date' => $this->dateValue($data['birth_date'] ?? null),
+            'national_id_number' => $data['identity_number'] ?? null,
+            'nip' => $data['nip'] ?? null,
+            'nidn' => $data['nidn'] ?? null,
+            'nidk' => $data['nidk'] ?? null,
+            'nuptk' => $data['nuptk'] ?? null,
             'phone' => $data['phone'] ?? null,
             'active' => array_key_exists('status', $data) ? $this->activeValue($data) : null,
         ]);
@@ -684,13 +694,13 @@ class CoreImportExecutionService
 
     protected function lecturerIdentifier(array $data): string
     {
-        return $this->requiredAny($data, ['nidn', 'nip', 'identity_number'], 'nidn/nip/identity_number wajib untuk membuat lecturer.');
+        return $this->requiredAny($data, ['nidn', 'nidk', 'nip', 'nuptk', 'identity_number'], 'nidn/nidk/nip/nuptk/identity_number wajib untuk membuat lecturer.');
     }
 
     protected function findLecturerForUpdate(array $data): Lecturer
     {
         $query = Lecturer::query();
-        $identifiers = array_values(array_filter([$data['nidn'] ?? null, $data['nip'] ?? null]));
+        $identifiers = array_values(array_filter([$data['nidn'] ?? null, $data['nidk'] ?? null, $data['nip'] ?? null, $data['nuptk'] ?? null]));
 
         if ($identifiers !== []) {
             $query->whereIn('lecturer_number', $identifiers);

@@ -46,12 +46,19 @@ class StudyProgramResource extends Resource
                             ->label('Nama')
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\Select::make('faculty_id')
+                            ->label('Fakultas')
+                            ->relationship('faculty', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->helperText('Program studi berada langsung di bawah fakultas.'),
                         Forms\Components\Select::make('department_id')
-                            ->label('Department')
+                            ->label('Departemen Pembina (opsional)')
                             ->relationship('department', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->helperText('Kosongkan bila program studi tidak ditempatkan di bawah departemen tertentu.'),
                         Forms\Components\Select::make('head_lecturer_id')
                             ->label('Kaprodi Referensi')
                             ->relationship('headLecturer', 'name')
@@ -77,15 +84,21 @@ class StudyProgramResource extends Resource
             ->columns([
                 TextColumn::make('code')->label('Kode')->sortable()->searchable()->badge()->color('info'),
                 TextColumn::make('name')->label('Nama')->sortable()->searchable(),
-                TextColumn::make('department.name')->label('Department'),
-                TextColumn::make('headLecturer.name')->label('Head Lecturer'),
+                TextColumn::make('faculty.name')->label('Fakultas'),
+                TextColumn::make('department.name')->label('Departemen Pembina'),
+                TextColumn::make('headLecturer.name')->label('Kaprodi Referensi'),
                 BooleanColumn::make('active')->label('Active'),
-                TextColumn::make('created_at')->dateTime('d MMM Y')->sortable(),
+                TextColumn::make('created_at')->dateTime('d M Y')->sortable(),
             ])
             ->filters([
                 SelectFilter::make('department_id')
-                    ->label('Department')
+                    ->label('Departemen Pembina')
                     ->relationship('department', 'name')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('faculty_id')
+                    ->label('Fakultas')
+                    ->relationship('faculty', 'name')
                     ->searchable()
                     ->preload(),
                 TernaryFilter::make('active')->label('Active'),
@@ -93,9 +106,7 @@ class StudyProgramResource extends Resource
             ->actions([
                 \Filament\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                \Filament\Actions\DeleteBulkAction::make(),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getPages(): array

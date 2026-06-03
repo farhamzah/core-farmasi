@@ -134,6 +134,203 @@ body {
     background: linear-gradient(135deg, #1d4ed8, #0369a1);
 }
 
+.fi-simple-layout {
+    min-height: 100svh;
+    height: 100svh;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 8%, rgba(14, 165, 233, 0.20), transparent 22rem),
+        radial-gradient(circle at 86% 12%, rgba(16, 185, 129, 0.12), transparent 20rem),
+        linear-gradient(135deg, #f8fbff 0%, #edf7ff 50%, #f8fffc 100%);
+}
+
+.fi-simple-main-ctn {
+    min-height: 100svh;
+    height: 100svh;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 1rem;
+}
+
+.fi-simple-main {
+    position: relative;
+    overflow: hidden;
+    width: min(100%, 29.5rem) !important;
+    max-height: calc(100svh - 2rem);
+    min-height: auto !important;
+    border: 1px solid rgba(186, 230, 253, 0.95);
+    border-radius: 1.25rem;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.95)),
+        linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(20, 184, 166, 0.06));
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+}
+
+.fi-simple-main::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 0.38rem;
+    background: linear-gradient(90deg, #2563eb, #0891b2, #10b981);
+}
+
+.fi-simple-main::after {
+    content: 'Password Core berlaku untuk aplikasi Farmasi yang sudah terhubung.';
+    display: block;
+    margin: 0.8rem 2rem 1.35rem;
+    border: 1px solid #dbeafe;
+    border-radius: 0.8rem;
+    background: #eff6ff;
+    padding: 0.62rem 0.85rem;
+    color: #334155;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.fi-simple-page {
+    padding: 1.35rem 2rem 0 !important;
+}
+
+.fi-simple-header {
+    gap: 0.35rem;
+    text-align: center;
+}
+
+.fi-simple-header .fi-logo {
+    width: 4.7rem;
+    height: 4.7rem !important;
+    margin-inline: auto;
+    border: 1px solid #e0f2fe;
+    border-radius: 1rem;
+    background: #ffffff;
+    object-fit: contain;
+    padding: 0.38rem;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.11);
+}
+
+.fi-simple-header-heading {
+    color: #020617;
+    font-size: 1.52rem;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: 0;
+}
+
+.fi-simple-header-subheading {
+    max-width: 23rem;
+    margin-inline: auto;
+    color: #475569;
+    font-size: 0.88rem;
+    line-height: 1.42;
+}
+
+.fi-simple-page-content {
+    margin-top: 1rem !important;
+}
+
+.fi-simple-main .fi-sc-form {
+    gap: 0.72rem;
+}
+
+.fi-simple-main .fi-fo-field-wrp-label span,
+.fi-simple-main .fi-checkbox-input + span {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.fi-simple-main .fi-input,
+.fi-simple-main .fi-input-wrp {
+    border-radius: 0.85rem;
+}
+
+.fi-simple-main .fi-input {
+    min-height: 2.7rem;
+    background: #ffffff;
+}
+
+.fi-simple-main .fi-input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.14);
+}
+
+.fi-simple-main .fi-btn-color-primary {
+    min-height: 2.65rem;
+    border-radius: 0.82rem;
+    font-weight: 900;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+}
+
+.fi-simple-main .fi-link {
+    color: #1d4ed8;
+}
+
+@media (max-width: 640px) {
+    .fi-simple-main-ctn {
+        padding: 0.75rem;
+    }
+
+    .fi-simple-main {
+        width: 100% !important;
+        border-radius: 1rem;
+    }
+
+    .fi-simple-page {
+        padding: 1.2rem 1.15rem 0 !important;
+    }
+
+    .fi-simple-main::after {
+        margin: 0.75rem 1.15rem 1rem;
+    }
+}
+
+@media (max-height: 760px) {
+    .fi-simple-main {
+        width: min(100%, 28rem) !important;
+    }
+
+    .fi-simple-page {
+        padding-top: 1.15rem !important;
+    }
+
+    .fi-simple-header .fi-logo {
+        width: 4rem;
+        height: 4rem !important;
+        padding: 0.32rem;
+    }
+
+    .fi-simple-header-heading {
+        font-size: 1.32rem;
+    }
+
+    .fi-simple-header-subheading {
+        font-size: 0.8rem;
+        line-height: 1.35;
+    }
+
+    .fi-simple-page-content {
+        margin-top: 0.7rem !important;
+    }
+
+    .fi-simple-main .fi-sc-form {
+        gap: 0.55rem;
+    }
+
+    .fi-simple-main .fi-input {
+        min-height: 2.45rem;
+    }
+
+    .fi-simple-main .fi-btn-color-primary {
+        min-height: 2.45rem;
+    }
+
+    .fi-simple-main::after {
+        margin-block: 0.55rem 0.9rem;
+        padding-block: 0.5rem;
+    }
+}
+
 .fi-badge {
     border-radius: 0.5rem;
     font-weight: 700;

@@ -148,7 +148,7 @@ class EmployeeResource extends Resource
                     ->label('Linked User')
                     ->searchable(),
                 TextColumn::make('created_at')
-                    ->dateTime('d MMM Y')
+                    ->dateTime('d M Y')
                     ->sortable(),
             ])
             ->filters([

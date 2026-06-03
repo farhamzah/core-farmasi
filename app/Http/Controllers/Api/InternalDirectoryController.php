@@ -72,7 +72,7 @@ class InternalDirectoryController extends Controller
         ]);
 
         $query = Student::query()
-            ->with(['user', 'studyProgram.department'])
+            ->with(['user', 'studyProgram.department', 'studyProgram.faculty'])
             ->when($filters['q'] ?? null, fn (Builder $query, string $q) => $query->where(function (Builder $query) use ($q): void {
                 $like = $this->like($q);
                 $query->where('name', 'like', $like)
@@ -90,7 +90,7 @@ class InternalDirectoryController extends Controller
 
     public function student(int $id)
     {
-        $student = Student::query()->with(['user', 'studyProgram.department'])->findOrFail($id);
+        $student = Student::query()->with(['user', 'studyProgram.department', 'studyProgram.faculty'])->findOrFail($id);
 
         return response()->json(['data' => $this->sanitizer->student($student)]);
     }
@@ -101,7 +101,10 @@ class InternalDirectoryController extends Controller
         $filters = $this->validateFilters($request, [
             'q' => ['nullable', 'string', 'max:100'],
             'nidn' => ['nullable', 'string', 'max:100'],
+            'nidk' => ['nullable', 'string', 'max:100'],
             'nip' => ['nullable', 'string', 'max:100'],
+            'nuptk' => ['nullable', 'string', 'max:100'],
+            'national_id_number' => ['nullable', 'string', 'max:100'],
             'lecturer_number' => ['nullable', 'string', 'max:100'],
             'department_id' => ['nullable', 'integer', 'min:1'],
             'study_program_id' => ['nullable', 'integer', 'min:1'],
@@ -116,9 +119,19 @@ class InternalDirectoryController extends Controller
                 $like = $this->like($q);
                 $query->where('name', 'like', $like)
                     ->orWhere('email', 'like', $like)
-                    ->orWhere('lecturer_number', 'like', $like);
+                    ->orWhere('lecturer_number', 'like', $like)
+                    ->orWhere('nidn', 'like', $like)
+                    ->orWhere('nidk', 'like', $like)
+                    ->orWhere('nip', 'like', $like)
+                    ->orWhere('nuptk', 'like', $like)
+                    ->orWhere('national_id_number', 'like', $like);
             }))
-            ->when($filters['nidn'] ?? $filters['nip'] ?? $filters['lecturer_number'] ?? null, fn (Builder $query, string $number) => $query->where('lecturer_number', $number))
+            ->when($filters['nidn'] ?? null, fn (Builder $query, string $number) => $query->where(fn (Builder $query) => $query->where('nidn', $number)->orWhere('lecturer_number', $number)))
+            ->when($filters['nidk'] ?? null, fn (Builder $query, string $number) => $query->where('nidk', $number))
+            ->when($filters['nip'] ?? null, fn (Builder $query, string $number) => $query->where(fn (Builder $query) => $query->where('nip', $number)->orWhere('lecturer_number', $number)))
+            ->when($filters['nuptk'] ?? null, fn (Builder $query, string $number) => $query->where('nuptk', $number))
+            ->when($filters['national_id_number'] ?? null, fn (Builder $query, string $number) => $query->where('national_id_number', $number))
+            ->when($filters['lecturer_number'] ?? null, fn (Builder $query, string $number) => $query->where('lecturer_number', $number))
             ->when($filters['department_id'] ?? null, fn (Builder $query, int $id) => $query->where('department_id', $id))
             ->when($filters['study_program_id'] ?? null, fn (Builder $query, int $id) => $query->where('study_program_id', $id))
             ->when(array_key_exists('active', $filters), fn (Builder $query) => $query->where('active', $this->booleanFilter($filters['active'])))
@@ -189,7 +202,7 @@ class InternalDirectoryController extends Controller
         ]);
 
         $query = StudyProgram::query()
-            ->with(['department', 'headLecturer'])
+            ->with(['faculty', 'department', 'headLecturer'])
             ->when($filters['q'] ?? null, fn (Builder $query, string $q) => $query->where(function (Builder $query) use ($q): void {
                 $like = $this->like($q);
                 $query->where('name', 'like', $like)->orWhere('code', 'like', $like);
@@ -204,7 +217,7 @@ class InternalDirectoryController extends Controller
 
     public function studyProgram(int $id)
     {
-        $studyProgram = StudyProgram::query()->with(['department', 'headLecturer'])->findOrFail($id);
+        $studyProgram = StudyProgram::query()->with(['faculty', 'department', 'headLecturer'])->findOrFail($id);
 
         return response()->json(['data' => $this->sanitizer->studyProgram($studyProgram)]);
     }
@@ -234,7 +247,7 @@ class InternalDirectoryController extends Controller
 
     public function department(int $id)
     {
-        $department = Department::query()->findOrFail($id);
+        $department = Department::query()->with('faculty')->findOrFail($id);
 
         return response()->json(['data' => $this->sanitizer->department($department)]);
     }

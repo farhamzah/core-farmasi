@@ -318,16 +318,18 @@ class CoreImportValidationService
 
         $data = $this->sanitizeProfileData($data, $warnings);
         $nidn = $this->value($data, 'nidn');
+        $nidk = $this->value($data, 'nidk');
         $nip = $this->value($data, 'nip');
-        $primary = $nidn ?: $nip ?: $this->value($data, 'identity_number');
+        $nuptk = $this->value($data, 'nuptk');
+        $primary = $nidn ?: $nidk ?: $nip ?: $nuptk ?: $this->value($data, 'identity_number');
 
         $this->require($data, 'name', $errors);
         $this->validateEmail($data, 'email', $errors);
         $this->validateDate($data, 'birth_date', $errors);
         $this->validateIn($data, 'status', self::STATUS_VALUES, $errors);
 
-        if (blank($nidn) && blank($nip) && blank($this->value($data, 'email')) && blank($this->value($data, 'identity_number'))) {
-            $warnings[] = 'Minimal salah satu dari nidn/nip/email/identity_number sebaiknya diisi.';
+        if (blank($nidn) && blank($nidk) && blank($nip) && blank($nuptk) && blank($this->value($data, 'email')) && blank($this->value($data, 'identity_number'))) {
+            $warnings[] = 'Minimal salah satu dari nidn/nidk/nip/nuptk/email/identity_number sebaiknya diisi.';
         }
 
         if (filled($this->value($data, 'department_code')) && ! Department::where('code', $this->value($data, 'department_code'))->exists()) {
@@ -338,7 +340,7 @@ class CoreImportValidationService
             $errors[] = 'study_program_code tidak ditemukan.';
         }
 
-        foreach (array_filter([$nidn, $nip]) as $identifier) {
+        foreach (array_filter([$nidn, $nidk, $nip, $nuptk]) as $identifier) {
             if (Lecturer::where('lecturer_number', $identifier)->exists()) {
                 $conflicts[] = 'NIDN/NIP sudah ada di lecturers.';
             }

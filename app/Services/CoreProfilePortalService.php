@@ -44,6 +44,7 @@ class CoreProfilePortalService
             'editable_fields' => $this->editableFieldsFor($user),
             'contact_values' => $this->contactValuesFor($user),
             'completion' => $this->completionFor($user, $profiles),
+            'profile_standards' => $this->profileStandards(),
         ];
     }
 
@@ -84,6 +85,25 @@ class CoreProfilePortalService
             }
         }
 
+        $userChanges = [];
+
+        foreach ($editableFields['user'] ?? [] as $field) {
+            if (! array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $userChanges[$field] = $data[$field];
+        }
+
+        if ($userChanges !== []) {
+            $user->fill($userChanges);
+
+            if ($user->isDirty()) {
+                $user->save();
+                $updated = array_values(array_unique([...$updated, ...array_keys($userChanges)]));
+            }
+        }
+
         if ($updated !== []) {
             UserActivityLog::create([
                 'user_id' => $user->id,
@@ -105,10 +125,18 @@ class CoreProfilePortalService
      */
     public function editableFieldsFor(User $user): array
     {
-        return [
+        $profileFields = [
             'student' => $this->existingColumns(Student::class, ['phone', 'address', 'alternate_email']),
             'lecturer' => $this->existingColumns(Lecturer::class, ['phone', 'address', 'alternate_email']),
             'employee' => $this->existingColumns(Employee::class, ['phone', 'address', 'alternate_email']),
+        ];
+
+        $hasEditableLinkedProfile = collect(['student', 'lecturer', 'employee'])
+            ->contains(fn (string $relation): bool => (bool) $user->{$relation} && ($profileFields[$relation] ?? []) !== []);
+
+        return [
+            ...$profileFields,
+            'user' => $hasEditableLinkedProfile ? [] : $this->existingColumns(User::class, ['phone', 'address', 'alternate_email']),
         ];
     }
 
@@ -125,9 +153,9 @@ class CoreProfilePortalService
     private function contactValuesFor(User $user): array
     {
         return [
-            'phone' => $user->student?->phone ?? $user->lecturer?->phone ?? $user->employee?->phone,
-            'address' => $user->student?->address ?? $user->lecturer?->address ?? $user->employee?->address,
-            'alternate_email' => $this->valueFromFirstAvailableColumn($user, 'alternate_email'),
+            'phone' => $user->student?->phone ?? $user->lecturer?->phone ?? $user->employee?->phone ?? $this->valueIfColumnExists($user, 'phone'),
+            'address' => $user->student?->address ?? $user->lecturer?->address ?? $user->employee?->address ?? $this->valueIfColumnExists($user, 'address'),
+            'alternate_email' => $this->valueFromFirstAvailableColumn($user, 'alternate_email') ?? $this->valueIfColumnExists($user, 'alternate_email'),
         ];
     }
 
@@ -155,7 +183,7 @@ class CoreProfilePortalService
             [
                 'key' => 'official_identifier',
                 'label' => 'Nomor identitas resmi tersedia',
-                'complete' => collect($profiles)->contains(fn (array $profile): bool => filled($profile['identifier'] ?? null)),
+                'complete' => filled($user->identity_number) || collect($profiles)->contains(fn (array $profile): bool => filled($profile['identifier'] ?? null)),
                 'sensitive' => false,
             ],
             [
@@ -206,6 +234,22 @@ class CoreProfilePortalService
             'phone' => $this->valueIfColumnExists($student, 'phone'),
             'address' => $this->valueIfColumnExists($student, 'address'),
             'birth_date_recorded' => filled($student->birth_date),
+            'official_identifiers' => [
+                ['label' => 'NIM', 'value' => $student->student_number, 'sensitive' => false],
+            ],
+            'profile_sections' => [
+                'Akademik' => [
+                    'Program Studi' => $student->studyProgram?->name,
+                    'Fakultas/Departemen' => $student->studyProgram?->department?->name,
+                    'Status Mahasiswa' => $student->status,
+                    'Tanggal Lahir' => filled($student->birth_date) ? 'Tercatat' : 'Belum tercatat',
+                ],
+                'Kontak' => [
+                    'Email Profil' => $student->email,
+                    'Telepon' => $this->valueIfColumnExists($student, 'phone'),
+                    'Alamat' => $this->valueIfColumnExists($student, 'address'),
+                ],
+            ],
         ];
     }
 
@@ -222,7 +266,7 @@ class CoreProfilePortalService
             'type' => 'lecturer',
             'label' => 'Dosen',
             'name' => $lecturer->name,
-            'identifier_label' => 'NIDN/NIP',
+            'identifier_label' => 'Nomor Utama Dosen',
             'identifier' => $lecturer->lecturer_number,
             'email' => $lecturer->email,
             'status' => $lecturer->active ? 'active' : 'inactive',
@@ -231,6 +275,35 @@ class CoreProfilePortalService
             'phone' => $lecturer->phone,
             'address' => $lecturer->address ?? null,
             'birth_date_recorded' => filled($lecturer->birth_date),
+            'official_identifiers' => [
+                ['label' => 'Nomor Utama', 'value' => $lecturer->lecturer_number, 'sensitive' => false],
+                ['label' => 'NIDN', 'value' => $this->valueIfColumnExists($lecturer, 'nidn'), 'sensitive' => false],
+                ['label' => 'NIDK', 'value' => $this->valueIfColumnExists($lecturer, 'nidk'), 'sensitive' => false],
+                ['label' => 'NIP', 'value' => $this->valueIfColumnExists($lecturer, 'nip'), 'sensitive' => false],
+                ['label' => 'NUPTK', 'value' => $this->valueIfColumnExists($lecturer, 'nuptk'), 'sensitive' => false],
+                ['label' => 'NIK / No. KTP', 'value' => $this->maskIdentifier($this->valueIfColumnExists($lecturer, 'national_id_number')), 'sensitive' => true],
+            ],
+            'profile_sections' => [
+                'Identitas Resmi' => [
+                    'Nomor Utama' => $lecturer->lecturer_number,
+                    'NIDN' => $this->valueIfColumnExists($lecturer, 'nidn'),
+                    'NIDK' => $this->valueIfColumnExists($lecturer, 'nidk'),
+                    'NIP' => $this->valueIfColumnExists($lecturer, 'nip'),
+                    'NUPTK' => $this->valueIfColumnExists($lecturer, 'nuptk'),
+                    'NIK / No. KTP' => $this->maskIdentifier($this->valueIfColumnExists($lecturer, 'national_id_number')),
+                ],
+                'Penempatan' => [
+                    'Program Studi' => $lecturer->studyProgram?->name,
+                    'Departemen' => $lecturer->department?->name,
+                    'Status Dosen' => $lecturer->active ? 'active' : 'inactive',
+                    'Tanggal Lahir' => filled($lecturer->birth_date) ? 'Tercatat' : 'Belum tercatat',
+                ],
+                'Kontak' => [
+                    'Email Profil' => $lecturer->email,
+                    'Telepon' => $lecturer->phone,
+                    'Alamat' => $lecturer->address ?? null,
+                ],
+            ],
         ];
     }
 
@@ -258,6 +331,40 @@ class CoreProfilePortalService
             'phone' => $employee->phone,
             'address' => $employee->address,
             'birth_date_recorded' => filled($employee->birth_date),
+            'official_identifiers' => [
+                ['label' => 'Nomor Pegawai', 'value' => $employee->employee_number, 'sensitive' => false],
+                ['label' => 'NIK / No. KTP', 'value' => $this->maskIdentifier($employee->national_id_number), 'sensitive' => true],
+            ],
+            'profile_sections' => [
+                'Kepegawaian' => [
+                    'Nomor Pegawai' => $employee->employee_number,
+                    'Jenis Staf' => $employee->staff_type,
+                    'Jabatan/Posisi' => $employee->position_title,
+                    'NIK / No. KTP' => $this->maskIdentifier($employee->national_id_number),
+                    'Status' => $employee->status,
+                ],
+                'Unit Kerja' => [
+                    'Program Studi' => $employee->studyProgram?->name,
+                    'Departemen' => $employee->department?->name,
+                ],
+                'Kontak' => [
+                    'Email Profil' => $employee->email,
+                    'Telepon' => $employee->phone,
+                    'Alamat' => $employee->address,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array<int, string>>
+     */
+    private function profileStandards(): array
+    {
+        return [
+            'Mahasiswa' => ['NIM', 'nama resmi', 'program studi', 'status akademik', 'kontak aktif', 'alamat'],
+            'Dosen' => ['NIK/KTP', 'NIDN/NIDK', 'NIP bila ASN', 'NUPTK', 'homebase/unit', 'jabatan/status', 'kontak aktif'],
+            'Tendik' => ['NIK/KTP', 'nomor pegawai', 'NUPTK bila ada', 'unit kerja', 'jabatan/posisi', 'kontak aktif'],
         ];
     }
 

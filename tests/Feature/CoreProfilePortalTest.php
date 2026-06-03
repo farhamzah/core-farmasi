@@ -293,6 +293,60 @@ class CoreProfilePortalTest extends TestCase
             ->assertDontSee($user->password);
     }
 
+    public function test_profile_edit_page_offers_navigation_and_password_change(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile/edit')
+            ->assertOk()
+            ->assertSee('Lihat Profil')
+            ->assertSee('Ganti Password')
+            ->assertSee('Simpan Kontak')
+            ->assertSee('Password dapat diganti kapan saja');
+    }
+
+    public function test_user_without_linked_profile_can_save_safe_contact_to_core_account(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => false,
+            'identity_type' => 'lecturer',
+            'identity_number' => 'LECT-001',
+            'phone' => null,
+            'address' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->put('/profile', [
+                'phone' => '081234500001',
+                'address' => 'Alamat akun Core',
+                'identity_number' => 'HACKED',
+                'active' => false,
+            ])
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('081234500001', $user->phone);
+        $this->assertSame('Alamat akun Core', $user->address);
+        $this->assertSame('LECT-001', $user->identity_number);
+        $this->assertTrue($user->active);
+        $this->assertDatabaseHas('user_activity_logs', [
+            'user_id' => $user->id,
+            'action' => 'profile.updated',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertSee('081234500001')
+            ->assertSee('Alamat akun Core');
+    }
+
     public function test_profile_page_shows_student_summary_with_safe_fields(): void
     {
         [$user, $department, $studyProgram] = $this->createAcademicUser();
@@ -330,6 +384,11 @@ class CoreProfilePortalTest extends TestCase
         Lecturer::create([
             'user_id' => $user->id,
             'lecturer_number' => 'DSN-001',
+            'national_id_number' => '3276010101010001',
+            'nip' => '198801012020121001',
+            'nidn' => '0011223344',
+            'nidk' => 'NIDK001122',
+            'nuptk' => '1234567890123456',
             'name' => 'Dosen Uji',
             'email' => 'lecturer@example.test',
             'department_id' => $department->id,
@@ -343,6 +402,11 @@ class CoreProfilePortalTest extends TestCase
             ->assertOk()
             ->assertSee('Dosen')
             ->assertSee('DSN-001')
+            ->assertSee('0011223344')
+            ->assertSee('198801012020121001')
+            ->assertSee('NIDK001122')
+            ->assertSee('1234567890123456')
+            ->assertSee('32************01')
             ->assertSee('0811111111')
             ->assertSee('Ruang Dosen');
     }
@@ -428,6 +492,14 @@ class CoreProfilePortalTest extends TestCase
         $this->assertTrue(Schema::hasColumn('students', 'phone'));
         $this->assertTrue(Schema::hasColumn('students', 'address'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'address'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'national_id_number'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'nip'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'nidn'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'nidk'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'nuptk'));
+        $this->assertTrue(Schema::hasColumn('users', 'phone'));
+        $this->assertTrue(Schema::hasColumn('users', 'address'));
+        $this->assertTrue(Schema::hasColumn('users', 'alternate_email'));
     }
 
     public function test_student_can_update_phone_and_address(): void

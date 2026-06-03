@@ -39,9 +39,24 @@ class LecturerResource extends Resource
                 Section::make('Identitas Dosen')
                     ->schema([
                         Forms\Components\TextInput::make('lecturer_number')
-                            ->label('NIDN / NIP')
+                            ->label('Nomor Utama Dosen')
                             ->required()
                             ->unique(ignoreRecord: true)
+                            ->maxLength(100),
+                        Forms\Components\TextInput::make('national_id_number')
+                            ->label('NIK / No. KTP')
+                            ->maxLength(100),
+                        Forms\Components\TextInput::make('nip')
+                            ->label('NIP')
+                            ->maxLength(100),
+                        Forms\Components\TextInput::make('nidn')
+                            ->label('NIDN')
+                            ->maxLength(100),
+                        Forms\Components\TextInput::make('nidk')
+                            ->label('NIDK')
+                            ->maxLength(100),
+                        Forms\Components\TextInput::make('nuptk')
+                            ->label('NUPTK')
                             ->maxLength(100),
                         Forms\Components\TextInput::make('name')
                             ->label('Nama')
@@ -55,7 +70,7 @@ class LecturerResource extends Resource
                             ->label('Tanggal Lahir')
                             ->helperText('Dipakai untuk reset password awal. Tidak ditampilkan default di tabel.'),
                     ])
-                    ->columns(2),
+                    ->columns(3),
                 Section::make('Penempatan')
                     ->schema([
                         Forms\Components\Select::make('department_id')
@@ -98,7 +113,11 @@ class LecturerResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('lecturer_number')->label('NIDN / NIP')->sortable()->searchable(),
+                TextColumn::make('lecturer_number')->label('Nomor Utama')->sortable()->searchable(),
+                TextColumn::make('nidn')->label('NIDN')->searchable()->toggleable(),
+                TextColumn::make('nip')->label('NIP')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('nuptk')->label('NUPTK')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('national_id_number')->label('NIK')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')->label('Nama')->sortable()->searchable(),
                 TextColumn::make('email')->sortable()->searchable(),
                 TextColumn::make('department.name')->label('Department')->sortable(),
@@ -106,11 +125,11 @@ class LecturerResource extends Resource
                 TextColumn::make('user.email')->label('Linked User')->searchable()->toggleable(),
                 TextColumn::make('birth_date')
                     ->label('Tanggal Lahir')
-                    ->date('d MMM Y')
+                    ->date('d M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 BooleanColumn::make('active')->label('Active'),
-                TextColumn::make('created_at')->dateTime('d MMM Y')->sortable(),
+                TextColumn::make('created_at')->dateTime('d M Y')->sortable(),
             ])
             ->filters([
                 SelectFilter::make('department_id')

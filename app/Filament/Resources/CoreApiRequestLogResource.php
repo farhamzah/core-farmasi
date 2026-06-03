@@ -40,7 +40,7 @@ class CoreApiRequestLogResource extends Resource
             ->columns([
                 TextColumn::make('created_at')
                     ->label('Waktu')
-                    ->dateTime('d MMM Y H:i:s')
+                    ->dateTime('d M Y H:i:s')
                     ->sortable(),
                 TextColumn::make('app_code')
                     ->label('App')

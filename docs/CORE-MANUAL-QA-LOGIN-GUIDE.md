@@ -55,6 +55,33 @@ Credential QA hanya dicetak oleh command untuk kebutuhan manual test lokal. Cred
 8. Pastikan `Must Change Password` aktif untuk akun baru.
 9. Simpan.
 
+## Auto User From Master Data
+
+Jika Admin Core membuat master data mahasiswa/dosen/tendik tanpa memilih `user_id`, Core otomatis mencoba membuat atau menautkan user.
+
+Aturan:
+
+- Mahasiswa: username = NIM.
+- Dosen: username = NIDN/NIP/lecturer number.
+- Tendik/staf/laboran: username = employee number.
+- Password awal = `NamaDepan + 4 karakter akhir identifier + !`.
+- User baru selalu `must_change_password=true`.
+- Role admin dan app access tidak diberikan otomatis.
+
+Contoh:
+
+- Nama: `Andi nurjanah`.
+- NIM: `221011402637`.
+- Username: `221011402637`.
+- Password awal: `Andi2637!`.
+
+Untuk backfill data lama yang sudah telanjur tidak punya user:
+
+```bash
+php artisan core:provision-master-users --only=students --identifier=221011402637 --show-passwords
+php artisan core:provision-master-users --apply --only=students --identifier=221011402637
+```
+
 ## Admin Assigns Global Role
 
 1. Login sebagai Admin Core.

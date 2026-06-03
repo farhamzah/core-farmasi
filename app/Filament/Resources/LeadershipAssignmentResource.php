@@ -141,17 +141,17 @@ class LeadershipAssignmentResource extends Resource
                     ->searchable(),
                 TextColumn::make('start_date')
                     ->label('Mulai')
-                    ->date('d MMM Y')
+                    ->date('d M Y')
                     ->sortable(),
                 TextColumn::make('end_date')
                     ->label('Selesai')
-                    ->date('d MMM Y')
+                    ->date('d M Y')
                     ->sortable(),
                 BooleanColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean(),
                 TextColumn::make('created_at')
-                    ->dateTime('d MMM Y')
+                    ->dateTime('d M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

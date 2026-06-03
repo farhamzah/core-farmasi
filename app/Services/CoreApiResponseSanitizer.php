@@ -72,8 +72,11 @@ class CoreApiResponseSanitizer
         return [
             'id' => $lecturer->id,
             'user_id' => $lecturer->user_id,
-            'nidn' => $lecturer->lecturer_number,
-            'nip' => $lecturer->lecturer_number,
+            'nidn' => $lecturer->nidn ?: $lecturer->lecturer_number,
+            'nidk' => $lecturer->nidk,
+            'nip' => $lecturer->nip,
+            'nuptk' => $lecturer->nuptk,
+            'national_id_number' => $lecturer->national_id_number,
             'lecturer_number' => $lecturer->lecturer_number,
             'name' => $lecturer->name,
             'email' => $lecturer->email,
@@ -135,6 +138,8 @@ class CoreApiResponseSanitizer
             'code' => $studyProgram->code,
             'name' => $studyProgram->name,
             'description' => $studyProgram->description,
+            'faculty_id' => $studyProgram->faculty_id,
+            'faculty_name' => $studyProgram->faculty?->name,
             'department_id' => $studyProgram->department_id,
             'department_name' => $studyProgram->department?->name,
             'active' => $studyProgram->active,
@@ -156,6 +161,8 @@ class CoreApiResponseSanitizer
             'code' => $department->code,
             'name' => $department->name,
             'description' => $department->description,
+            'faculty_id' => $department->faculty_id,
+            'faculty_name' => $department->faculty?->name,
             'active' => $department->active,
         ];
     }

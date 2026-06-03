@@ -1055,13 +1055,18 @@ class CoreImportCenterTest extends TestCase
 
         Livewire::test(CoreImportCenter::class)
             ->set('importType', 'lecturers')
-            ->set('importFile', $this->csv('lecturers.csv', "name,nidn,email,department_code,birth_date,username\nExecute Lecturer,99887766,execute-lecturer@example.test,{$department->code},09/10/1988,99887766\n"))
+            ->set('importFile', $this->csv('lecturers.csv', "name,nidn,nidk,nip,nuptk,identity_number,email,department_code,birth_date,username\nExecute Lecturer,99887766,NIDK9988,198801012020121001,1234567890123456,3276010101010001,execute-lecturer@example.test,{$department->code},09/10/1988,99887766\n"))
             ->call('uploadAndPreview')
             ->call('executeImport')
             ->assertSet('executionSummary.created_count', 1);
 
         $lecturer = Lecturer::where('lecturer_number', '99887766')->firstOrFail();
         $this->assertSame('Execute Lecturer', $lecturer->name);
+        $this->assertSame('99887766', $lecturer->nidn);
+        $this->assertSame('NIDK9988', $lecturer->nidk);
+        $this->assertSame('198801012020121001', $lecturer->nip);
+        $this->assertSame('1234567890123456', $lecturer->nuptk);
+        $this->assertSame('3276010101010001', $lecturer->national_id_number);
         $this->assertTrue($lecturer->user->must_change_password);
         $this->assertTrue(Hash::check('Execute Lecturer', $lecturer->user->password));
 
@@ -1086,7 +1091,7 @@ class CoreImportCenterTest extends TestCase
             'employee_number' => 'EMP-UPD-001',
             'name' => 'Old Employee',
             'staff_type' => 'tendik',
-            'email' => 'old-employee@example.test',
+            'email' => null,
             'status' => 'active',
         ]);
 

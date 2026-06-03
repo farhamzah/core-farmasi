@@ -31,6 +31,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login(CoreLogin::class)
             ->brandName('Core Farmasi UBP')
+            ->brandLogo(asset('images/logo-fakultas-farmasi-ubp.png'))
+            ->brandLogoHeight('4rem')
             ->darkMode(false)
             ->viteTheme('resources/css/app.css')
             ->colors([

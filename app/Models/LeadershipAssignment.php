@@ -76,7 +76,12 @@ class LeadershipAssignment extends Model
                     ?? "Program Studi #{$this->unit_id}";
             }
 
-            if (in_array($this->unit_type, ['faculty', 'department'], true) && filled($this->unit_id)) {
+            if ($this->unit_type === 'faculty' && filled($this->unit_id)) {
+                return Faculty::query()->find($this->unit_id)?->name
+                    ?? "Fakultas #{$this->unit_id}";
+            }
+
+            if ($this->unit_type === 'department' && filled($this->unit_id)) {
                 return Department::query()->find($this->unit_id)?->name
                     ?? "{$this->unitTypeLabel()} #{$this->unit_id}";
             }

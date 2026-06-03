@@ -190,7 +190,7 @@ class AccountRequestResource extends Resource
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Diajukan')
-                    ->dateTime('d MMM Y H:i')
+                    ->dateTime('d M Y H:i')
                     ->sortable(),
             ])
             ->filters([

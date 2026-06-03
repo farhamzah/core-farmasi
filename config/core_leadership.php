@@ -6,6 +6,7 @@ return [
         'wakil_dekan' => 'Wakil Dekan',
         'kaprodi' => 'Kaprodi',
         'sekretaris_prodi' => 'Sekretaris Prodi',
+        'kepala_departemen' => 'Kepala Departemen',
         'kepala_lab' => 'Kepala Laboratorium',
         'koordinator_kp' => 'Koordinator KP',
         'other' => 'Lainnya',

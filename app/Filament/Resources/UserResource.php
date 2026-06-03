@@ -133,10 +133,10 @@ class UserResource extends Resource
                     ->color('info'),
                 TextColumn::make('password_changed_at')
                     ->label('Password Changed')
-                    ->dateTime('d MMM Y H:i')
+                    ->dateTime('d M Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('created_at')->dateTime('d MMM Y')->sortable(),
+                TextColumn::make('created_at')->dateTime('d M Y')->sortable(),
             ])
             ->filters([
                 SelectFilter::make('identity_type')

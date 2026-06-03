@@ -8,7 +8,9 @@ use App\Console\Commands\ImportKpMasterDataCommand;
 use App\Console\Commands\IssueTuApiClientCommand;
 use App\Console\Commands\LabAccessDryRunCommand;
 use App\Console\Commands\LabAppReadinessCommand;
+use App\Console\Commands\ProvisionMasterProfileUsersCommand;
 use App\Console\Commands\PruneCoreApiRequestLogsCommand;
+use App\Console\Commands\ReconcileProfileUserLinksCommand;
 use App\Console\Commands\RollbackKpImportCommand;
 use App\Console\Commands\SetupTuAppAccessCommand;
 use App\Console\Commands\TuConnectionReadinessCommand;
@@ -32,7 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
         IssueTuApiClientCommand::class,
         LabAccessDryRunCommand::class,
         LabAppReadinessCommand::class,
+        ProvisionMasterProfileUsersCommand::class,
         PruneCoreApiRequestLogsCommand::class,
+        ReconcileProfileUserLinksCommand::class,
         RollbackKpImportCommand::class,
         SetupTuAppAccessCommand::class,
         TuConnectionReadinessCommand::class,

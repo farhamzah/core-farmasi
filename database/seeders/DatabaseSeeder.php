@@ -3,12 +3,14 @@
 namespace Database\Seeders;
 
 use App\Models\Department;
+use App\Models\Faculty;
 use App\Models\Role;
 use App\Models\StudyProgram;
 use App\Models\User;
 use App\Models\UserAppAccess;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -47,29 +49,43 @@ class DatabaseSeeder extends Seeder
 
         $superAdmin->roles()->sync([$roles->firstWhere('name', 'super-admin')->id]);
 
-        $department = Department::firstOrCreate([
+        $faculty = Faculty::updateOrCreate([
             'code' => 'FF',
         ], [
-            'name' => 'Fakultas Farmasi',
+            'name' => 'Farmasi',
             'description' => 'Fakultas Farmasi',
+            'active' => true,
         ]);
 
-        Department::firstOrCreate([
-            'code' => 'FARKLIN',
+        $departments = collect([
+            ['code' => 'FFK', 'name' => 'Farmakologi dan Farmasi Klinik'],
+            ['code' => 'FK', 'name' => 'Farmakokimia'],
+            ['code' => 'TSF', 'name' => 'Teknologi Sediaan Farmasi'],
+            ['code' => 'BF', 'name' => 'Biologi Farmasi'],
+        ])->map(fn (array $department): Department => Department::updateOrCreate([
+            'code' => $department['code'],
         ], [
-            'name' => 'Farmasi Klinis',
-            'description' => 'Farmasi Klinis',
-        ]);
+            'faculty_id' => $faculty->id,
+            'name' => $department['name'],
+            'description' => $department['name'],
+            'active' => true,
+        ]));
+
+        $fallbackDepartmentId = DB::connection()->getDriverName() === 'mysql'
+            ? null
+            : $departments->first()?->id;
 
         collect([
-            ['code' => 'S1-FARMASI', 'name' => 'S1 Farmasi'],
+            ['code' => 'S1-FARMASI', 'name' => 'Farmasi S1'],
             ['code' => 'PROFESI-APOTEKER', 'name' => 'Profesi Apoteker'],
-        ])->each(fn (array $program) => StudyProgram::firstOrCreate([
+        ])->each(fn (array $program) => StudyProgram::updateOrCreate([
             'code' => $program['code'],
         ], [
+            'faculty_id' => $faculty->id,
             'name' => $program['name'],
-            'department_id' => $department->id,
+            'department_id' => $fallbackDepartmentId,
             'description' => $program['name'],
+            'active' => true,
         ]));
 
         collect(['core-farmasi', 'safa-ubp', 'kp-farmasi', 'ta-farmasi'])

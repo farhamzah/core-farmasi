@@ -16,11 +16,11 @@ class AppConnectionReadinessTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_future_consumer_applications_are_seeded_as_private_active_apps(): void
+    public function test_workspace_consumer_applications_are_seeded_as_private_active_apps(): void
     {
         $this->seed(CoreApplicationSeeder::class);
 
-        foreach (['ta-farmasi' => 'TA Farmasi UBP', 'lab-farmasi' => 'Lab Farmasi', 'helpdesk-farmasi' => 'Helpdesk Farmasi'] as $appCode => $name) {
+        foreach ($this->workspaceConsumerNames() as $appCode => $name) {
             $application = CoreApplication::where('app_code', $appCode)->firstOrFail();
 
             $this->assertSame($name, $application->name);
@@ -31,12 +31,12 @@ class AppConnectionReadinessTest extends TestCase
         }
     }
 
-    public function test_future_consumer_required_roles_are_seeded(): void
+    public function test_workspace_consumer_required_roles_are_seeded(): void
     {
         $this->seed(CoreApplicationSeeder::class);
         $readiness = app(AppConnectionReadinessService::class);
 
-        foreach (['ta-farmasi', 'lab-farmasi', 'helpdesk-farmasi'] as $appCode) {
+        foreach ($this->workspaceConsumerCodes() as $appCode) {
             $roles = $readiness->checkApplicationRoles($appCode);
 
             $this->assertTrue($roles['complete']);
@@ -48,7 +48,7 @@ class AppConnectionReadinessTest extends TestCase
     {
         $this->seed(CoreApplicationSeeder::class);
 
-        foreach (['ta-farmasi', 'lab-farmasi', 'helpdesk-farmasi'] as $appCode) {
+        foreach ($this->workspaceConsumerCodes() as $appCode) {
             $exitCode = Artisan::call('core:app-connection-readiness', ['app_code' => $appCode]);
             $output = Artisan::output();
 
@@ -67,7 +67,7 @@ class AppConnectionReadinessTest extends TestCase
         $this->seed(CoreApplicationSeeder::class);
         $readiness = app(AppConnectionReadinessService::class);
 
-        foreach (['ta-farmasi', 'lab-farmasi', 'helpdesk-farmasi'] as $appCode) {
+        foreach ($this->workspaceConsumerCodes() as $appCode) {
             $this->makeClient($appCode, $readiness->requiredAbilities($appCode));
 
             $summary = $readiness->readinessSummary($appCode);
@@ -79,7 +79,7 @@ class AppConnectionReadinessTest extends TestCase
         }
     }
 
-    public function test_seeder_is_idempotent_for_future_consumer_registry(): void
+    public function test_seeder_is_idempotent_for_workspace_consumer_registry(): void
     {
         $this->seed(CoreApplicationSeeder::class);
         $firstCounts = $this->counts();
@@ -121,15 +121,39 @@ class AppConnectionReadinessTest extends TestCase
     {
         return [
             'ta_applications' => CoreApplication::where('app_code', 'ta-farmasi')->count(),
+            'tu_applications' => CoreApplication::where('app_code', 'tu-farmasi')->count(),
+            'kp_applications' => CoreApplication::where('app_code', 'kp-farmasi')->count(),
             'lab_applications' => CoreApplication::where('app_code', 'lab-farmasi')->count(),
             'helpdesk_applications' => CoreApplication::where('app_code', 'helpdesk-farmasi')->count(),
             'ta_roles' => CoreApplicationRole::where('app_code', 'ta-farmasi')->count(),
+            'tu_required_roles' => CoreApplicationRole::where('app_code', 'tu-farmasi')
+                ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('tu-farmasi'))
+                ->count(),
+            'kp_required_roles' => CoreApplicationRole::where('app_code', 'kp-farmasi')
+                ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('kp-farmasi'))
+                ->count(),
             'lab_required_roles' => CoreApplicationRole::where('app_code', 'lab-farmasi')
                 ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('lab-farmasi'))
                 ->count(),
             'helpdesk_required_roles' => CoreApplicationRole::where('app_code', 'helpdesk-farmasi')
                 ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('helpdesk-farmasi'))
                 ->count(),
+        ];
+    }
+
+    private function workspaceConsumerCodes(): array
+    {
+        return array_keys($this->workspaceConsumerNames());
+    }
+
+    private function workspaceConsumerNames(): array
+    {
+        return [
+            'ta-farmasi' => 'TA Farmasi UBP',
+            'tu-farmasi' => 'TU Farmasi',
+            'lab-farmasi' => 'Lab Farmasi',
+            'kp-farmasi' => 'KP Farmasi',
+            'helpdesk-farmasi' => 'Helpdesk Farmasi',
         ];
     }
 }

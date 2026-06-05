@@ -5,6 +5,7 @@ use App\Console\Commands\AppConnectionReadinessCommand;
 use App\Console\Commands\CoreManualQaAccountsCommand;
 use App\Console\Commands\GrantTuApiClientAbilityCommand;
 use App\Console\Commands\ImportKpMasterDataCommand;
+use App\Console\Commands\IssueLabApiClientCommand;
 use App\Console\Commands\IssueTuApiClientCommand;
 use App\Console\Commands\LabAccessDryRunCommand;
 use App\Console\Commands\LabAppReadinessCommand;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         CoreManualQaAccountsCommand::class,
         GrantTuApiClientAbilityCommand::class,
         ImportKpMasterDataCommand::class,
+        IssueLabApiClientCommand::class,
         IssueTuApiClientCommand::class,
         LabAccessDryRunCommand::class,
         LabAppReadinessCommand::class,

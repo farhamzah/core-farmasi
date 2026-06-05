@@ -249,28 +249,41 @@ TU staging smoke checklist sudah disiapkan di `apps/tu-farmasi/docs/CORE-HTTP-AD
 
 Paket readiness koneksi TU dari sisi Core tersedia di `docs/CORE-TU-CONNECTION-PACKAGE.md`. Paket ini merangkum app code `tu-farmasi`, required abilities, required app roles, endpoint, env TU, credential handling, dan command `php artisan core:tu-connection-readiness`.
 
-## Future Consumer Readiness: TA, Lab, and Helpdesk
-Core sudah menyiapkan package koneksi future consumer untuk:
+## Consumer App Readiness Matrix
+Core menyediakan readiness check non-destruktif untuk consumer aktual workspace dan future consumer:
+- KP Farmasi: app code `kp-farmasi`
+- TU Farmasi: app code `tu-farmasi`
+- TA Farmasi: app code `ta-farmasi`
+- Lab Farmasi: app code `lab-farmasi`
+- Helpdesk Farmasi: app code `helpdesk-farmasi`
+
+Package koneksi tersedia untuk:
 - TA Farmasi: `docs/CORE-TA-CONNECTION-PACKAGE.md`
 - Lab Farmasi: `docs/CORE-LAB-CONNECTION-PACKAGE.md`
 - Helpdesk Farmasi: `docs/CORE-HELPDESK-CONNECTION-PACKAGE.md`
 
 Status:
-- app registry `ta-farmasi`, `lab-farmasi`, dan `helpdesk-farmasi` disiapkan active, non-public, dan requires login.
-- app role catalog TA/Lab/Helpdesk disiapkan sebagai dynamic app roles.
-- required abilities TA/Lab/Helpdesk masih read-only: users, students, lecturers, employees, study programs, departments, app access, leadership.
+- app registry `kp-farmasi`, `tu-farmasi`, `ta-farmasi`, `lab-farmasi`, dan `helpdesk-farmasi` disiapkan active, non-public, dan requires login.
+- app role catalog KP/TU/TA/Lab/Helpdesk disiapkan sebagai dynamic app roles.
+- required abilities generic readiness masih read-only: users, students, lecturers, employees, study programs, departments, app access, leadership.
 - readiness command generik tersedia:
+  - `php artisan core:app-connection-readiness kp-farmasi`
+  - `php artisan core:app-connection-readiness tu-farmasi`
   - `php artisan core:app-connection-readiness ta-farmasi`
   - `php artisan core:app-connection-readiness lab-farmasi`
   - `php artisan core:app-connection-readiness helpdesk-farmasi`
+- TU juga punya readiness khusus: `php artisan core:tu-connection-readiness`.
+- TA juga punya readiness khusus: `php artisan core:ta-app-readiness`.
+- Lab juga punya readiness khusus: `php artisan core:lab-app-readiness`.
 - TA HTTP read-only adapter skeleton sudah tersedia di `apps/ta-farmasi` dengan default disabled, no SSO, no write-back, dan smoke command `php artisan ta:core-smoke-test`.
-- belum ada real API client secret untuk TA/Lab/Helpdesk.
 - Lab HTTP read-only adapter skeleton sudah tersedia di `apps/lab-farmasi` dengan default disabled, no SSO, no write-back, dan smoke command `php artisan lab:core-smoke-test`.
+- KP, TU, TA, dan Lab sudah memiliki active API client untuk staging/readiness lokal. Secret tidak ditulis di dokumen.
+- KP generic readiness sudah didukung dan sudah dapat memberi verdict staging. KP legacy/Core bridge yang sudah berjalan tetap terpisah dari API client generic.
 - belum ada app Helpdesk skeleton atau adapter implementation di app Helpdesk.
-- belum ada real smoke test TA/Lab/Helpdesk.
+- Helpdesk belum punya real API client sampai app/adapter dibuat.
 - tidak ada SSO, auto-login, token URL, atau write-back.
 
-Next step untuk TA/Lab adalah issue staging client hanya saat environment siap, lalu staging smoke test. Next step untuk Helpdesk adalah application planning/skeleton dan read-only adapter saat app consumer sudah ada.
+Next step untuk Lab adalah memasang credential staging ke environment Lab yang aman dan menjalankan `php artisan lab:core-smoke-test`. Next step untuk KP adalah menjalankan HTTP smoke generic hanya jika jalur adapter HTTP KP akan dipakai; jangan mengubah bridge/login yang sudah ada tanpa tahap cutover terpisah. Next step untuk Helpdesk adalah application planning/skeleton dan read-only adapter saat app consumer sudah ada.
 
 ## Profile Cutover Notes
 Catatan cutover profil tersedia di:

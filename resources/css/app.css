@@ -24,6 +24,12 @@ html,
 body {
     background: #f8fbff;
     color: var(--core-text);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    overflow-x: hidden;
 }
 
 .fi-body {
@@ -144,6 +150,11 @@ body {
         linear-gradient(135deg, #f8fbff 0%, #edf7ff 50%, #f8fffc 100%);
 }
 
+body:has(.fi-simple-layout) {
+    height: 100svh;
+    overflow: hidden;
+}
+
 .fi-simple-main-ctn {
     min-height: 100svh;
     height: 100svh;
@@ -156,7 +167,7 @@ body {
 .fi-simple-main {
     position: relative;
     overflow: hidden;
-    width: min(100%, 29.5rem) !important;
+    width: min(100%, 28.5rem) !important;
     max-height: calc(100svh - 2rem);
     min-height: auto !important;
     border: 1px solid rgba(186, 230, 253, 0.95);
@@ -190,7 +201,7 @@ body {
 }
 
 .fi-simple-page {
-    padding: 1.35rem 2rem 0 !important;
+    padding: 1.25rem 1.9rem 0 !important;
 }
 
 .fi-simple-header {
@@ -199,8 +210,8 @@ body {
 }
 
 .fi-simple-header .fi-logo {
-    width: 4.7rem;
-    height: 4.7rem !important;
+    width: 5rem;
+    height: 5rem !important;
     margin-inline: auto;
     border: 1px solid #e0f2fe;
     border-radius: 1rem;
@@ -212,7 +223,7 @@ body {
 
 .fi-simple-header-heading {
     color: #020617;
-    font-size: 1.52rem;
+    font-size: 1.48rem;
     font-weight: 900;
     line-height: 1.15;
     letter-spacing: 0;
@@ -222,12 +233,12 @@ body {
     max-width: 23rem;
     margin-inline: auto;
     color: #475569;
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     line-height: 1.42;
 }
 
 .fi-simple-page-content {
-    margin-top: 1rem !important;
+    margin-top: 0.85rem !important;
 }
 
 .fi-simple-main .fi-sc-form {
@@ -246,7 +257,7 @@ body {
 }
 
 .fi-simple-main .fi-input {
-    min-height: 2.7rem;
+    min-height: 2.6rem;
     background: #ffffff;
 }
 
@@ -256,10 +267,21 @@ body {
 }
 
 .fi-simple-main .fi-btn-color-primary {
-    min-height: 2.65rem;
+    min-height: 2.55rem;
     border-radius: 0.82rem;
     font-weight: 900;
     box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+}
+
+.fi-simple-main .fi-checkbox-input {
+    border-color: #cbd5e1;
+}
+
+.fi-simple-main .fi-checkbox-input:focus-visible,
+.fi-simple-main .fi-btn:focus-visible,
+.fi-simple-main .fi-input:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.18);
+    outline-offset: 2px;
 }
 
 .fi-simple-main .fi-link {
@@ -295,8 +317,8 @@ body {
     }
 
     .fi-simple-header .fi-logo {
-        width: 4rem;
-        height: 4rem !important;
+        width: 3.75rem;
+        height: 3.75rem !important;
         padding: 0.32rem;
     }
 
@@ -328,6 +350,27 @@ body {
     .fi-simple-main::after {
         margin-block: 0.55rem 0.9rem;
         padding-block: 0.5rem;
+    }
+}
+
+@media (max-height: 700px) {
+    .fi-simple-main::after {
+        display: none;
+    }
+
+    .fi-simple-page {
+        padding-bottom: 1rem !important;
+    }
+}
+
+@media (max-height: 620px) {
+    .fi-simple-header-subheading {
+        display: none;
+    }
+
+    .fi-simple-header .fi-logo {
+        width: 3.25rem;
+        height: 3.25rem !important;
     }
 }
 

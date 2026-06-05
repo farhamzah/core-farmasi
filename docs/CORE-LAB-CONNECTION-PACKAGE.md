@@ -22,15 +22,20 @@ Role aplikasi Lab yang perlu tersedia di Core app role catalog:
 - `mahasiswa`
 - `dosen`
 - `laboran`
+- `admin_lab`
+- `koordinator_lab`
+- `teknisi`
+- `viewer`
+
+Legacy/alias role yang masih dapat dipetakan oleh Lab:
 - `kepala-lab`
 - `admin-lab`
 - `pengguna-lab`
 - `peminjam-alat`
-- `teknisi`
-- `viewer`
 
 Catatan:
-- `kepala-lab`, `pengguna-lab`, `peminjam-alat`, dan `teknisi` adalah app-specific roles.
+- `admin_lab`, `koordinator_lab`, `laboran`, `teknisi`, `dosen`, `mahasiswa`, dan `viewer` adalah role canonical Lab saat ini.
+- `kepala-lab`, `admin-lab`, `pengguna-lab`, dan `peminjam-alat` adalah legacy/alias app-specific roles.
 - Kepala Lab sebagai jabatan resmi sebaiknya diambil dari Core leadership assignments jika dipakai untuk dokumen resmi.
 
 ## Required Abilities
@@ -115,19 +120,30 @@ Command tidak menampilkan secret, secret hash, password, atau token.
 
 ## Creating API Client Later
 Credential Lab belum dibuat pada tahap ini. Saat staging sudah siap:
-1. Buat app client `lab-farmasi` dari Core Admin > API Clients.
-2. Pilih hanya required abilities.
-3. Salin one-time secret langsung ke secret manager/staging env.
-4. Jangan tulis secret di docs, report, chat, screenshot, log, atau URL.
-5. Jalankan readiness command kembali.
-6. Jalankan smoke test Lab setelah adapter Lab dibuat.
+1. Jalankan dry-run:
+   ```bash
+   php artisan core:issue-lab-api-client
+   ```
+2. Tampilkan template env tanpa secret:
+   ```bash
+   php artisan core:issue-lab-api-client --show-env-template
+   ```
+3. Jika sudah di environment Core staging yang benar, buat app client:
+   ```bash
+   php artisan core:issue-lab-api-client --apply
+   ```
+4. Alternatif manual: buat app client `lab-farmasi` dari Core Admin > API Clients.
+5. Pilih hanya required abilities.
+6. Salin one-time secret langsung ke secret manager/staging env.
+7. Jangan tulis secret di docs, report, chat, screenshot, log, atau URL.
+8. Jalankan readiness command kembali.
+9. Jalankan smoke test Lab setelah adapter Lab dibuat.
 
 ## Not Done
-- Tidak membuat real API client secret.
-- Tidak membuat Lab adapter.
+- Dokumen ini tidak menyimpan real API client secret.
+- API client hanya dibuat jika operator menjalankan `php artisan core:issue-lab-api-client --apply` di environment yang disetujui.
 - Tidak mengubah app Lab.
-- Tidak menjalankan Lab command.
-- Tidak menjalankan smoke test.
+- Tidak menjalankan Lab HTTP smoke test dari dokumen ini.
 - Tidak membuat SSO.
 - Tidak membuat auto-login.
 - Tidak membuat token URL.

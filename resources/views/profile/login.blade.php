@@ -7,10 +7,16 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-[#f4f8ff] text-slate-950">
-    <main class="mx-auto grid min-h-screen w-full max-w-6xl items-center gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_460px] lg:px-8">
+    <main class="mx-auto grid min-h-screen w-full max-w-6xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_460px] lg:px-8">
         <section class="hidden lg:block">
-            <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Core Farmasi UBP</p>
-            <h1 class="mt-4 max-w-3xl text-5xl font-black leading-tight tracking-normal text-slate-950">Portal Profil Core Farmasi</h1>
+            <div class="inline-flex items-center gap-3 rounded-2xl border border-blue-100 bg-white/90 px-4 py-3 shadow-sm">
+                <img src="{{ asset('images/logo-fakultas-farmasi-ubp.png') }}" alt="Logo Fakultas Farmasi UBP" class="h-12 w-12 rounded-xl object-contain">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Core Farmasi UBP</p>
+                    <p class="text-sm font-bold text-slate-700">Identity & master data center</p>
+                </div>
+            </div>
+            <h1 class="mt-6 max-w-3xl text-5xl font-black leading-tight tracking-normal text-slate-950">Portal Profil Core Farmasi</h1>
             <p class="mt-5 max-w-2xl text-base leading-8 text-slate-600">
                 Satu akun pusat untuk identitas resmi, kontak aman, dan password layanan Farmasi yang terhubung ke Core.
             </p>
@@ -34,8 +40,13 @@
         <section class="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-[0_24px_70px_rgba(30,64,175,0.16)]">
             <div class="h-1 bg-gradient-to-r from-blue-700 via-cyan-500 to-emerald-400"></div>
             <div class="p-6 sm:p-8">
-                <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Core Farmasi UBP</p>
-                <h2 class="mt-3 text-3xl font-black tracking-normal text-slate-950">Masuk Profil</h2>
+                <div class="flex items-center gap-3">
+                    <img src="{{ asset('images/logo-fakultas-farmasi-ubp.png') }}" alt="Logo Fakultas Farmasi UBP" class="h-14 w-14 rounded-2xl border border-blue-100 bg-white object-contain p-1 shadow-sm">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Core Farmasi UBP</p>
+                        <h2 class="mt-1 text-3xl font-black tracking-normal text-slate-950">Masuk Profil</h2>
+                    </div>
+                </div>
                 <p class="mt-3 text-sm leading-7 text-slate-600">
                     Gunakan username dari NIM, NIDN/NIP, NUPTK, nomor kepegawaian, email, atau username yang diberikan Admin Core.
                 </p>
@@ -86,8 +97,8 @@
                         >
                     </div>
 
-                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
-                        Masuk Profile Portal
+                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                        Masuk Portal Profil
                     </button>
                 </form>
 

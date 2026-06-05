@@ -28,7 +28,7 @@
                             <div class="mt-4 flex flex-wrap items-center gap-2">
                                 <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{{ $roleLabel }}</span>
                                 <span class="rounded-full {{ ($profile['user']['active'] ?? false) ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }} px-3 py-1 text-xs font-bold">
-                                    {{ ($profile['user']['active'] ?? false) ? 'Akun aktif' : 'Akun inactive' }}
+                                    {{ ($profile['user']['active'] ?? false) ? 'Akun aktif' : 'Akun tidak aktif' }}
                                 </span>
                                 <span class="rounded-full {{ $completion['is_complete'] ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }} px-3 py-1 text-xs font-bold">
                                     {{ $completion['is_complete'] ? 'Profil lengkap' : 'Profil belum lengkap' }}
@@ -124,7 +124,7 @@
                     </div>
                     <div class="rounded-2xl bg-slate-50 p-4">
                         <dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Status Akses</dt>
-                        <dd class="mt-1 text-sm font-semibold text-slate-950">{{ ($profile['user']['active'] ?? false) ? 'Aktif' : 'Inactive' }}</dd>
+                        <dd class="mt-1 text-sm font-semibold text-slate-950">{{ ($profile['user']['active'] ?? false) ? 'Aktif' : 'Tidak aktif' }}</dd>
                     </div>
                 </dl>
             </article>
@@ -193,8 +193,8 @@
                 @empty
                     <article class="rounded-3xl border border-dashed border-blue-200 bg-white p-8 text-center shadow-sm">
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Profil Resmi</p>
-                        <h2 class="mt-3 text-xl font-black text-slate-950">Belum ada profil tertaut</h2>
-                        <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">Akun ini belum terhubung ke profil mahasiswa, dosen, atau tendik. Kontak tetap bisa disimpan di akun Core sambil menunggu Admin Core menautkan data resmi.</p>
+                        <h2 class="mt-3 text-xl font-black text-slate-950">Profil resmi belum ditautkan</h2>
+                        <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">Akun ini belum terhubung ke data mahasiswa, dosen, atau tendik. Kontak tetap bisa disimpan di akun Core sambil menunggu Admin Core menautkan data resmi.</p>
                         <a href="{{ route('profile.edit') }}" class="mt-5 inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
                             Isi Kontak Aman
                         </a>

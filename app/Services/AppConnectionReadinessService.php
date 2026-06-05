@@ -232,6 +232,30 @@ class AppConnectionReadinessService
                     'validator',
                 ],
             ],
+            'tu-farmasi' => [
+                'name' => 'TU Farmasi',
+                'abilities' => $standardReadAbilities,
+                'roles' => [
+                    'admin-tu',
+                    'staf-tu',
+                    'dosen',
+                    'mahasiswa',
+                    'validator',
+                    'penandatangan',
+                ],
+            ],
+            'kp-farmasi' => [
+                'name' => 'KP Farmasi',
+                'abilities' => $standardReadAbilities,
+                'roles' => [
+                    'mahasiswa',
+                    'koordinator-kp',
+                    'pembimbing-dalam',
+                    'pembimbing-lapangan',
+                    'penguji',
+                    'admin-kp',
+                ],
+            ],
             'lab-farmasi' => [
                 'name' => 'Lab Farmasi',
                 'abilities' => $standardReadAbilities,

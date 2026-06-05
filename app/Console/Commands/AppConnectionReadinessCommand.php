@@ -8,9 +8,9 @@ use InvalidArgumentException;
 
 class AppConnectionReadinessCommand extends Command
 {
-    protected $signature = 'core:app-connection-readiness {app_code : Future consumer app code}';
+    protected $signature = 'core:app-connection-readiness {app_code : Consumer app code}';
 
-    protected $description = 'Check Core readiness for a future app connection without exposing secrets';
+    protected $description = 'Check Core readiness for a consumer app connection without exposing secrets';
 
     public function handle(AppConnectionReadinessService $readiness): int
     {

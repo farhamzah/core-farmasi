@@ -3,11 +3,19 @@
 namespace App\Services;
 
 use App\Models\AccountRequest;
+use App\Models\CoreApplication;
+use App\Models\CoreApplicationRole;
 use App\Models\Employee;
 use App\Models\Lecturer;
+use App\Models\Role;
 use App\Models\Student;
 use App\Models\User;
+use App\Models\UserAppAccess;
+use App\Models\UserActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class CoreAccountRequestService
 {
@@ -16,6 +24,8 @@ class CoreAccountRequestService
      */
     public function submit(array $data, Request $request): AccountRequest
     {
+        $data = $this->normalizeSubmissionData($data);
+
         return AccountRequest::create([
             ...$data,
             'status' => AccountRequest::STATUS_PENDING,
@@ -60,6 +70,68 @@ class CoreAccountRequestService
         return $accountRequest->fresh();
     }
 
+    public function approveAndProvision(AccountRequest $accountRequest, ?User $reviewer, ?string $adminNotes = null, bool $createRequestedAppAccess = false): AccountRequest
+    {
+        return DB::transaction(function () use ($accountRequest, $reviewer, $adminNotes, $createRequestedAppAccess): AccountRequest {
+            $accountRequest->refresh();
+
+            if ($accountRequest->isApproved() && $accountRequest->approved_user_id) {
+                return $accountRequest;
+            }
+
+            $blockers = $this->approvalBlockers($accountRequest);
+
+            if ($blockers !== []) {
+                throw ValidationException::withMessages([
+                    'account_request' => implode(' ', $blockers),
+                ]);
+            }
+
+            if ($accountRequest->request_type === AccountRequest::TYPE_FIELD_SUPERVISOR) {
+                $profile = null;
+                $user = $this->createOrLinkFieldSupervisorUser($accountRequest);
+            } else {
+                $profile = $this->createOrUpdateProfile($accountRequest);
+                $user = app(CoreProfileUserProvisioningService::class)->provisionFor($profile);
+            }
+
+            if (! $user) {
+                throw ValidationException::withMessages([
+                    'account_request' => 'Akun tidak dapat dibuat atau ditautkan. Periksa email dan nomor identitas pemohon.',
+                ]);
+            }
+
+            $this->assignDefaultGlobalRole($user, $accountRequest);
+            $appAccess = $createRequestedAppAccess
+                ? $this->createRequestedAppAccess($user, $accountRequest)
+                : null;
+
+            $accountRequest->forceFill([
+                'status' => AccountRequest::STATUS_APPROVED,
+                'admin_notes' => $adminNotes ?? $accountRequest->admin_notes,
+                'reviewed_by' => $reviewer?->id,
+                'reviewed_at' => now(),
+                'approved_user_id' => $user->id,
+            ])->save();
+
+            UserActivityLog::create([
+                'user_id' => $user->id,
+                'action' => 'account_request.approved',
+                'meta' => [
+                    'account_request_id' => $accountRequest->id,
+                    'request_type' => $accountRequest->request_type,
+                    'profile_type' => $profile ? class_basename($profile) : 'CoreUserOnly',
+                    'profile_id' => $profile?->getKey(),
+                    'reviewed_by' => $reviewer?->id,
+                    'app_access_created' => (bool) $appAccess,
+                    'app_access_id' => $appAccess?->id,
+                ],
+            ]);
+
+            return $accountRequest->fresh();
+        });
+    }
+
     /**
      * @return array<string, bool>
      */
@@ -72,5 +144,377 @@ class CoreAccountRequestService
             'lecturer_number_exists' => filled($accountRequest->lecturer_number) && Lecturer::where('lecturer_number', $accountRequest->lecturer_number)->exists(),
             'employee_number_exists' => filled($accountRequest->employee_number) && Employee::where('employee_number', $accountRequest->employee_number)->exists(),
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function approvalBlockers(AccountRequest $accountRequest): array
+    {
+        $blockers = [];
+
+        if (! in_array($accountRequest->request_type, [
+            AccountRequest::TYPE_STUDENT,
+            AccountRequest::TYPE_LECTURER,
+            AccountRequest::TYPE_EMPLOYEE,
+            AccountRequest::TYPE_FIELD_SUPERVISOR,
+        ], true)) {
+            $blockers[] = 'Jenis pemohon belum didukung untuk approve otomatis.';
+        }
+
+        if (blank($accountRequest->name)) {
+            $blockers[] = 'Nama wajib diisi.';
+        }
+
+        if (blank($accountRequest->email)) {
+            $blockers[] = 'Email wajib diisi agar akun Core dapat dibuat.';
+        }
+
+        if ($accountRequest->request_type === AccountRequest::TYPE_STUDENT) {
+            if (blank($accountRequest->student_number)) {
+                $blockers[] = 'NIM wajib diisi untuk mahasiswa.';
+            }
+
+            if (blank($accountRequest->study_program_id)) {
+                $blockers[] = 'Program studi wajib diisi untuk mahasiswa.';
+            }
+
+            $this->appendProfileConflictBlocker(
+                $blockers,
+                Student::query()->where('student_number', $accountRequest->student_number)->first(),
+                $accountRequest,
+                'NIM'
+            );
+        }
+
+        if ($accountRequest->request_type === AccountRequest::TYPE_LECTURER) {
+            if (blank($accountRequest->lecturer_number)) {
+                $blockers[] = 'Nomor utama dosen wajib diisi.';
+            }
+
+            if (blank($accountRequest->department_id)) {
+                $blockers[] = 'Departemen wajib diisi untuk dosen.';
+            }
+
+            $this->appendProfileConflictBlocker(
+                $blockers,
+                Lecturer::query()->where('lecturer_number', $accountRequest->lecturer_number)->first(),
+                $accountRequest,
+                'nomor dosen'
+            );
+        }
+
+        if ($accountRequest->request_type === AccountRequest::TYPE_EMPLOYEE) {
+            if (blank($accountRequest->employee_number)) {
+                $blockers[] = 'Nomor pegawai wajib diisi untuk tendik/staf/laboran.';
+            }
+
+            if (blank($accountRequest->staff_type)) {
+                $blockers[] = 'Jenis tendik/staf/laboran wajib diisi.';
+            }
+
+            $this->appendProfileConflictBlocker(
+                $blockers,
+                Employee::query()->where('employee_number', $accountRequest->employee_number)->first(),
+                $accountRequest,
+                'nomor pegawai'
+            );
+        }
+
+        if ($accountRequest->request_type === AccountRequest::TYPE_FIELD_SUPERVISOR) {
+            if (blank($accountRequest->phone)) {
+                $blockers[] = 'Nomor telepon wajib diisi untuk pembimbing luar.';
+            }
+        }
+
+        $existingUser = filled($accountRequest->email)
+            ? User::query()->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $accountRequest->email))])->first()
+            : null;
+
+        if ($existingUser) {
+            $existingUser->loadMissing(['student', 'lecturer', 'employee']);
+            $expectedIdentifier = $this->identifierFor($accountRequest);
+            $existingProfile = match ($accountRequest->request_type) {
+                AccountRequest::TYPE_STUDENT => $existingUser->student,
+                AccountRequest::TYPE_LECTURER => $existingUser->lecturer,
+                AccountRequest::TYPE_EMPLOYEE => $existingUser->employee,
+                AccountRequest::TYPE_FIELD_SUPERVISOR => null,
+                default => null,
+            };
+
+            $existingIdentifier = match (true) {
+                $existingProfile instanceof Student => $existingProfile->student_number,
+                $existingProfile instanceof Lecturer => $existingProfile->lecturer_number,
+                $existingProfile instanceof Employee => $existingProfile->employee_number,
+                default => null,
+            };
+
+            if ($existingProfile && filled($expectedIdentifier) && $existingIdentifier !== $expectedIdentifier) {
+                $blockers[] = 'Email sudah terhubung ke profil lain dengan nomor identitas berbeda.';
+            }
+        }
+
+        return array_values(array_unique($blockers));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeSubmissionData(array $data): array
+    {
+        foreach ([
+            'name',
+            'email',
+            'phone',
+            'address',
+            'gender',
+            'identity_number',
+            'student_number',
+            'lecturer_number',
+            'nip',
+            'nidn',
+            'nidk',
+            'nuptk',
+            'employee_number',
+            'staff_type',
+            'position_title',
+            'requested_role',
+            'requested_app_code',
+        ] as $key) {
+            if (array_key_exists($key, $data) && is_string($data[$key])) {
+                $data[$key] = trim($data[$key]);
+            }
+        }
+
+        if (filled($data['email'] ?? null)) {
+            $data['email'] = strtolower((string) $data['email']);
+        }
+
+        return $data;
+    }
+
+    protected function createOrUpdateProfile(AccountRequest $accountRequest): Student|Lecturer|Employee
+    {
+        return match ($accountRequest->request_type) {
+            AccountRequest::TYPE_STUDENT => $this->createOrUpdateStudent($accountRequest),
+            AccountRequest::TYPE_LECTURER => $this->createOrUpdateLecturer($accountRequest),
+            AccountRequest::TYPE_EMPLOYEE => $this->createOrUpdateEmployee($accountRequest),
+            default => throw ValidationException::withMessages([
+                'account_request' => 'Jenis pemohon belum didukung untuk approve otomatis.',
+            ]),
+        };
+    }
+
+    protected function createOrLinkFieldSupervisorUser(AccountRequest $accountRequest): ?User
+    {
+        if (! config('core_identity.auto_user.enabled', true)) {
+            return null;
+        }
+
+        $email = strtolower(trim((string) $accountRequest->email));
+        $user = User::query()->whereRaw('LOWER(TRIM(email)) = ?', [$email])->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        return User::create([
+            'name' => $accountRequest->name,
+            'email' => $email,
+            'phone' => $accountRequest->phone,
+            'address' => $accountRequest->address,
+            'username' => $email,
+            'identity_type' => 'field_supervisor',
+            'identity_number' => null,
+            'password' => Hash::make(app(CoreProfileUserProvisioningService::class)->generateInitialPassword($accountRequest->name, $email)),
+            'active' => true,
+            'must_change_password' => true,
+            'password_changed_at' => null,
+            'last_password_reset_at' => now(),
+        ]);
+    }
+
+    protected function createOrUpdateStudent(AccountRequest $accountRequest): Student
+    {
+        $student = Student::query()->firstOrNew([
+            'student_number' => $accountRequest->student_number,
+        ]);
+
+        $this->fillProfile($student, [
+            'name' => $accountRequest->name,
+            'email' => $accountRequest->email,
+            'phone' => $accountRequest->phone,
+            'address' => $accountRequest->address,
+            'birth_date' => $accountRequest->birth_date,
+            'study_program_id' => $accountRequest->study_program_id,
+            'status' => 'active',
+            'active' => true,
+        ]);
+
+        return $student;
+    }
+
+    protected function createOrUpdateLecturer(AccountRequest $accountRequest): Lecturer
+    {
+        $lecturer = Lecturer::query()->firstOrNew([
+            'lecturer_number' => $accountRequest->lecturer_number,
+        ]);
+
+        $this->fillProfile($lecturer, [
+            'national_id_number' => $accountRequest->identity_number,
+            'nip' => $accountRequest->nip,
+            'nidn' => $accountRequest->nidn ?: $accountRequest->lecturer_number,
+            'nidk' => $accountRequest->nidk,
+            'nuptk' => $accountRequest->nuptk,
+            'name' => $accountRequest->name,
+            'email' => $accountRequest->email,
+            'birth_date' => $accountRequest->birth_date,
+            'department_id' => $accountRequest->department_id,
+            'study_program_id' => $accountRequest->study_program_id,
+            'phone' => $accountRequest->phone,
+            'address' => $accountRequest->address,
+            'notes' => $accountRequest->notes,
+            'active' => true,
+        ]);
+
+        return $lecturer;
+    }
+
+    protected function createOrUpdateEmployee(AccountRequest $accountRequest): Employee
+    {
+        $employee = Employee::query()->firstOrNew([
+            'employee_number' => $accountRequest->employee_number,
+        ]);
+
+        $this->fillProfile($employee, [
+            'national_id_number' => $accountRequest->identity_number,
+            'name' => $accountRequest->name,
+            'staff_type' => $accountRequest->staff_type,
+            'department_id' => $accountRequest->department_id,
+            'study_program_id' => $accountRequest->study_program_id,
+            'position_title' => $accountRequest->position_title,
+            'phone' => $accountRequest->phone,
+            'email' => $accountRequest->email,
+            'birth_date' => $accountRequest->birth_date,
+            'gender' => $accountRequest->gender,
+            'address' => $accountRequest->address,
+            'status' => 'active',
+            'notes' => $accountRequest->notes,
+        ]);
+
+        return $employee;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function fillProfile(Student|Lecturer|Employee $profile, array $attributes): void
+    {
+        $payload = $profile->exists
+            ? array_filter($attributes, fn ($value): bool => filled($value) || is_bool($value))
+            : $attributes;
+
+        $profile->fill($payload);
+        $profile->save();
+    }
+
+    protected function assignDefaultGlobalRole(User $user, AccountRequest $accountRequest): void
+    {
+        $roleName = match ($accountRequest->request_type) {
+            AccountRequest::TYPE_STUDENT => 'mahasiswa',
+            AccountRequest::TYPE_LECTURER => 'dosen',
+            AccountRequest::TYPE_EMPLOYEE => 'tata-usaha',
+            AccountRequest::TYPE_FIELD_SUPERVISOR => 'pembimbing-lapangan',
+            default => null,
+        };
+
+        if (! $roleName) {
+            return;
+        }
+
+        $role = Role::query()->firstOrCreate(
+            ['name' => $roleName],
+            ['label' => str($roleName)->headline()->toString(), 'active' => true],
+        );
+
+        $user->roles()->syncWithoutDetaching([$role->id]);
+    }
+
+    protected function createRequestedAppAccess(User $user, AccountRequest $accountRequest): ?UserAppAccess
+    {
+        $appCode = trim((string) $accountRequest->requested_app_code);
+        $roleSlug = trim((string) $accountRequest->requested_role);
+
+        if (blank($appCode) || blank($roleSlug)) {
+            return null;
+        }
+
+        $application = CoreApplication::query()
+            ->where('app_code', $appCode)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $application) {
+            throw ValidationException::withMessages([
+                'account_request' => "Aplikasi {$appCode} belum aktif di registry Core.",
+            ]);
+        }
+
+        $role = CoreApplicationRole::query()
+            ->where('app_code', $appCode)
+            ->where('role_slug', $roleSlug)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $role) {
+            throw ValidationException::withMessages([
+                'account_request' => "Role aplikasi {$roleSlug} belum aktif untuk {$appCode}.",
+            ]);
+        }
+
+        return UserAppAccess::query()->updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'app_code' => $appCode,
+                'role_slug' => $roleSlug,
+            ],
+            [
+                'permissions' => [],
+                'is_active' => true,
+                'activated_at' => now(),
+                'deactivated_at' => null,
+            ],
+        );
+    }
+
+    protected function appendProfileConflictBlocker(array &$blockers, Student|Lecturer|Employee|null $profile, AccountRequest $accountRequest, string $label): void
+    {
+        if (! $profile) {
+            return;
+        }
+
+        if (filled($profile->email) && filled($accountRequest->email) && strtolower(trim((string) $profile->email)) !== strtolower(trim((string) $accountRequest->email))) {
+            $blockers[] = "{$label} sudah terdaftar dengan email berbeda.";
+        }
+
+        if (filled($profile->user_id)) {
+            $profile->loadMissing('user');
+
+            if ($profile->user && filled($accountRequest->email) && strtolower(trim((string) $profile->user->email)) !== strtolower(trim((string) $accountRequest->email))) {
+                $blockers[] = "{$label} sudah terhubung ke user lain.";
+            }
+        }
+    }
+
+    protected function identifierFor(AccountRequest $accountRequest): ?string
+    {
+        return match ($accountRequest->request_type) {
+            AccountRequest::TYPE_STUDENT => $accountRequest->student_number,
+            AccountRequest::TYPE_LECTURER => $accountRequest->lecturer_number,
+            AccountRequest::TYPE_EMPLOYEE => $accountRequest->employee_number,
+            AccountRequest::TYPE_FIELD_SUPERVISOR => $accountRequest->email,
+            default => null,
+        };
     }
 }

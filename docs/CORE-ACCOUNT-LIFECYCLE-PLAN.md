@@ -430,6 +430,21 @@ Existing implementation note:
 - Password policy admin/import default memakai nama user sebagai password awal sementara dan memaksa `must_change_password`.
 - Tetap tidak memberi app access otomatis.
 
+Update 2026-06-07:
+
+- Action admin `Approve & Buat Akun` tersedia di `AccountRequestResource`.
+- Approval membuat/menautkan user dan profil master:
+  - mahasiswa -> `students`
+  - dosen -> `lecturers`
+  - tendik/staf/laboran -> `employees`
+- Role global dasar diberikan sesuai jenis pemohon:
+  - mahasiswa -> `mahasiswa`
+  - dosen -> `dosen`
+  - tendik/staf/laboran -> `tata-usaha`
+- Password awal mengikuti kebijakan Core `first_name_identifier_suffix`.
+- `user_app_accesses` tetap tidak dibuat otomatis.
+- Konflik email/nomor identitas diblokir agar tidak membuat duplikat.
+
 ### Phase 3: Profile Password Self-Service
 
 - Selesai pada CORE-PROFILE-4:

@@ -20,6 +20,7 @@ class AccountRequest extends Model
     public const TYPE_STUDENT = 'student';
     public const TYPE_LECTURER = 'lecturer';
     public const TYPE_EMPLOYEE = 'employee';
+    public const TYPE_FIELD_SUPERVISOR = 'field_supervisor';
     public const TYPE_OTHER = 'other';
 
     protected $fillable = [
@@ -27,10 +28,19 @@ class AccountRequest extends Model
         'name',
         'email',
         'phone',
+        'address',
+        'birth_date',
+        'gender',
         'identity_number',
         'student_number',
         'lecturer_number',
+        'nip',
+        'nidn',
+        'nidk',
+        'nuptk',
         'employee_number',
+        'staff_type',
+        'position_title',
         'study_program_id',
         'department_id',
         'requested_role',
@@ -46,6 +56,7 @@ class AccountRequest extends Model
     ];
 
     protected $casts = [
+        'birth_date' => 'date',
         'reviewed_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
@@ -94,6 +105,7 @@ class AccountRequest extends Model
             self::TYPE_STUDENT => 'Mahasiswa',
             self::TYPE_LECTURER => 'Dosen',
             self::TYPE_EMPLOYEE => 'Tendik / Staf / Laboran',
+            self::TYPE_FIELD_SUPERVISOR => 'Pembimbing Luar',
             self::TYPE_OTHER => 'Lainnya',
         ];
     }

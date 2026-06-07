@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserAppAccessResource\Pages;
 use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
+use App\Models\User;
 use App\Models\UserAppAccess;
 use BackedEnum;
 use Filament\Forms;
@@ -37,43 +38,74 @@ class UserAppAccessResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Akses Aplikasi')
+                Section::make('Panduan Singkat')
+                    ->description('Berikan akses aplikasi per user. Pilih user, aplikasi, lalu role aplikasi yang sesuai. Role di sini hanya berlaku untuk aplikasi yang dipilih, bukan role global Core.')
+                    ->schema([])
+                    ->columnSpanFull(),
+                Section::make('1. User & Aplikasi')
+                    ->description('Pastikan user sudah aktif dan aplikasi sudah terdaftar aktif di Core.')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label('User')
-                            ->relationship('user', 'email')
+                            ->options(fn (): array => self::defaultUserOptions())
+                            ->getSearchResultsUsing(fn (string $search): array => self::userSearchResults($search))
+                            ->getOptionLabelUsing(fn ($value): ?string => self::userOptionLabel($value))
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->helperText('Cari dengan nama, email, username, NIM, NIDN/NIP, atau nomor pegawai.')
+                            ->columnSpanFull(),
                         Forms\Components\Select::make('app_code')
                             ->label('Aplikasi')
                             ->options(fn (): array => self::applicationOptions())
                             ->live()
+                            ->afterStateUpdated(fn ($set): mixed => $set('role_slug', null))
                             ->searchable()
                             ->required()
-                            ->helperText('Aplikasi harus aktif di app registry Core.'),
+                            ->helperText('Role aplikasi akan difilter sesuai aplikasi ini.'),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Akses aktif')
+                            ->default(true)
+                            ->helperText('Matikan jika akses hanya disiapkan tetapi belum boleh dipakai.'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+                Section::make('2. Role Aplikasi')
+                    ->description('Pilih satu role aplikasi. Untuk mahasiswa KP pilih Mahasiswa, untuk admin TA pilih Admin TA, dan seterusnya.')
+                    ->schema([
                         Forms\Components\Select::make('role_slug')
                             ->label('Role Aplikasi')
                             ->options(fn ($get): array => self::roleOptions($get('app_code')))
                             ->searchable()
                             ->required()
-                            ->helperText('Role berasal dari catalog role aplikasi, bukan role global.'),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
-                            ->default(true),
+                            ->helperText('Jika belum ada pilihan, pilih aplikasi dulu atau cek catalog Role Aplikasi.'),
                     ])
-                    ->columns(2),
-                Section::make('Permission & Periode')
+                    ->columns(1)
+                    ->columnSpanFull(),
+                Section::make('3. Periode Akses')
+                    ->description('Umumnya cukup biarkan tanggal aktif terisi otomatis. Tanggal nonaktif hanya diisi jika akses punya batas waktu.')
+                    ->schema([
+                        Forms\Components\DateTimePicker::make('activated_at')
+                            ->label('Mulai Aktif')
+                            ->default(now())
+                            ->helperText('Jika kosong, akses tetap aktif selama toggle Akses aktif menyala.'),
+                        Forms\Components\DateTimePicker::make('deactivated_at')
+                            ->label('Nonaktif Pada')
+                            ->helperText('Opsional. Isi hanya untuk akses sementara.'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+                Section::make('Advanced: Permission Tambahan')
+                    ->description('Biarkan kosong untuk akses normal. Dipakai hanya jika aplikasi membutuhkan permission khusus di luar role.')
                     ->schema([
                         Forms\Components\KeyValue::make('permissions')
+                            ->label('Permission Tambahan')
                             ->keyLabel('Permission')
-                            ->valueLabel('Value'),
-                        Forms\Components\DateTimePicker::make('activated_at')
-                            ->label('Activated At'),
-                        Forms\Components\DateTimePicker::make('deactivated_at')
-                            ->label('Deactivated At'),
+                            ->valueLabel('Value')
+                            ->addActionLabel('Tambah permission'),
                     ])
-                    ->columns(2),
+                    ->collapsed()
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -127,6 +159,60 @@ class UserAppAccessResource extends Resource
             ->all();
     }
 
+    public static function defaultUserOptions(): array
+    {
+        return User::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->limit(50)
+            ->get()
+            ->mapWithKeys(fn (User $user): array => [$user->id => self::formatUserOption($user)])
+            ->all();
+    }
+
+    public static function userSearchResults(string $search): array
+    {
+        $term = '%'.strtolower(trim($search)).'%';
+
+        return User::query()
+            ->where('active', true)
+            ->where(function ($query) use ($term): void {
+                $query
+                    ->whereRaw('LOWER(name) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(email) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(username) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(identity_number) LIKE ?', [$term]);
+            })
+            ->orderBy('name')
+            ->limit(50)
+            ->get()
+            ->mapWithKeys(fn (User $user): array => [$user->id => self::formatUserOption($user)])
+            ->all();
+    }
+
+    public static function userOptionLabel(mixed $value): ?string
+    {
+        if (blank($value)) {
+            return null;
+        }
+
+        $user = User::query()->find($value);
+
+        return $user ? self::formatUserOption($user) : null;
+    }
+
+    protected static function formatUserOption(User $user): string
+    {
+        $identifier = collect([$user->username, $user->identity_number])
+            ->filter()
+            ->unique()
+            ->implode(' / ');
+
+        $label = "{$user->name} - {$user->email}";
+
+        return $identifier ? "{$label} ({$identifier})" : $label;
+    }
+
     public static function roleOptions(?string $appCode): array
     {
         return CoreApplicationRole::query()
@@ -136,7 +222,7 @@ class UserAppAccessResource extends Resource
             ->orderBy('role_name')
             ->get()
             ->mapWithKeys(fn (CoreApplicationRole $role): array => [
-                $role->role_slug => "{$role->role_name} ({$role->role_slug})",
+                $role->role_slug => "{$role->role_name} - {$role->role_slug}",
             ])
             ->all();
     }

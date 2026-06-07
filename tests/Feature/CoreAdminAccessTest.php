@@ -23,7 +23,14 @@ class CoreAdminAccessTest extends TestCase
 
         $user->roles()->attach($role);
 
-        $this->actingAs($user)->get('/admin')->assertOk();
+        $this->actingAs($user)
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('Pusat Identitas')
+            ->assertSee('Master Data')
+            ->assertSee('Link registrasi calon user')
+            ->assertDontSee('Documentation')
+            ->assertDontSee('GitHub');
     }
 
     public function test_super_admin_can_open_core_resource_indexes(): void

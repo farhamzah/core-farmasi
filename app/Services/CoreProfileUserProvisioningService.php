@@ -92,10 +92,24 @@ class CoreProfileUserProvisioningService
 
         if (filled($profile->getAttribute('user_id'))) {
             $user = User::withTrashed()->find($profile->getAttribute('user_id'));
+            $wasTrashed = (bool) $user?->trashed();
 
-            if ($user?->trashed()) {
+            if ($wasTrashed) {
                 $user->restore();
-                $user->forceFill(['active' => $context['active']])->saveQuietly();
+            }
+
+            if ($user && $wasTrashed) {
+                $user->forceFill([
+                    'name' => $context['name'],
+                    'username' => $context['identifier'],
+                    'identity_type' => $context['identity_type'],
+                    'identity_number' => $context['identifier'],
+                    'active' => $context['active'],
+                ])->saveQuietly();
+
+                if (filled($context['email'])) {
+                    $user->forceFill(['email' => $context['email']])->saveQuietly();
+                }
             }
 
             return $user && ! $user->trashed() ? $user : null;

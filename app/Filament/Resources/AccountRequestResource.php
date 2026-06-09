@@ -18,6 +18,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 use UnitEnum;
 
 class AccountRequestResource extends Resource
@@ -283,6 +284,14 @@ class AccountRequestResource extends Resource
                                 ->danger()
                                 ->title('Approval diblokir.')
                                 ->body(collect($exception->errors())->flatten()->implode(' '))
+                                ->send();
+                        } catch (Throwable $exception) {
+                            report($exception);
+
+                            Notification::make()
+                                ->danger()
+                                ->title('Approval gagal diproses.')
+                                ->body('Terjadi error teknis saat membuat/menautkan akun. Periksa data duplikat atau log aplikasi, lalu coba lagi.')
                                 ->send();
                         }
                     }),

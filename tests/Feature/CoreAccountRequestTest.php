@@ -378,6 +378,102 @@ class CoreAccountRequestTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_approve_corrected_student_request_after_wrong_approved_request_was_rejected_and_deleted(): void
+    {
+        config(['core_account.public_account_request_enabled' => true]);
+
+        $admin = $this->createCoreAdmin('admin-core');
+        $studyProgram = $this->createStudyProgram();
+        Role::create(['name' => 'mahasiswa', 'label' => 'Mahasiswa', 'active' => true]);
+        $app = CoreApplication::create([
+            'app_code' => 'kp-farmasi',
+            'name' => 'KP Farmasi',
+            'is_active' => true,
+        ]);
+        CoreApplicationRole::create([
+            'core_application_id' => $app->id,
+            'app_code' => 'kp-farmasi',
+            'role_slug' => 'mahasiswa',
+            'role_name' => 'Mahasiswa',
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'name' => 'Muhamad Fajar Pahrelji',
+            'email' => 'fm24.muhamadpahrelji@mhs.ubpkarawang.ac.id',
+            'username' => '244162482010',
+            'identity_type' => 'student',
+            'identity_number' => '244162482010',
+            'active' => true,
+        ]);
+        $student = Student::create([
+            'user_id' => $user->id,
+            'student_number' => '244162482010',
+            'name' => 'Muhamad Fajar Pahrelji',
+            'email' => 'fm24.muhamadpahrelji@mhs.ubpkarawang.ac.id',
+            'study_program_id' => $studyProgram->id,
+            'status' => 'active',
+            'active' => true,
+        ]);
+        $access = UserAppAccess::create([
+            'user_id' => $user->id,
+            'app_code' => 'kp-farmasi',
+            'role_slug' => 'mahasiswa',
+            'permissions' => [],
+            'is_active' => true,
+            'activated_at' => now(),
+        ]);
+        $wrongRequest = AccountRequest::create([
+            'request_type' => AccountRequest::TYPE_STUDENT,
+            'name' => 'MUHAMAD FAJAR PAHREJI',
+            'email' => 'fm24.muhamadpahrelji@mhs.ubpkarawang.ac.id',
+            'student_number' => '244162482010',
+            'study_program_id' => $studyProgram->id,
+            'requested_app_code' => 'kp-farmasi',
+            'requested_role' => 'mahasiswa',
+            'status' => AccountRequest::STATUS_APPROVED,
+            'approved_user_id' => $user->id,
+        ]);
+
+        app(CoreAccountRequestService::class)->reject($wrongRequest, $admin, 'NIM salah.');
+
+        $access->delete();
+        $student->delete();
+        $user->delete();
+
+        $correctRequest = AccountRequest::create([
+            'request_type' => AccountRequest::TYPE_STUDENT,
+            'name' => 'Muhamad Fajar Pahrelji',
+            'email' => 'fm24.muhamadpahrelji@mhs.ubpkarawang.ac.id',
+            'student_number' => '24416248201081',
+            'study_program_id' => $studyProgram->id,
+            'requested_app_code' => 'kp-farmasi',
+            'requested_role' => 'mahasiswa',
+            'status' => AccountRequest::STATUS_PENDING,
+        ]);
+
+        app(CoreAccountRequestService::class)->approveAndProvision($correctRequest, $admin, 'Data sudah dikoreksi.', true);
+
+        $correctRequest->refresh();
+        $restoredUser = User::withTrashed()->findOrFail($user->id);
+        $restoredStudent = Student::withTrashed()->findOrFail($student->id);
+
+        $this->assertFalse($restoredUser->trashed());
+        $this->assertFalse($restoredStudent->trashed());
+        $this->assertSame($restoredUser->id, $correctRequest->approved_user_id);
+        $this->assertSame('24416248201081', $restoredStudent->student_number);
+        $this->assertSame('24416248201081', $restoredUser->username);
+        $this->assertSame('24416248201081', $restoredUser->identity_number);
+        $this->assertSame('Muhamad Fajar Pahrelji', $restoredStudent->name);
+        $this->assertSame('muhamad fajar pahrelji', strtolower($restoredUser->name));
+        $this->assertDatabaseHas('user_app_accesses', [
+            'user_id' => $restoredUser->id,
+            'app_code' => 'kp-farmasi',
+            'role_slug' => 'mahasiswa',
+            'is_active' => true,
+        ]);
+    }
+
     public function test_guest_can_submit_field_supervisor_request(): void
     {
         config(['core_account.public_account_request_enabled' => true]);

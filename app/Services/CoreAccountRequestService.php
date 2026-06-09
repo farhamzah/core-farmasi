@@ -102,6 +102,10 @@ class CoreAccountRequestService
                 ]);
             }
 
+            if ($profile) {
+                $this->syncApprovedUserIdentity($profile, $user, $accountRequest);
+            }
+
             $this->assignDefaultGlobalRole($user, $accountRequest);
             $appAccess = $createRequestedAppAccess
                 ? $this->createRequestedAppAccess($user, $accountRequest)
@@ -186,6 +190,15 @@ class CoreAccountRequestService
                 $accountRequest,
                 'NIM'
             );
+
+            $this->appendProfileConflictBlocker(
+                $blockers,
+                Student::query()
+                    ->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $accountRequest->email))])
+                    ->first(),
+                $accountRequest,
+                'email mahasiswa'
+            );
         }
 
         if ($accountRequest->request_type === AccountRequest::TYPE_LECTURER) {
@@ -202,6 +215,15 @@ class CoreAccountRequestService
                 Lecturer::query()->where('lecturer_number', $accountRequest->lecturer_number)->first(),
                 $accountRequest,
                 'nomor dosen'
+            );
+
+            $this->appendProfileConflictBlocker(
+                $blockers,
+                Lecturer::query()
+                    ->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $accountRequest->email))])
+                    ->first(),
+                $accountRequest,
+                'email dosen'
             );
         }
 
@@ -422,13 +444,23 @@ class CoreAccountRequestService
     protected function createOrUpdateStudent(AccountRequest $accountRequest): Student
     {
         $student = Student::withTrashed()
-            ->firstOrNew(['student_number' => $accountRequest->student_number]);
+            ->where('student_number', $accountRequest->student_number)
+            ->first();
+
+        if (! $student && filled($accountRequest->email)) {
+            $student = Student::withTrashed()
+                ->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $accountRequest->email))])
+                ->first();
+        }
+
+        $student ??= new Student(['student_number' => $accountRequest->student_number]);
 
         if ($student->trashed()) {
             $student->restore();
         }
 
         $this->fillProfile($student, [
+            'student_number' => $accountRequest->student_number,
             'name' => $accountRequest->name,
             'email' => $accountRequest->email,
             'phone' => $accountRequest->phone,
@@ -445,13 +477,23 @@ class CoreAccountRequestService
     protected function createOrUpdateLecturer(AccountRequest $accountRequest): Lecturer
     {
         $lecturer = Lecturer::withTrashed()
-            ->firstOrNew(['lecturer_number' => $accountRequest->lecturer_number]);
+            ->where('lecturer_number', $accountRequest->lecturer_number)
+            ->first();
+
+        if (! $lecturer && filled($accountRequest->email)) {
+            $lecturer = Lecturer::withTrashed()
+                ->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $accountRequest->email))])
+                ->first();
+        }
+
+        $lecturer ??= new Lecturer(['lecturer_number' => $accountRequest->lecturer_number]);
 
         if ($lecturer->trashed()) {
             $lecturer->restore();
         }
 
         $this->fillProfile($lecturer, [
+            'lecturer_number' => $accountRequest->lecturer_number,
             'national_id_number' => $accountRequest->identity_number,
             'nip' => $accountRequest->nip,
             'nidn' => $accountRequest->nidn ?: $accountRequest->lecturer_number,
@@ -481,6 +523,7 @@ class CoreAccountRequestService
         }
 
         $this->fillProfile($employee, [
+            'employee_number' => $accountRequest->employee_number,
             'national_id_number' => $accountRequest->identity_number,
             'name' => $accountRequest->name,
             'staff_type' => $accountRequest->staff_type,
@@ -532,6 +575,32 @@ class CoreAccountRequestService
         );
 
         $user->roles()->syncWithoutDetaching([$role->id]);
+    }
+
+    protected function syncApprovedUserIdentity(Student|Lecturer|Employee $profile, User $user, AccountRequest $accountRequest): void
+    {
+        $identifier = $this->identifierFor($accountRequest);
+
+        if (blank($identifier)) {
+            return;
+        }
+
+        $user->forceFill([
+            'name' => $profile->name,
+            'email' => $profile->email,
+            'username' => $identifier,
+            'identity_type' => match (true) {
+                $profile instanceof Student => 'student',
+                $profile instanceof Lecturer => 'lecturer',
+                $profile instanceof Employee => 'employee',
+            },
+            'identity_number' => $identifier,
+            'active' => match (true) {
+                $profile instanceof Student => (bool) ($profile->active ?? $profile->status !== 'inactive'),
+                $profile instanceof Lecturer => (bool) ($profile->active ?? true),
+                $profile instanceof Employee => ($profile->status ?? 'active') !== 'inactive',
+            },
+        ])->saveQuietly();
     }
 
     protected function createRequestedAppAccess(User $user, AccountRequest $accountRequest): ?UserAppAccess
@@ -589,6 +658,18 @@ class CoreAccountRequestService
 
         if (filled($profile->email) && filled($accountRequest->email) && strtolower(trim((string) $profile->email)) !== strtolower(trim((string) $accountRequest->email))) {
             $blockers[] = "{$label} sudah terdaftar dengan email berbeda.";
+        }
+
+        $expectedIdentifier = $this->identifierFor($accountRequest);
+        $profileIdentifier = match (true) {
+            $profile instanceof Student => $profile->student_number,
+            $profile instanceof Lecturer => $profile->lecturer_number,
+            $profile instanceof Employee => $profile->employee_number,
+            default => null,
+        };
+
+        if (filled($expectedIdentifier) && filled($profileIdentifier) && $profileIdentifier !== $expectedIdentifier) {
+            $blockers[] = "{$label} sudah terhubung ke nomor identitas berbeda.";
         }
 
         if (filled($profile->user_id)) {

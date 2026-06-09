@@ -206,6 +206,31 @@ class TuPortalPasswordVerificationTest extends TestCase
             ->assertJsonPath('user.employee.employee_number', $user->employee->employee_number);
     }
 
+    public function test_tu_portal_allows_tendik_and_laboran_app_roles(): void
+    {
+        $this->prepareClient();
+        $tendik = $this->makeAccessibleEmployeeUser('tendik');
+        $laboran = $this->makeAccessibleEmployeeUser('laboran');
+
+        $this->postJson($this->endpoint(), [
+            'login' => $tendik->employee->employee_number,
+            'password' => $this->password,
+        ], $this->headers())
+            ->assertOk()
+            ->assertJsonPath('authenticated', true)
+            ->assertJsonPath('app_access.roles.0', 'tendik')
+            ->assertJsonPath('user.employee.staff_type', 'tendik');
+
+        $this->postJson($this->endpoint(), [
+            'login' => $laboran->employee->employee_number,
+            'password' => $this->password,
+        ], $this->headers())
+            ->assertOk()
+            ->assertJsonPath('authenticated', true)
+            ->assertJsonPath('app_access.roles.0', 'laboran')
+            ->assertJsonPath('user.employee.staff_type', 'laboran');
+    }
+
     public function test_response_does_not_contain_password_hash_token_or_secret(): void
     {
         $this->prepareClient();
@@ -366,23 +391,24 @@ class TuPortalPasswordVerificationTest extends TestCase
         return $user->fresh(['student', 'appAccesses']);
     }
 
-    private function makeAccessibleEmployeeUser(): User
+    private function makeAccessibleEmployeeUser(string $staffType = 'staf-tu', ?string $roleSlug = null): User
     {
         $user = $this->makeUser(['identity_type' => 'employee']);
         $department = $this->makeDepartment();
+        $roleSlug ??= $staffType;
 
         Employee::create([
             'user_id' => $user->id,
             'employee_number' => fake()->unique()->numerify('EMP######'),
             'name' => $user->name,
-            'staff_type' => 'staf-tu',
+            'staff_type' => $staffType,
             'department_id' => $department->id,
-            'position_title' => 'Staf TU',
+            'position_title' => str($staffType)->replace('-', ' ')->title()->toString(),
             'email' => 'employee-'.$user->id.'@example.test',
             'status' => 'active',
         ]);
 
-        $this->giveAccess($user, 'staf-tu');
+        $this->giveAccess($user, $roleSlug);
 
         return $user->fresh(['employee', 'appAccesses']);
     }

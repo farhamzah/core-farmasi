@@ -533,6 +533,45 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame($studyProgram->id, $student->study_program_id);
     }
 
+    public function test_student_can_update_safe_profile_fields_but_not_name_or_nim(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        $student = Student::create([
+            'user_id' => $user->id,
+            'student_number' => 'MHS-003',
+            'name' => 'Mahasiswa Aman',
+            'email' => 'student-safe-old@example.test',
+            'phone' => '0800000005',
+            'address' => 'Alamat Lama',
+            'birth_date' => null,
+            'enrolled_at' => null,
+            'study_program_id' => $studyProgram->id,
+            'status' => 'active',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'name' => 'Nama Tidak Boleh Berubah',
+            'student_number' => 'MHS-HACKED',
+            'email' => 'student-safe-new@example.test',
+            'phone' => '08122223333',
+            'address' => 'Alamat Baru',
+            'birth_date' => '2002-01-15',
+            'enrolled_at' => '2024-09-01',
+        ])->assertRedirect('/profile');
+
+        $student->refresh();
+
+        $this->assertSame('Mahasiswa Aman', $student->name);
+        $this->assertSame('MHS-003', $student->student_number);
+        $this->assertSame('student-safe-new@example.test', $student->email);
+        $this->assertSame('08122223333', $student->phone);
+        $this->assertSame('Alamat Baru', $student->address);
+        $this->assertSame('2002-01-15', $student->birth_date?->toDateString());
+        $this->assertSame('2024-09-01', $student->enrolled_at?->toDateString());
+    }
+
     public function test_lecturer_can_update_phone_and_address(): void
     {
         [$user, $department, $studyProgram] = $this->createAcademicUser();
@@ -562,6 +601,106 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('Alamat Baru Dosen', $lecturer->address);
         $this->assertSame('DSN-002', $lecturer->lecturer_number);
         $this->assertSame($department->id, $lecturer->department_id);
+    }
+
+    public function test_lecturer_can_update_safe_profile_fields_but_not_name_nidn_or_nidk(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        $lecturer = Lecturer::create([
+            'user_id' => $user->id,
+            'lecturer_number' => 'DSN-003',
+            'national_id_number' => '3215000000000001',
+            'nip' => '198801012020121001',
+            'nidn' => '0011223344',
+            'nidk' => 'NIDK001122',
+            'nuptk' => '1234567890123456',
+            'name' => 'Dosen Aman',
+            'email' => 'lecturer-safe-old@example.test',
+            'department_id' => $department->id,
+            'study_program_id' => $studyProgram->id,
+            'phone' => '0800000006',
+            'address' => 'Alamat Lama Dosen',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'name' => 'Nama Dosen Tidak Boleh Berubah',
+            'lecturer_number' => 'DSN-HACKED',
+            'nidn' => 'NIDN-HACKED',
+            'nidk' => 'NIDK-HACKED',
+            'email' => 'lecturer-safe-new@example.test',
+            'phone' => '08244445555',
+            'address' => 'Alamat Baru Dosen',
+            'birth_date' => '1988-01-01',
+            'national_id_number' => '3215000000000099',
+            'nip' => '198801012020129999',
+            'nuptk' => '9999999999999999',
+            'notes' => 'Catatan dosen aman.',
+        ])->assertRedirect('/profile');
+
+        $lecturer->refresh();
+
+        $this->assertSame('Dosen Aman', $lecturer->name);
+        $this->assertSame('DSN-003', $lecturer->lecturer_number);
+        $this->assertSame('0011223344', $lecturer->nidn);
+        $this->assertSame('NIDK001122', $lecturer->nidk);
+        $this->assertSame('lecturer-safe-new@example.test', $lecturer->email);
+        $this->assertSame('08244445555', $lecturer->phone);
+        $this->assertSame('Alamat Baru Dosen', $lecturer->address);
+        $this->assertSame('1988-01-01', $lecturer->birth_date?->toDateString());
+        $this->assertSame('3215000000000099', $lecturer->national_id_number);
+        $this->assertSame('198801012020129999', $lecturer->nip);
+        $this->assertSame('9999999999999999', $lecturer->nuptk);
+        $this->assertSame('Catatan dosen aman.', $lecturer->notes);
+    }
+
+    public function test_employee_can_update_safe_profile_fields_but_not_name_or_employee_number(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        $employee = Employee::create([
+            'user_id' => $user->id,
+            'employee_number' => 'EMP-005',
+            'national_id_number' => '3215000000000002',
+            'name' => 'Tendik Aman',
+            'staff_type' => 'staf_tu',
+            'department_id' => $department->id,
+            'study_program_id' => $studyProgram->id,
+            'position_title' => 'Staf Lama',
+            'phone' => '0800000007',
+            'email' => 'employee-safe-old@example.test',
+            'address' => 'Alamat Lama Tendik',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'name' => 'Nama Tendik Tidak Boleh Berubah',
+            'employee_number' => 'EMP-HACKED',
+            'email' => 'employee-safe-new@example.test',
+            'phone' => '08355556666',
+            'address' => 'Alamat Baru Tendik',
+            'birth_date' => '1990-05-10',
+            'gender' => 'female',
+            'national_id_number' => '3215000000000098',
+            'staff_type' => 'laboran',
+            'position_title' => 'Laboran',
+            'notes' => 'Catatan tendik aman.',
+        ])->assertRedirect('/profile');
+
+        $employee->refresh();
+
+        $this->assertSame('Tendik Aman', $employee->name);
+        $this->assertSame('EMP-005', $employee->employee_number);
+        $this->assertSame('employee-safe-new@example.test', $employee->email);
+        $this->assertSame('08355556666', $employee->phone);
+        $this->assertSame('Alamat Baru Tendik', $employee->address);
+        $this->assertSame('1990-05-10', $employee->birth_date?->toDateString());
+        $this->assertSame('female', $employee->gender);
+        $this->assertSame('3215000000000098', $employee->national_id_number);
+        $this->assertSame('laboran', $employee->staff_type);
+        $this->assertSame('Laboran', $employee->position_title);
+        $this->assertSame('Catatan tendik aman.', $employee->notes);
     }
 
     public function test_profile_update_does_not_change_another_users_profile(): void

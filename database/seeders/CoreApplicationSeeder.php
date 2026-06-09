@@ -114,6 +114,8 @@ class CoreApplicationSeeder extends Seeder
             'tu-farmasi' => [
                 ['role_slug' => 'admin-tu', 'role_name' => 'Admin TU'],
                 ['role_slug' => 'staf-tu', 'role_name' => 'Staf TU'],
+                ['role_slug' => 'tendik', 'role_name' => 'Tendik'],
+                ['role_slug' => 'laboran', 'role_name' => 'Laboran'],
                 ['role_slug' => 'dosen', 'role_name' => 'Dosen'],
                 ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa'],
                 ['role_slug' => 'validator', 'role_name' => 'Validator'],

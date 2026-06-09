@@ -113,9 +113,19 @@ class ProfilePortalController extends Controller
         }
 
         $validated = $request->validate([
+            'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:1000'],
             'alternate_email' => ['nullable', 'email', 'max:255'],
+            'birth_date' => ['nullable', 'date'],
+            'enrolled_at' => ['nullable', 'date'],
+            'national_id_number' => ['nullable', 'string', 'max:255'],
+            'nip' => ['nullable', 'string', 'max:255'],
+            'nuptk' => ['nullable', 'string', 'max:255'],
+            'gender' => ['nullable', 'string', 'max:50'],
+            'staff_type' => ['nullable', 'string', 'max:255'],
+            'position_title' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $result = $this->profiles->updateSafeContactFields($request->user(), $validated, $request);

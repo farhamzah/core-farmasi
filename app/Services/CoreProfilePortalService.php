@@ -43,6 +43,7 @@ class CoreProfilePortalService
             'profiles' => $profiles,
             'editable_fields' => $this->editableFieldsFor($user),
             'contact_values' => $this->contactValuesFor($user),
+            'edit_values' => $this->editableValuesFor($user),
             'completion' => $this->completionFor($user, $profiles),
             'profile_standards' => $this->profileStandards(),
         ];
@@ -126,9 +127,9 @@ class CoreProfilePortalService
     public function editableFieldsFor(User $user): array
     {
         $profileFields = [
-            'student' => $this->existingColumns(Student::class, ['phone', 'address', 'alternate_email']),
-            'lecturer' => $this->existingColumns(Lecturer::class, ['phone', 'address', 'alternate_email']),
-            'employee' => $this->existingColumns(Employee::class, ['phone', 'address', 'alternate_email']),
+            'student' => $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_date', 'enrolled_at']),
+            'lecturer' => $this->existingColumns(Lecturer::class, ['email', 'phone', 'address', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']),
+            'employee' => $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']),
         ];
 
         $hasEditableLinkedProfile = collect(['student', 'lecturer', 'employee'])
@@ -138,6 +139,32 @@ class CoreProfilePortalService
             ...$profileFields,
             'user' => $hasEditableLinkedProfile ? [] : $this->existingColumns(User::class, ['phone', 'address', 'alternate_email']),
         ];
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function editableValuesFor(User $user): array
+    {
+        $values = $this->contactValuesFor($user);
+
+        foreach (['student', 'lecturer', 'employee'] as $relation) {
+            $profile = $user->{$relation};
+
+            if (! $profile) {
+                continue;
+            }
+
+            foreach ($this->editableFieldsFor($user)[$relation] ?? [] as $field) {
+                $values[$field] = $this->editableValue($profile, $field);
+            }
+        }
+
+        foreach ($this->editableFieldsFor($user)['user'] ?? [] as $field) {
+            $values[$field] = $this->editableValue($user, $field);
+        }
+
+        return $values;
     }
 
     public function isComplete(User $user): bool
@@ -404,6 +431,21 @@ class CoreProfilePortalService
         }
 
         return null;
+    }
+
+    private function editableValue(object $model, string $column): ?string
+    {
+        if (! Schema::hasColumn($model->getTable(), $column)) {
+            return null;
+        }
+
+        $value = $model->{$column};
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        return $value === null ? null : (string) $value;
     }
 
     private function maskIdentifier(?string $value): ?string

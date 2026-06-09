@@ -185,6 +185,199 @@ class CoreAccountRequestTest extends TestCase
         $this->assertSame(0, UserAppAccess::count());
     }
 
+    public function test_guest_cannot_submit_duplicate_active_account_request_email(): void
+    {
+        config(['core_account.public_account_request_enabled' => true]);
+
+        AccountRequest::create([
+            'request_type' => AccountRequest::TYPE_LECTURER,
+            'name' => 'Existing Request',
+            'email' => 'ermi.abriyani@ubpkarawang.ac.id',
+            'lecturer_number' => '416200028/0405108202',
+            'status' => AccountRequest::STATUS_PENDING,
+        ]);
+
+        $this->from('/account-request')
+            ->post('/account-request', [
+                'request_type' => AccountRequest::TYPE_LECTURER,
+                'name' => 'Ermi Abriyani',
+                'email' => 'ERMI.ABRIYANI@ubpkarawang.ac.id',
+                'lecturer_number' => 'NEW-LECTURER-NUMBER',
+            ])
+            ->assertRedirect('/account-request')
+            ->assertSessionHasErrors([
+                'email' => 'Email sudah pernah terdaftar atau sedang menunggu review. Gunakan email lain atau hubungi Admin Core.',
+            ]);
+
+        $this->assertSame(1, AccountRequest::count());
+    }
+
+    public function test_guest_cannot_submit_account_request_for_existing_user_email(): void
+    {
+        config(['core_account.public_account_request_enabled' => true]);
+
+        User::factory()->create([
+            'email' => 'existing.user@example.test',
+            'active' => true,
+        ]);
+
+        $this->from('/account-request')
+            ->post('/account-request', [
+                'request_type' => AccountRequest::TYPE_FIELD_SUPERVISOR,
+                'name' => 'Existing User',
+                'email' => 'existing.user@example.test',
+                'phone' => '081234567890',
+            ])
+            ->assertRedirect('/account-request')
+            ->assertSessionHasErrors('email');
+
+        $this->assertSame(0, AccountRequest::count());
+    }
+
+    public function test_guest_cannot_submit_duplicate_student_number(): void
+    {
+        config(['core_account.public_account_request_enabled' => true]);
+
+        Student::create([
+            'student_number' => '221011402637',
+            'name' => 'Existing Student',
+            'email' => 'existing.student@example.test',
+            'study_program_id' => $this->createStudyProgram()->id,
+        ]);
+
+        $this->from('/account-request')
+            ->post('/account-request', [
+                'request_type' => AccountRequest::TYPE_STUDENT,
+                'name' => 'Duplicate Student',
+                'email' => 'duplicate.student@example.test',
+                'student_number' => '221011402637',
+            ])
+            ->assertRedirect('/account-request')
+            ->assertSessionHasErrors([
+                'student_number' => 'NIM sudah pernah terdaftar atau sedang menunggu review.',
+            ]);
+
+        $this->assertSame(0, AccountRequest::count());
+    }
+
+    public function test_guest_cannot_submit_duplicate_pending_student_number(): void
+    {
+        config(['core_account.public_account_request_enabled' => true]);
+
+        AccountRequest::create([
+            'request_type' => AccountRequest::TYPE_STUDENT,
+            'name' => 'Mahasiswa Pending',
+            'email' => 'pending.student@example.test',
+            'student_number' => '221011402637',
+            'status' => AccountRequest::STATUS_PENDING,
+        ]);
+
+        $this->from('/account-request')
+            ->post('/account-request', [
+                'request_type' => AccountRequest::TYPE_STUDENT,
+                'name' => 'Duplicate Pending NIM',
+                'email' => 'duplicate.pending.student@example.test',
+                'student_number' => '221011402637',
+            ])
+            ->assertRedirect('/account-request')
+            ->assertSessionHasErrors([
+                'student_number' => 'NIM sudah pernah terdaftar atau sedang menunggu review.',
+            ]);
+
+        $this->assertSame(1, AccountRequest::count());
+    }
+
+    public function test_guest_can_resubmit_after_approved_student_was_soft_deleted_and_admin_can_restore_profile(): void
+    {
+        config(['core_account.public_account_request_enabled' => true]);
+
+        $admin = $this->createCoreAdmin('admin-core');
+        $studyProgram = $this->createStudyProgram();
+        Role::create(['name' => 'mahasiswa', 'label' => 'Mahasiswa', 'active' => true]);
+        $app = CoreApplication::create([
+            'app_code' => 'kp-farmasi',
+            'name' => 'KP Farmasi',
+            'is_active' => true,
+        ]);
+        CoreApplicationRole::create([
+            'core_application_id' => $app->id,
+            'app_code' => 'kp-farmasi',
+            'role_slug' => 'mahasiswa',
+            'role_name' => 'Mahasiswa',
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'name' => 'Adi Hidayat Lama',
+            'email' => 'adi.hidayat@example.test',
+            'username' => '221011402637',
+            'identity_type' => 'student',
+            'identity_number' => '221011402637',
+            'active' => true,
+        ]);
+        $student = Student::create([
+            'user_id' => $user->id,
+            'student_number' => '221011402637',
+            'name' => 'Adi Hidayat Lama',
+            'email' => 'adi.hidayat@example.test',
+            'study_program_id' => $studyProgram->id,
+            'status' => 'active',
+            'active' => true,
+        ]);
+        $access = UserAppAccess::create([
+            'user_id' => $user->id,
+            'app_code' => 'kp-farmasi',
+            'role_slug' => 'mahasiswa',
+            'permissions' => [],
+            'is_active' => true,
+            'activated_at' => now(),
+        ]);
+        AccountRequest::create([
+            'request_type' => AccountRequest::TYPE_STUDENT,
+            'name' => 'Adi Hidayat Lama',
+            'email' => 'adi.hidayat@example.test',
+            'student_number' => '221011402637',
+            'status' => AccountRequest::STATUS_APPROVED,
+            'approved_user_id' => $user->id,
+        ]);
+
+        $access->delete();
+        $student->delete();
+        $user->delete();
+
+        $this->from('/account-request')
+            ->post('/account-request', [
+                'request_type' => AccountRequest::TYPE_STUDENT,
+                'name' => 'Adi Hidayat',
+                'email' => 'adi.hidayat@example.test',
+                'student_number' => '221011402637',
+                'study_program_id' => $studyProgram->id,
+                'requested_app_code' => 'kp-farmasi',
+                'requested_role' => 'mahasiswa',
+            ])
+            ->assertRedirect('/account-request/success');
+
+        $newRequest = AccountRequest::query()->where('status', AccountRequest::STATUS_PENDING)->firstOrFail();
+
+        app(CoreAccountRequestService::class)->approveAndProvision($newRequest, $admin, 'Restore data lama yang sempat dihapus.', true);
+
+        $newRequest->refresh();
+        $restoredUser = User::withTrashed()->findOrFail($user->id);
+        $restoredStudent = Student::withTrashed()->findOrFail($student->id);
+
+        $this->assertFalse($restoredUser->trashed());
+        $this->assertFalse($restoredStudent->trashed());
+        $this->assertSame($restoredUser->id, $newRequest->approved_user_id);
+        $this->assertSame($restoredUser->id, $restoredStudent->user_id);
+        $this->assertSame('Adi Hidayat', $restoredStudent->name);
+        $this->assertDatabaseHas('user_app_accesses', [
+            'user_id' => $restoredUser->id,
+            'app_code' => 'kp-farmasi',
+            'role_slug' => 'mahasiswa',
+            'is_active' => true,
+        ]);
+    }
+
     public function test_guest_can_submit_field_supervisor_request(): void
     {
         config(['core_account.public_account_request_enabled' => true]);

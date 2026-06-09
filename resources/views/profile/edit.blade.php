@@ -13,6 +13,28 @@
         $contactTarget = $hasLinkedProfile ? 'profil resmi tertaut' : 'akun Core sementara';
         $completion = $profile['completion'];
         $contact = $profile['contact_values'];
+        $editValues = $profile['edit_values'] ?? $contact;
+        $fieldLabels = [
+            'email' => 'Email Profil',
+            'phone' => 'Telepon',
+            'address' => 'Alamat',
+            'alternate_email' => 'Email Alternatif',
+            'birth_date' => 'Tanggal Lahir',
+            'enrolled_at' => 'Tanggal Masuk',
+            'national_id_number' => 'NIK / No. KTP',
+            'nip' => 'NIP',
+            'nuptk' => 'NUPTK',
+            'gender' => 'Jenis Kelamin',
+            'staff_type' => 'Jenis Tendik / Staf',
+            'position_title' => 'Jabatan / Posisi',
+            'notes' => 'Catatan Profil',
+        ];
+        $dateFields = ['birth_date', 'enrolled_at'];
+        $textareaFields = ['address', 'notes'];
+        $selectOptions = [
+            'gender' => ['' => 'Pilih jika ingin diisi', 'male' => 'Laki-laki', 'female' => 'Perempuan'],
+            'staff_type' => ['' => 'Pilih jika ingin diisi', 'tendik' => 'Tendik', 'staf_tu' => 'Staf TU', 'laboran' => 'Laboran', 'admin' => 'Admin', 'other' => 'Lainnya'],
+        ];
     @endphp
 
     <main class="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -24,7 +46,7 @@
                         <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Core Farmasi UBP</p>
                         <h1 class="mt-3 text-3xl font-black tracking-normal text-slate-950 sm:text-4xl">Edit Kontak Aman</h1>
                         <p class="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
-                            Ubah kontak yang boleh dikelola mandiri. Data resmi seperti NIM, NIDN, NUPTK, NIP, NIK/KTP, prodi, departemen, status, role, app access, dan jabatan tetap admin-only.
+                            Ubah biodata pendukung dan kontak yang boleh dikelola mandiri. Nama, NIM, NIDN, dan NIDK tetap dikunci agar identitas utama tidak berubah tanpa verifikasi Admin Core.
                         </p>
                     </div>
                     <div class="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1">
@@ -97,57 +119,51 @@
             @method('PUT')
 
             <section class="rounded-3xl border border-blue-100 bg-white p-6 shadow-[0_18px_48px_rgba(15,23,42,0.06)] sm:p-7">
-                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Form Kontak</p>
-                <h2 class="mt-2 text-2xl font-black text-slate-950">Kontak yang Bisa Diperbarui</h2>
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Form Profil</p>
+                <h2 class="mt-2 text-2xl font-black text-slate-950">Profil yang Bisa Diperbarui</h2>
 
                 <div class="mt-6 grid gap-5">
-                    @if ($editableFields->contains('phone'))
+                    @foreach ($editableFields as $field)
                         <div>
-                            <label for="phone" class="text-sm font-bold text-slate-800">Telepon</label>
-                            <input
-                                id="phone"
-                                name="phone"
-                                type="text"
-                                value="{{ old('phone', $contact['phone'] ?? '') }}"
-                                class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                                autocomplete="tel"
-                            >
+                            <label for="{{ $field }}" class="text-sm font-bold text-slate-800">{{ $fieldLabels[$field] ?? str($field)->replace('_', ' ')->title() }}</label>
+
+                            @if (array_key_exists($field, $selectOptions))
+                                <select
+                                    id="{{ $field }}"
+                                    name="{{ $field }}"
+                                    class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                                >
+                                    @foreach ($selectOptions[$field] as $value => $label)
+                                        <option value="{{ $value }}" @selected(old($field, $editValues[$field] ?? '') === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            @elseif (in_array($field, $textareaFields, true))
+                                <textarea
+                                    id="{{ $field }}"
+                                    name="{{ $field }}"
+                                    rows="{{ $field === 'notes' ? 4 : 5 }}"
+                                    class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                                    @if ($field === 'address') autocomplete="street-address" @endif
+                                >{{ old($field, $editValues[$field] ?? '') }}</textarea>
+                            @else
+                                <input
+                                    id="{{ $field }}"
+                                    name="{{ $field }}"
+                                    type="{{ in_array($field, $dateFields, true) ? 'date' : ($field === 'email' || $field === 'alternate_email' ? 'email' : 'text') }}"
+                                    value="{{ old($field, $editValues[$field] ?? '') }}"
+                                    class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                                    @if ($field === 'phone') autocomplete="tel" @endif
+                                    @if ($field === 'email' || $field === 'alternate_email') autocomplete="email" @endif
+                                >
+                            @endif
+
                             <p class="mt-2 text-xs font-medium text-slate-500">Disimpan ke {{ $contactTarget }}.</p>
                         </div>
-                    @endif
-
-                    @if ($editableFields->contains('address'))
-                        <div>
-                            <label for="address" class="text-sm font-bold text-slate-800">Alamat</label>
-                            <textarea
-                                id="address"
-                                name="address"
-                                rows="5"
-                                class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                                autocomplete="street-address"
-                            >{{ old('address', $contact['address'] ?? '') }}</textarea>
-                            <p class="mt-2 text-xs font-medium text-slate-500">Disimpan ke {{ $contactTarget }}.</p>
-                        </div>
-                    @endif
-
-                    @if ($editableFields->contains('alternate_email'))
-                        <div>
-                            <label for="alternate_email" class="text-sm font-bold text-slate-800">Email Alternatif</label>
-                            <input
-                                id="alternate_email"
-                                name="alternate_email"
-                                type="email"
-                                value="{{ old('alternate_email', $contact['alternate_email'] ?? '') }}"
-                                class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                                autocomplete="email"
-                            >
-                            <p class="mt-2 text-xs font-medium text-slate-500">Disimpan jika field email alternatif tersedia.</p>
-                        </div>
-                    @endif
+                    @endforeach
 
                     @if ($editableFields->isEmpty())
                         <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
-                            Belum ada field kontak aman yang tersedia. Anda tetap bisa melihat profil atau mengganti password.
+                            Belum ada field profil yang tersedia untuk diedit. Anda tetap bisa melihat profil atau mengganti password.
                         </div>
                     @endif
                 </div>
@@ -189,7 +205,7 @@
                 <section class="rounded-3xl border border-blue-100 bg-blue-50 p-6">
                     <h2 class="text-lg font-black text-slate-950">Batas Edit Mandiri</h2>
                     <p class="mt-3 text-sm leading-7 text-slate-700">
-                        Nomor akademik/pegawai, NIK/KTP, NIDN/NIDK, NIP, NUPTK, prodi, departemen, status, role, app access, dan jabatan hanya diperbarui oleh Admin Core.
+                        Nama, NIM, NIDN, NIDK, status aktif, role, app access, dan jabatan struktural hanya diperbarui oleh Admin Core.
                     </p>
                 </section>
             </aside>

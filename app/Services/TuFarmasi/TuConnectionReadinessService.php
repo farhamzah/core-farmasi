@@ -35,6 +35,8 @@ class TuConnectionReadinessService
         return [
             'admin-tu',
             'staf-tu',
+            'tendik',
+            'laboran',
             'dosen',
             'mahasiswa',
             'validator',

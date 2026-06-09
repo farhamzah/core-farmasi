@@ -25,6 +25,7 @@ class CoreAccountRequestService
     public function submit(array $data, Request $request): AccountRequest
     {
         $data = $this->normalizeSubmissionData($data);
+        $this->ensureSubmissionIsUnique($data);
 
         return AccountRequest::create([
             ...$data,
@@ -294,6 +295,89 @@ class CoreAccountRequestService
         return $data;
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function ensureSubmissionIsUnique(array $data): void
+    {
+        $errors = [];
+        $activeRequestStatuses = [
+            AccountRequest::STATUS_PENDING,
+            AccountRequest::STATUS_IN_REVIEW,
+        ];
+
+        $email = strtolower(trim((string) ($data['email'] ?? '')));
+
+        if (filled($email)) {
+            $emailExists = User::query()
+                ->whereRaw('LOWER(TRIM(email)) = ?', [$email])
+                ->exists()
+                || Student::query()->whereRaw('LOWER(TRIM(email)) = ?', [$email])->exists()
+                || Lecturer::query()->whereRaw('LOWER(TRIM(email)) = ?', [$email])->exists()
+                || Employee::query()->whereRaw('LOWER(TRIM(email)) = ?', [$email])->exists()
+                || AccountRequest::query()
+                    ->whereRaw('LOWER(TRIM(email)) = ?', [$email])
+                    ->whereIn('status', $activeRequestStatuses)
+                    ->exists();
+
+            if ($emailExists) {
+                $errors['email'] = 'Email sudah pernah terdaftar atau sedang menunggu review. Gunakan email lain atau hubungi Admin Core.';
+            }
+        }
+
+        $identityNumber = trim((string) ($data['identity_number'] ?? ''));
+
+        if (filled($identityNumber) && (
+            User::query()->where('identity_number', $identityNumber)->exists()
+            || AccountRequest::query()
+                ->where('identity_number', $identityNumber)
+                ->whereIn('status', $activeRequestStatuses)
+                ->exists()
+        )) {
+            $errors['identity_number'] = 'NIK/nomor identitas sudah pernah terdaftar atau sedang menunggu review.';
+        }
+
+        $studentNumber = trim((string) ($data['student_number'] ?? ''));
+
+        if (filled($studentNumber) && (
+            Student::query()->where('student_number', $studentNumber)->exists()
+            || AccountRequest::query()
+                ->where('student_number', $studentNumber)
+                ->whereIn('status', $activeRequestStatuses)
+                ->exists()
+        )) {
+            $errors['student_number'] = 'NIM sudah pernah terdaftar atau sedang menunggu review.';
+        }
+
+        $lecturerNumber = trim((string) ($data['lecturer_number'] ?? ''));
+
+        if (filled($lecturerNumber) && (
+            Lecturer::query()->where('lecturer_number', $lecturerNumber)->exists()
+            || AccountRequest::query()
+                ->where('lecturer_number', $lecturerNumber)
+                ->whereIn('status', $activeRequestStatuses)
+                ->exists()
+        )) {
+            $errors['lecturer_number'] = 'Nomor utama dosen sudah pernah terdaftar atau sedang menunggu review.';
+        }
+
+        $employeeNumber = trim((string) ($data['employee_number'] ?? ''));
+
+        if (filled($employeeNumber) && (
+            Employee::query()->where('employee_number', $employeeNumber)->exists()
+            || AccountRequest::query()
+                ->where('employee_number', $employeeNumber)
+                ->whereIn('status', $activeRequestStatuses)
+                ->exists()
+        )) {
+            $errors['employee_number'] = 'Nomor pegawai sudah pernah terdaftar atau sedang menunggu review.';
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
     protected function createOrUpdateProfile(AccountRequest $accountRequest): Student|Lecturer|Employee
     {
         return match ($accountRequest->request_type) {
@@ -337,9 +421,12 @@ class CoreAccountRequestService
 
     protected function createOrUpdateStudent(AccountRequest $accountRequest): Student
     {
-        $student = Student::query()->firstOrNew([
-            'student_number' => $accountRequest->student_number,
-        ]);
+        $student = Student::withTrashed()
+            ->firstOrNew(['student_number' => $accountRequest->student_number]);
+
+        if ($student->trashed()) {
+            $student->restore();
+        }
 
         $this->fillProfile($student, [
             'name' => $accountRequest->name,
@@ -357,9 +444,12 @@ class CoreAccountRequestService
 
     protected function createOrUpdateLecturer(AccountRequest $accountRequest): Lecturer
     {
-        $lecturer = Lecturer::query()->firstOrNew([
-            'lecturer_number' => $accountRequest->lecturer_number,
-        ]);
+        $lecturer = Lecturer::withTrashed()
+            ->firstOrNew(['lecturer_number' => $accountRequest->lecturer_number]);
+
+        if ($lecturer->trashed()) {
+            $lecturer->restore();
+        }
 
         $this->fillProfile($lecturer, [
             'national_id_number' => $accountRequest->identity_number,
@@ -383,9 +473,12 @@ class CoreAccountRequestService
 
     protected function createOrUpdateEmployee(AccountRequest $accountRequest): Employee
     {
-        $employee = Employee::query()->firstOrNew([
-            'employee_number' => $accountRequest->employee_number,
-        ]);
+        $employee = Employee::withTrashed()
+            ->firstOrNew(['employee_number' => $accountRequest->employee_number]);
+
+        if ($employee->trashed()) {
+            $employee->restore();
+        }
 
         $this->fillProfile($employee, [
             'national_id_number' => $accountRequest->identity_number,

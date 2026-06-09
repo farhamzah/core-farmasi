@@ -36,6 +36,8 @@ class TuConnectionReadinessTest extends TestCase
 
         $this->assertFalse($roles['complete']);
         $this->assertContains('staf-tu', $roles['missing']);
+        $this->assertContains('tendik', $roles['missing']);
+        $this->assertContains('laboran', $roles['missing']);
         $this->assertContains('penandatangan', $roles['missing']);
     }
 

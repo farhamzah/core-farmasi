@@ -86,8 +86,19 @@ class CoreProfileUserProvisioningService
 
         $context = $this->profileContext($profile);
 
-        if (! $context || filled($profile->getAttribute('user_id'))) {
-            return $profile->getAttribute('user_id') ? $profile->user : null;
+        if (! $context) {
+            return null;
+        }
+
+        if (filled($profile->getAttribute('user_id'))) {
+            $user = User::withTrashed()->find($profile->getAttribute('user_id'));
+
+            if ($user?->trashed()) {
+                $user->restore();
+                $user->forceFill(['active' => $context['active']])->saveQuietly();
+            }
+
+            return $user && ! $user->trashed() ? $user : null;
         }
 
         if (blank($context['identifier']) || blank($context['name']) || blank($context['email'])) {
@@ -102,6 +113,19 @@ class CoreProfileUserProvisioningService
 
         if ($matches->count() === 1) {
             $user = $matches->first();
+
+            if ($user->trashed()) {
+                $user->restore();
+                $user->forceFill([
+                    'name' => $context['name'],
+                    'email' => $context['email'],
+                    'username' => $context['identifier'],
+                    'identity_type' => $context['identity_type'],
+                    'identity_number' => $context['identifier'],
+                    'active' => $context['active'],
+                ])->saveQuietly();
+            }
+
             $profile->forceFill(['user_id' => $user->id])->saveQuietly();
 
             $this->log('profile.user_auto_linked', $user, $context, $profile);
@@ -146,7 +170,7 @@ class CoreProfileUserProvisioningService
 
     protected function matchingUsers(array $context)
     {
-        return User::query()
+        return User::withTrashed()
             ->where(function ($query) use ($context): void {
                 $query->where('username', $context['identifier'])
                     ->orWhere('email', $context['email'])

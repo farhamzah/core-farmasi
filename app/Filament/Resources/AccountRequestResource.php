@@ -246,7 +246,11 @@ class AccountRequestResource extends Resource
                     ->icon('heroicon-o-eye')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->visible(fn (AccountRequest $record): bool => in_array($record->status, [AccountRequest::STATUS_PENDING, AccountRequest::STATUS_CANCELLED], true))
+                    ->visible(fn (AccountRequest $record): bool => in_array($record->status, [
+                        AccountRequest::STATUS_PENDING,
+                        AccountRequest::STATUS_CANCELLED,
+                        AccountRequest::STATUS_REJECTED,
+                    ], true))
                     ->action(fn (AccountRequest $record) => self::accountRequests()->markInReview($record, Filament::auth()->user())),
                 Action::make('approveSkeleton')
                     ->label('Approve & Buat Akun')
@@ -254,7 +258,7 @@ class AccountRequestResource extends Resource
                     ->color('success')
                     ->requiresConfirmation()
                     ->modalDescription('Akun Core dan profil master akan dibuat atau ditautkan jika data lolos validasi. User App Access hanya dibuat jika aplikasi dan role permintaan tersedia dan opsi di bawah diaktifkan.')
-                    ->visible(fn (AccountRequest $record): bool => ! $record->isRejected() && blank($record->approved_user_id))
+                    ->visible(fn (AccountRequest $record): bool => blank($record->approved_user_id))
                     ->form([
                         Forms\Components\Toggle::make('create_requested_app_access')
                             ->label('Buat User App Access dari permintaan')

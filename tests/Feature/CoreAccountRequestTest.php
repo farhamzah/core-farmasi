@@ -587,6 +587,39 @@ class CoreAccountRequestTest extends TestCase
         $this->assertSame(0, UserAppAccess::count());
     }
 
+    public function test_rejected_request_can_be_approved_after_data_is_corrected(): void
+    {
+        $admin = $this->createCoreAdmin('admin-core');
+        $studyProgram = $this->createStudyProgram();
+        Role::create(['name' => 'mahasiswa', 'label' => 'Mahasiswa', 'active' => true]);
+
+        $request = AccountRequest::create([
+            'request_type' => AccountRequest::TYPE_STUDENT,
+            'name' => 'Muhamad Fajar Pahreji',
+            'email' => 'fajar.corrected@example.test',
+            'student_number' => '24416248201081',
+            'study_program_id' => $studyProgram->id,
+            'status' => AccountRequest::STATUS_REJECTED,
+            'admin_notes' => 'NIM lama bentrok, data sudah diperbaiki.',
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/account-requests')
+            ->assertOk()
+            ->assertSee('Muhamad Fajar Pahreji')
+            ->assertSee('Approve &amp; Buat Akun', false);
+
+        app(CoreAccountRequestService::class)->approveAndProvision($request, $admin, 'Data koreksi valid.');
+
+        $request->refresh();
+        $user = User::where('email', 'fajar.corrected@example.test')->firstOrFail();
+        $student = Student::where('student_number', '24416248201081')->firstOrFail();
+
+        $this->assertTrue($request->isApproved());
+        $this->assertSame($user->id, $request->approved_user_id);
+        $this->assertSame($user->id, $student->user_id);
+    }
+
     public function test_approve_skeleton_does_not_create_user_or_app_access(): void
     {
         $admin = $this->createCoreAdmin('super-admin');

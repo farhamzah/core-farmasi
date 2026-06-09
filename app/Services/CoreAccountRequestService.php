@@ -453,6 +453,12 @@ class CoreAccountRequestService
                 ->first();
         }
 
+        if (! $student && $user = $this->matchingUserForRequest($accountRequest)) {
+            $student = Student::withTrashed()
+                ->where('user_id', $user->id)
+                ->first();
+        }
+
         $student ??= new Student(['student_number' => $accountRequest->student_number]);
 
         if ($student->trashed()) {
@@ -483,6 +489,12 @@ class CoreAccountRequestService
         if (! $lecturer && filled($accountRequest->email)) {
             $lecturer = Lecturer::withTrashed()
                 ->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $accountRequest->email))])
+                ->first();
+        }
+
+        if (! $lecturer && $user = $this->matchingUserForRequest($accountRequest)) {
+            $lecturer = Lecturer::withTrashed()
+                ->where('user_id', $user->id)
                 ->first();
         }
 
@@ -518,6 +530,12 @@ class CoreAccountRequestService
         $employee = Employee::withTrashed()
             ->firstOrNew(['employee_number' => $accountRequest->employee_number]);
 
+        if (! $employee->exists && $user = $this->matchingUserForRequest($accountRequest)) {
+            $employee = Employee::withTrashed()
+                ->where('user_id', $user->id)
+                ->first() ?? $employee;
+        }
+
         if ($employee->trashed()) {
             $employee->restore();
         }
@@ -540,6 +558,32 @@ class CoreAccountRequestService
         ]);
 
         return $employee;
+    }
+
+    protected function matchingUserForRequest(AccountRequest $accountRequest): ?User
+    {
+        $email = strtolower(trim((string) $accountRequest->email));
+        $identifier = $this->identifierFor($accountRequest);
+
+        if (blank($email) && blank($identifier)) {
+            return null;
+        }
+
+        $users = User::withTrashed()
+            ->where(function ($query) use ($email, $identifier): void {
+                if (filled($email)) {
+                    $query->orWhereRaw('LOWER(TRIM(email)) = ?', [$email]);
+                }
+
+                if (filled($identifier)) {
+                    $query
+                        ->orWhere('username', $identifier)
+                        ->orWhere('identity_number', $identifier);
+                }
+            })
+            ->get();
+
+        return $users->count() === 1 ? $users->first() : null;
     }
 
     /**

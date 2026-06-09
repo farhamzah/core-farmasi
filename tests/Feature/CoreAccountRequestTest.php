@@ -474,6 +474,54 @@ class CoreAccountRequestTest extends TestCase
         ]);
     }
 
+    public function test_approve_corrected_student_request_reuses_soft_deleted_profile_by_matching_user(): void
+    {
+        $admin = $this->createCoreAdmin('admin-core');
+        $studyProgram = $this->createStudyProgram();
+        Role::create(['name' => 'mahasiswa', 'label' => 'Mahasiswa', 'active' => true]);
+
+        $user = User::factory()->create([
+            'name' => 'Fadilah Resvi Lama',
+            'email' => 'fm24.fadilahresvi@mhs.ubpkarawang.ac.id',
+            'username' => '24416248201055',
+            'identity_type' => 'student',
+            'identity_number' => '24416248201055',
+            'active' => true,
+        ]);
+        $student = Student::create([
+            'user_id' => $user->id,
+            'student_number' => '24416248200000',
+            'name' => 'Fadilah Resvi Lama',
+            'email' => 'old.fadilah@example.test',
+            'study_program_id' => $studyProgram->id,
+            'status' => 'active',
+            'active' => true,
+        ]);
+        $student->delete();
+
+        $request = AccountRequest::create([
+            'request_type' => AccountRequest::TYPE_STUDENT,
+            'name' => 'Fadilah Resvi',
+            'email' => 'fm24.fadilahresvi@mhs.ubpkarawang.ac.id',
+            'student_number' => '24416248201055',
+            'study_program_id' => $studyProgram->id,
+            'requested_role' => 'mahasiswa',
+            'status' => AccountRequest::STATUS_IN_REVIEW,
+        ]);
+
+        app(CoreAccountRequestService::class)->approveAndProvision($request, $admin, 'Data koreksi valid.');
+
+        $request->refresh();
+        $student->refresh();
+
+        $this->assertTrue($request->isApproved());
+        $this->assertSame($user->id, $request->approved_user_id);
+        $this->assertFalse($student->trashed());
+        $this->assertSame($user->id, $student->user_id);
+        $this->assertSame('24416248201055', $student->student_number);
+        $this->assertSame('fm24.fadilahresvi@mhs.ubpkarawang.ac.id', $student->email);
+    }
+
     public function test_guest_can_submit_field_supervisor_request(): void
     {
         config(['core_account.public_account_request_enabled' => true]);

@@ -127,9 +127,9 @@ class CoreProfilePortalService
     public function editableFieldsFor(User $user): array
     {
         $profileFields = [
-            'student' => $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_date', 'enrolled_at']),
-            'lecturer' => $this->existingColumns(Lecturer::class, ['email', 'phone', 'address', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']),
-            'employee' => $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']),
+            'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_date', 'enrolled_at']) : [],
+            'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'phone', 'address', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
+            'employee' => $user->employee ? $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
         ];
 
         $hasEditableLinkedProfile = collect(['student', 'lecturer', 'employee'])
@@ -195,37 +195,61 @@ class CoreProfilePortalService
         $contact = $this->contactValuesFor($user);
 
         $items = [
-            [
-                'key' => 'linked_profile',
-                'label' => 'Profil tertaut',
-                'complete' => $profiles !== [],
-                'sensitive' => false,
-            ],
-            [
-                'key' => 'email',
-                'label' => 'Email tersedia',
-                'complete' => filled($user->email) || collect($profiles)->contains(fn (array $profile): bool => filled($profile['email'] ?? null)),
-                'sensitive' => false,
-            ],
-            [
-                'key' => 'official_identifier',
-                'label' => 'Nomor identitas resmi tersedia',
-                'complete' => filled($user->identity_number) || collect($profiles)->contains(fn (array $profile): bool => filled($profile['identifier'] ?? null)),
-                'sensitive' => false,
-            ],
-            [
-                'key' => 'phone',
-                'label' => 'Telepon tersedia',
-                'complete' => filled($contact['phone']),
-                'sensitive' => false,
-            ],
-            [
-                'key' => 'address',
-                'label' => 'Alamat tersedia',
-                'complete' => filled($contact['address']),
-                'sensitive' => false,
-            ],
+            $this->completionItem('linked_profile', 'Profil resmi tertaut', $profiles !== []),
+            $this->completionItem('email', 'Email utama tersedia', filled($user->email) || collect($profiles)->contains(fn (array $profile): bool => filled($profile['email'] ?? null))),
         ];
+
+        if ($user->student) {
+            $student = $user->student;
+            $items = [
+                ...$items,
+                $this->completionItem('student_number', 'NIM tersedia', filled($student->student_number)),
+                $this->completionItem('student_program', 'Program studi tersedia', filled($student->study_program_id)),
+                $this->completionItem('student_status', 'Status mahasiswa tersedia', filled($student->status)),
+                $this->completionItem('student_birth_date', 'Tanggal lahir tersedia', filled($student->birth_date)),
+                $this->completionItem('student_phone', 'Telepon mahasiswa tersedia', filled($student->phone)),
+                $this->completionItem('student_address', 'Alamat mahasiswa tersedia', filled($student->address)),
+            ];
+
+            if (Schema::hasColumn($student->getTable(), 'enrolled_at')) {
+                $items[] = $this->completionItem('student_enrolled_at', 'Tanggal masuk tersedia', filled($student->enrolled_at));
+            }
+        } elseif ($user->lecturer) {
+            $lecturer = $user->lecturer;
+            $items = [
+                ...$items,
+                $this->completionItem('lecturer_number', 'Nomor utama dosen tersedia', filled($lecturer->lecturer_number)),
+                $this->completionItem('lecturer_nidn_or_nidk', 'NIDN atau NIDK tersedia', filled($lecturer->nidn) || filled($lecturer->nidk)),
+                $this->completionItem('lecturer_national_id', 'NIK / No. KTP tersedia', filled($lecturer->national_id_number)),
+                $this->completionItem('lecturer_nip', 'NIP tersedia jika ada', filled($lecturer->nip)),
+                $this->completionItem('lecturer_nuptk', 'NUPTK tersedia jika ada', filled($lecturer->nuptk)),
+                $this->completionItem('lecturer_birth_date', 'Tanggal lahir tersedia', filled($lecturer->birth_date)),
+                $this->completionItem('lecturer_department', 'Departemen tersedia', filled($lecturer->department_id)),
+                $this->completionItem('lecturer_phone', 'Telepon dosen tersedia', filled($lecturer->phone)),
+                $this->completionItem('lecturer_address', 'Alamat dosen tersedia', filled($lecturer->address)),
+            ];
+        } elseif ($user->employee) {
+            $employee = $user->employee;
+            $items = [
+                ...$items,
+                $this->completionItem('employee_number', 'Nomor pegawai tersedia', filled($employee->employee_number)),
+                $this->completionItem('employee_staff_type', 'Jenis tendik/staf tersedia', filled($employee->staff_type)),
+                $this->completionItem('employee_position', 'Jabatan/posisi tersedia', filled($employee->position_title)),
+                $this->completionItem('employee_national_id', 'NIK / No. KTP tersedia', filled($employee->national_id_number)),
+                $this->completionItem('employee_birth_date', 'Tanggal lahir tersedia', filled($employee->birth_date)),
+                $this->completionItem('employee_gender', 'Jenis kelamin tersedia', filled($employee->gender)),
+                $this->completionItem('employee_unit', 'Unit kerja tersedia', filled($employee->department_id) || filled($employee->study_program_id)),
+                $this->completionItem('employee_phone', 'Telepon tendik tersedia', filled($employee->phone)),
+                $this->completionItem('employee_address', 'Alamat tendik tersedia', filled($employee->address)),
+            ];
+        } else {
+            $items = [
+                ...$items,
+                $this->completionItem('official_identifier', 'Nomor identitas resmi tersedia', filled($user->identity_number)),
+                $this->completionItem('phone', 'Telepon tersedia', filled($contact['phone'])),
+                $this->completionItem('address', 'Alamat tersedia', filled($contact['address'])),
+            ];
+        }
 
         $completed = collect($items)->where('complete', true)->count();
         $total = count($items);
@@ -236,6 +260,19 @@ class CoreProfilePortalService
             'total' => $total,
             'items' => $items,
             'is_complete' => $completed === $total,
+        ];
+    }
+
+    /**
+     * @return array{key: string, label: string, complete: bool, sensitive: bool}
+     */
+    private function completionItem(string $key, string $label, bool $complete, bool $sensitive = false): array
+    {
+        return [
+            'key' => $key,
+            'label' => $label,
+            'complete' => $complete,
+            'sensitive' => $sensitive,
         ];
     }
 

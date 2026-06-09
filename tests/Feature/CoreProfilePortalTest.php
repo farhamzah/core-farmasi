@@ -655,6 +655,39 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('Catatan dosen aman.', $lecturer->notes);
     }
 
+    public function test_lecturer_profile_completion_uses_lecturer_specific_items_and_form_fields(): void
+    {
+        $user = User::factory()->create(['active' => true]);
+        $department = Department::create(['code' => 'D-FAR', 'name' => 'Departemen Farmasi', 'active' => true]);
+
+        Lecturer::create([
+            'user_id' => $user->id,
+            'lecturer_number' => '0430037804',
+            'name' => 'Dosen Lengkap',
+            'email' => 'dosen-lengkap@example.test',
+            'nidn' => '0430037804',
+            'department_id' => $department->id,
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile/edit')
+            ->assertOk()
+            ->assertSee('Profil Dosen')
+            ->assertSee('NIK / No. KTP')
+            ->assertSee('NUPTK')
+            ->assertSee('45%')
+            ->assertSee('5/11')
+            ->assertDontSee('Jenis Tendik / Staf');
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertSee('NIK / No. KTP tersedia')
+            ->assertSee('NUPTK tersedia jika ada')
+            ->assertSee('Alamat dosen tersedia');
+    }
+
     public function test_employee_can_update_safe_profile_fields_but_not_name_or_employee_number(): void
     {
         [$user, $department, $studyProgram] = $this->createAcademicUser();
@@ -701,6 +734,28 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('laboran', $employee->staff_type);
         $this->assertSame('Laboran', $employee->position_title);
         $this->assertSame('Catatan tendik aman.', $employee->notes);
+    }
+
+    public function test_employee_profile_form_shows_employee_specific_fields(): void
+    {
+        $user = User::factory()->create(['active' => true]);
+
+        Employee::create([
+            'user_id' => $user->id,
+            'employee_number' => 'EMP-EDIT-001',
+            'name' => 'Tendik Edit',
+            'email' => 'tendik-edit@example.test',
+            'staff_type' => 'staf_tu',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile/edit')
+            ->assertOk()
+            ->assertSee('Profil Tendik / Staf / Laboran')
+            ->assertSee('Jenis Tendik / Staf')
+            ->assertSee('Jabatan / Posisi')
+            ->assertDontSee('Profil Dosen');
     }
 
     public function test_profile_update_does_not_change_another_users_profile(): void

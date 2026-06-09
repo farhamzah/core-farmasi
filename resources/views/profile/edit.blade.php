@@ -9,11 +9,19 @@
 <body class="min-h-screen bg-[#f4f8ff] text-slate-950">
     @php
         $editableFields = collect($profile['editable_fields'])->flatten()->unique()->values();
+        $editableGroups = collect($profile['editable_fields'])
+            ->filter(fn ($fields) => collect($fields)->isNotEmpty());
         $hasLinkedProfile = collect($profile['profiles'] ?? [])->isNotEmpty();
         $contactTarget = $hasLinkedProfile ? 'profil resmi tertaut' : 'akun Core sementara';
         $completion = $profile['completion'];
         $contact = $profile['contact_values'];
         $editValues = $profile['edit_values'] ?? $contact;
+        $groupLabels = [
+            'student' => ['title' => 'Profil Mahasiswa', 'subtitle' => 'Data pendukung mahasiswa. NIM, nama resmi, program studi, dan status tetap diverifikasi Admin Core.'],
+            'lecturer' => ['title' => 'Profil Dosen', 'subtitle' => 'Data pendukung dosen. Nama, nomor utama, NIDN, dan NIDK tetap dikunci agar identitas resmi tidak berubah sepihak.'],
+            'employee' => ['title' => 'Profil Tendik / Staf / Laboran', 'subtitle' => 'Data pendukung kepegawaian. Nomor pegawai dan nama resmi tetap diverifikasi Admin Core.'],
+            'user' => ['title' => 'Akun Core Sementara', 'subtitle' => 'Kontak dasar disimpan di akun Core sampai profil resmi ditautkan oleh Admin Core.'],
+        ];
         $fieldLabels = [
             'email' => 'Email Profil',
             'phone' => 'Telepon',
@@ -122,46 +130,62 @@
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Form Profil</p>
                 <h2 class="mt-2 text-2xl font-black text-slate-950">Profil yang Bisa Diperbarui</h2>
 
-                <div class="mt-6 grid gap-5">
-                    @foreach ($editableFields as $field)
-                        <div>
-                            <label for="{{ $field }}" class="text-sm font-bold text-slate-800">{{ $fieldLabels[$field] ?? str($field)->replace('_', ' ')->title() }}</label>
+                <div class="mt-6 grid gap-6">
+                    @foreach ($editableGroups as $groupKey => $fields)
+                        @php
+                            $group = $groupLabels[$groupKey] ?? ['title' => str($groupKey)->replace('_', ' ')->title(), 'subtitle' => 'Field profil yang aman diperbarui mandiri.'];
+                        @endphp
 
-                            @if (array_key_exists($field, $selectOptions))
-                                <select
-                                    id="{{ $field }}"
-                                    name="{{ $field }}"
-                                    class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                                >
-                                    @foreach ($selectOptions[$field] as $value => $label)
-                                        <option value="{{ $value }}" @selected(old($field, $editValues[$field] ?? '') === $value)>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                            @elseif (in_array($field, $textareaFields, true))
-                                <textarea
-                                    id="{{ $field }}"
-                                    name="{{ $field }}"
-                                    rows="{{ $field === 'notes' ? 4 : 5 }}"
-                                    class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                                    @if ($field === 'address') autocomplete="street-address" @endif
-                                >{{ old($field, $editValues[$field] ?? '') }}</textarea>
-                            @else
-                                <input
-                                    id="{{ $field }}"
-                                    name="{{ $field }}"
-                                    type="{{ in_array($field, $dateFields, true) ? 'date' : ($field === 'email' || $field === 'alternate_email' ? 'email' : 'text') }}"
-                                    value="{{ old($field, $editValues[$field] ?? '') }}"
-                                    class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                                    @if ($field === 'phone') autocomplete="tel" @endif
-                                    @if ($field === 'email' || $field === 'alternate_email') autocomplete="email" @endif
-                                >
-                            @endif
+                        <section class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                            <div class="mb-5">
+                                <h3 class="text-base font-black text-slate-950">{{ $group['title'] }}</h3>
+                                <p class="mt-1 text-xs leading-6 text-slate-600">{{ $group['subtitle'] }}</p>
+                            </div>
 
-                            <p class="mt-2 text-xs font-medium text-slate-500">Disimpan ke {{ $contactTarget }}.</p>
-                        </div>
+                            <div class="grid gap-5">
+                                @foreach ($fields as $field)
+                                    @php($inputId = $groupKey.'-'.$field)
+                                    <div>
+                                        <label for="{{ $inputId }}" class="text-sm font-bold text-slate-800">{{ $fieldLabels[$field] ?? str($field)->replace('_', ' ')->title() }}</label>
+
+                                        @if (array_key_exists($field, $selectOptions))
+                                            <select
+                                                id="{{ $inputId }}"
+                                                name="{{ $field }}"
+                                                class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                                            >
+                                                @foreach ($selectOptions[$field] as $value => $label)
+                                                    <option value="{{ $value }}" @selected(old($field, $editValues[$field] ?? '') === $value)>{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        @elseif (in_array($field, $textareaFields, true))
+                                            <textarea
+                                                id="{{ $inputId }}"
+                                                name="{{ $field }}"
+                                                rows="{{ $field === 'notes' ? 4 : 5 }}"
+                                                class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                                                @if ($field === 'address') autocomplete="street-address" @endif
+                                            >{{ old($field, $editValues[$field] ?? '') }}</textarea>
+                                        @else
+                                            <input
+                                                id="{{ $inputId }}"
+                                                name="{{ $field }}"
+                                                type="{{ in_array($field, $dateFields, true) ? 'date' : ($field === 'email' || $field === 'alternate_email' ? 'email' : 'text') }}"
+                                                value="{{ old($field, $editValues[$field] ?? '') }}"
+                                                class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                                                @if ($field === 'phone') autocomplete="tel" @endif
+                                                @if ($field === 'email' || $field === 'alternate_email') autocomplete="email" @endif
+                                            >
+                                        @endif
+
+                                        <p class="mt-2 text-xs font-medium text-slate-500">Disimpan ke {{ $group['title'] }}.</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </section>
                     @endforeach
 
-                    @if ($editableFields->isEmpty())
+                    @if ($editableGroups->isEmpty())
                         <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
                             Belum ada field profil yang tersedia untuk diedit. Anda tetap bisa melihat profil atau mengganti password.
                         </div>

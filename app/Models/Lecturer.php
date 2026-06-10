@@ -21,6 +21,7 @@ class Lecturer extends Model
         'nuptk',
         'name',
         'email',
+        'birth_place',
         'birth_date',
         'department_id',
         'study_program_id',

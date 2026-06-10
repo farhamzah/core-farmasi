@@ -68,39 +68,72 @@
                 <div class="mt-6 grid gap-5">
                     <div>
                         <label for="current_password" class="text-sm font-bold text-slate-800">Password Saat Ini</label>
-                        <input
-                            id="current_password"
-                            name="current_password"
-                            type="password"
-                            autocomplete="current-password"
-                            required
-                            class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                        >
+                        <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-100">
+                            <input
+                                id="current_password"
+                                name="current_password"
+                                type="password"
+                                autocomplete="current-password"
+                                required
+                                data-password-toggle-target
+                                class="min-w-0 flex-1 border-0 bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-0"
+                            >
+                            <button
+                                type="button"
+                                data-password-toggle
+                                data-target="current_password"
+                                class="shrink-0 border-l border-slate-200 px-4 text-sm font-bold text-blue-700 transition hover:bg-blue-50 focus:outline-none"
+                                aria-controls="current_password"
+                                aria-label="Lihat password saat ini"
+                            >Lihat</button>
+                        </div>
                     </div>
 
                     <div>
                         <label for="password" class="text-sm font-bold text-slate-800">Password Baru</label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            autocomplete="new-password"
-                            required
-                            class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                        >
+                        <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-100">
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                autocomplete="new-password"
+                                required
+                                data-password-toggle-target
+                                class="min-w-0 flex-1 border-0 bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-0"
+                            >
+                            <button
+                                type="button"
+                                data-password-toggle
+                                data-target="password"
+                                class="shrink-0 border-l border-slate-200 px-4 text-sm font-bold text-blue-700 transition hover:bg-blue-50 focus:outline-none"
+                                aria-controls="password"
+                                aria-label="Lihat password baru"
+                            >Lihat</button>
+                        </div>
                         <p class="mt-2 text-xs font-medium text-slate-500">Gunakan minimal 8 karakter. Hindari nama, tanggal lahir, atau pola yang mudah ditebak.</p>
                     </div>
 
                     <div>
                         <label for="password_confirmation" class="text-sm font-bold text-slate-800">Konfirmasi Password Baru</label>
-                        <input
-                            id="password_confirmation"
-                            name="password_confirmation"
-                            type="password"
-                            autocomplete="new-password"
-                            required
-                            class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                        >
+                        <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-100">
+                            <input
+                                id="password_confirmation"
+                                name="password_confirmation"
+                                type="password"
+                                autocomplete="new-password"
+                                required
+                                data-password-toggle-target
+                                class="min-w-0 flex-1 border-0 bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-0"
+                            >
+                            <button
+                                type="button"
+                                data-password-toggle
+                                data-target="password_confirmation"
+                                class="shrink-0 border-l border-slate-200 px-4 text-sm font-bold text-blue-700 transition hover:bg-blue-50 focus:outline-none"
+                                aria-controls="password_confirmation"
+                                aria-label="Lihat konfirmasi password baru"
+                            >Lihat</button>
+                        </div>
                     </div>
                 </div>
 
@@ -134,5 +167,24 @@
             </aside>
         </section>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const input = document.getElementById(button.dataset.target);
+
+                    if (! input) {
+                        return;
+                    }
+
+                    const isHidden = input.type === 'password';
+                    input.type = isHidden ? 'text' : 'password';
+                    button.textContent = isHidden ? 'Sembunyikan' : 'Lihat';
+                    button.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Lihat password');
+                    input.focus();
+                });
+            });
+        });
+    </script>
 </body>
 </html>

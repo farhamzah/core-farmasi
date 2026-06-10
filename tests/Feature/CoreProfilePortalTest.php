@@ -11,8 +11,10 @@ use App\Models\StudyProgram;
 use App\Models\User;
 use App\Models\UserActivityLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CoreProfilePortalTest extends TestCase
@@ -135,6 +137,8 @@ class CoreProfilePortalTest extends TestCase
             ->get('/profile/change-password')
             ->assertOk()
             ->assertSee('Ganti Password')
+            ->assertSee('data-password-toggle', false)
+            ->assertSee('Lihat')
             ->assertSee('Password ini berlaku untuk aplikasi Farmasi yang menggunakan verifikasi Core.')
             ->assertDontSee($user->password)
             ->assertDontSee('remember_token')
@@ -305,7 +309,8 @@ class CoreProfilePortalTest extends TestCase
             ->assertOk()
             ->assertSee('Lihat Profil')
             ->assertSee('Ganti Password')
-            ->assertSee('Simpan Kontak')
+            ->assertSee('Simpan Profil')
+            ->assertSee('Pilih Foto')
             ->assertSee('Password dapat diganti kapan saja');
     }
 
@@ -345,6 +350,39 @@ class CoreProfilePortalTest extends TestCase
             ->assertOk()
             ->assertSee('081234500001')
             ->assertSee('Alamat akun Core');
+    }
+
+    public function test_user_can_upload_profile_photo_from_profile_portal(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => false,
+            'profile_photo_path' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->put('/profile', [
+                'phone' => '081234567890',
+                'address' => 'Alamat Foto',
+                'profile_photo' => UploadedFile::fake()->image('profile.jpg', 320, 320),
+            ])
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertNotNull($user->profile_photo_path);
+        Storage::disk('public')->assertExists($user->profile_photo_path);
+        $this->assertDatabaseHas('user_activity_logs', [
+            'user_id' => $user->id,
+            'action' => 'profile.photo_updated',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertSee('/storage/'.$user->profile_photo_path, false);
     }
 
     public function test_profile_page_shows_student_summary_with_safe_fields(): void
@@ -491,7 +529,9 @@ class CoreProfilePortalTest extends TestCase
     {
         $this->assertTrue(Schema::hasColumn('students', 'phone'));
         $this->assertTrue(Schema::hasColumn('students', 'address'));
+        $this->assertTrue(Schema::hasColumn('students', 'birth_place'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'address'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'birth_place'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'national_id_number'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'nip'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'nidn'));
@@ -500,6 +540,8 @@ class CoreProfilePortalTest extends TestCase
         $this->assertTrue(Schema::hasColumn('users', 'phone'));
         $this->assertTrue(Schema::hasColumn('users', 'address'));
         $this->assertTrue(Schema::hasColumn('users', 'alternate_email'));
+        $this->assertTrue(Schema::hasColumn('users', 'profile_photo_path'));
+        $this->assertTrue(Schema::hasColumn('employees', 'birth_place'));
     }
 
     public function test_student_can_update_phone_and_address(): void
@@ -557,6 +599,7 @@ class CoreProfilePortalTest extends TestCase
             'email' => 'student-safe-new@example.test',
             'phone' => '08122223333',
             'address' => 'Alamat Baru',
+            'birth_place' => 'Karawang',
             'birth_date' => '2002-01-15',
             'enrolled_at' => '2024-09-01',
         ])->assertRedirect('/profile');
@@ -568,6 +611,7 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('student-safe-new@example.test', $student->email);
         $this->assertSame('08122223333', $student->phone);
         $this->assertSame('Alamat Baru', $student->address);
+        $this->assertSame('Karawang', $student->birth_place);
         $this->assertSame('2002-01-15', $student->birth_date?->toDateString());
         $this->assertSame('2024-09-01', $student->enrolled_at?->toDateString());
     }
@@ -632,6 +676,7 @@ class CoreProfilePortalTest extends TestCase
             'email' => 'lecturer-safe-new@example.test',
             'phone' => '08244445555',
             'address' => 'Alamat Baru Dosen',
+            'birth_place' => 'Bandung',
             'birth_date' => '1988-01-01',
             'national_id_number' => '3215000000000099',
             'nip' => '198801012020129999',
@@ -648,6 +693,7 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('lecturer-safe-new@example.test', $lecturer->email);
         $this->assertSame('08244445555', $lecturer->phone);
         $this->assertSame('Alamat Baru Dosen', $lecturer->address);
+        $this->assertSame('Bandung', $lecturer->birth_place);
         $this->assertSame('1988-01-01', $lecturer->birth_date?->toDateString());
         $this->assertSame('3215000000000099', $lecturer->national_id_number);
         $this->assertSame('198801012020129999', $lecturer->nip);
@@ -676,14 +722,16 @@ class CoreProfilePortalTest extends TestCase
             ->assertSee('Profil Dosen')
             ->assertSee('NIK / No. KTP')
             ->assertSee('NUPTK')
-            ->assertSee('45%')
-            ->assertSee('5/11')
+            ->assertSee('38%')
+            ->assertSee('5/13')
             ->assertDontSee('Jenis Tendik / Staf');
 
         $this->actingAs($user)
             ->get('/profile')
             ->assertOk()
             ->assertSee('NIK / No. KTP tersedia')
+            ->assertSee('Foto profil tersedia')
+            ->assertSee('Tempat lahir tersedia')
             ->assertSee('NUPTK tersedia jika ada')
             ->assertSee('Alamat dosen tersedia');
     }
@@ -713,6 +761,7 @@ class CoreProfilePortalTest extends TestCase
             'email' => 'employee-safe-new@example.test',
             'phone' => '08355556666',
             'address' => 'Alamat Baru Tendik',
+            'birth_place' => 'Bekasi',
             'birth_date' => '1990-05-10',
             'gender' => 'female',
             'national_id_number' => '3215000000000098',
@@ -728,6 +777,7 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('employee-safe-new@example.test', $employee->email);
         $this->assertSame('08355556666', $employee->phone);
         $this->assertSame('Alamat Baru Tendik', $employee->address);
+        $this->assertSame('Bekasi', $employee->birth_place);
         $this->assertSame('1990-05-10', $employee->birth_date?->toDateString());
         $this->assertSame('female', $employee->gender);
         $this->assertSame('3215000000000098', $employee->national_id_number);

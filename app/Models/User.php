@@ -33,6 +33,7 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'address',
         'alternate_email',
+        'profile_photo_path',
         'username',
         'identity_type',
         'identity_number',

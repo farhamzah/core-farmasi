@@ -9,6 +9,7 @@ use App\Models\Lecturer;
 use App\Models\Student;
 use App\Models\StudyProgram;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class CoreApiResponseSanitizer
 {
@@ -21,6 +22,7 @@ class CoreApiResponseSanitizer
             'username' => $user->username,
             'identity_type' => $user->identity_type,
             'identity_number' => $user->identity_number,
+            'profile_photo_url' => $this->profilePhotoUrl($user),
             'active' => $user->active,
             'roles' => $user->roles->pluck('name')->values()->all(),
             'created_at' => $user->created_at?->toISOString(),
@@ -52,6 +54,7 @@ class CoreApiResponseSanitizer
             'email' => $student->email,
             'status' => $student->status,
             'active' => $student->active,
+            'birth_place' => $student->birth_place,
             'enrolled_at' => $student->enrolled_at?->toDateString(),
             'phone' => null,
             'study_program_id' => $student->study_program_id,
@@ -81,6 +84,7 @@ class CoreApiResponseSanitizer
             'name' => $lecturer->name,
             'email' => $lecturer->email,
             'phone' => $lecturer->phone,
+            'birth_place' => $lecturer->birth_place,
             'active' => $lecturer->active,
             'department_id' => $lecturer->department_id,
             'study_program_id' => $lecturer->study_program_id,
@@ -112,6 +116,7 @@ class CoreApiResponseSanitizer
             'position_title' => $employee->position_title,
             'email' => $employee->email,
             'phone' => $employee->phone,
+            'birth_place' => $employee->birth_place,
             'status' => $employee->status,
             'department_id' => $employee->department_id,
             'study_program_id' => $employee->study_program_id,
@@ -199,7 +204,15 @@ class CoreApiResponseSanitizer
             'username' => $user->username,
             'identity_type' => $user->identity_type,
             'identity_number' => $user->identity_number,
+            'profile_photo_url' => $this->profilePhotoUrl($user),
             'active' => $user->active,
         ];
+    }
+
+    private function profilePhotoUrl(User $user): ?string
+    {
+        return $user->profile_photo_path
+            ? Storage::disk('public')->url($user->profile_photo_path)
+            : null;
     }
 }

@@ -8,7 +8,9 @@ use App\Models\Student;
 use App\Models\User;
 use App\Models\UserActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class CoreProfilePortalService
 {
@@ -38,6 +40,8 @@ class CoreProfilePortalService
                 'email' => $user->email,
                 'identity_type' => $user->identity_type,
                 'identity_number_masked' => $this->maskIdentifier($user->identity_number),
+                'profile_photo_path' => $this->valueIfColumnExists($user, 'profile_photo_path'),
+                'profile_photo_url' => $this->profilePhotoUrl($user),
                 'active' => $user->active,
             ],
             'profiles' => $profiles,
@@ -122,14 +126,46 @@ class CoreProfilePortalService
     }
 
     /**
+     * @return array{updated: array<int, string>}
+     */
+    public function storeProfilePhoto(User $user, UploadedFile $photo, Request $request): array
+    {
+        if (! Schema::hasColumn($user->getTable(), 'profile_photo_path')) {
+            return ['updated' => []];
+        }
+
+        $oldPath = $user->profile_photo_path;
+        $path = $photo->store('profile-photos', 'public');
+
+        $user->forceFill(['profile_photo_path' => $path])->save();
+
+        if ($oldPath && str_starts_with((string) $oldPath, 'profile-photos/')) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        UserActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'profile.photo_updated',
+            'ip_address' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            'meta' => [
+                'profile_user_id' => $user->id,
+                'changed_fields' => ['profile_photo_path'],
+            ],
+        ]);
+
+        return ['updated' => ['profile_photo_path']];
+    }
+
+    /**
      * @return array<string, array<int, string>>
      */
     public function editableFieldsFor(User $user): array
     {
         $profileFields = [
-            'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_date', 'enrolled_at']) : [],
-            'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'phone', 'address', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
-            'employee' => $user->employee ? $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
+            'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
+            'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
+            'employee' => $user->employee ? $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
         ];
 
         $hasEditableLinkedProfile = collect(['student', 'lecturer', 'employee'])
@@ -196,6 +232,7 @@ class CoreProfilePortalService
 
         $items = [
             $this->completionItem('linked_profile', 'Profil resmi tertaut', $profiles !== []),
+            $this->completionItem('profile_photo', 'Foto profil tersedia', filled($this->valueIfColumnExists($user, 'profile_photo_path'))),
             $this->completionItem('email', 'Email utama tersedia', filled($user->email) || collect($profiles)->contains(fn (array $profile): bool => filled($profile['email'] ?? null))),
         ];
 
@@ -206,6 +243,7 @@ class CoreProfilePortalService
                 $this->completionItem('student_number', 'NIM tersedia', filled($student->student_number)),
                 $this->completionItem('student_program', 'Program studi tersedia', filled($student->study_program_id)),
                 $this->completionItem('student_status', 'Status mahasiswa tersedia', filled($student->status)),
+                $this->completionItem('student_birth_place', 'Tempat lahir tersedia', filled($this->valueIfColumnExists($student, 'birth_place'))),
                 $this->completionItem('student_birth_date', 'Tanggal lahir tersedia', filled($student->birth_date)),
                 $this->completionItem('student_phone', 'Telepon mahasiswa tersedia', filled($student->phone)),
                 $this->completionItem('student_address', 'Alamat mahasiswa tersedia', filled($student->address)),
@@ -223,6 +261,7 @@ class CoreProfilePortalService
                 $this->completionItem('lecturer_national_id', 'NIK / No. KTP tersedia', filled($lecturer->national_id_number)),
                 $this->completionItem('lecturer_nip', 'NIP tersedia jika ada', filled($lecturer->nip)),
                 $this->completionItem('lecturer_nuptk', 'NUPTK tersedia jika ada', filled($lecturer->nuptk)),
+                $this->completionItem('lecturer_birth_place', 'Tempat lahir tersedia', filled($this->valueIfColumnExists($lecturer, 'birth_place'))),
                 $this->completionItem('lecturer_birth_date', 'Tanggal lahir tersedia', filled($lecturer->birth_date)),
                 $this->completionItem('lecturer_department', 'Departemen tersedia', filled($lecturer->department_id)),
                 $this->completionItem('lecturer_phone', 'Telepon dosen tersedia', filled($lecturer->phone)),
@@ -236,6 +275,7 @@ class CoreProfilePortalService
                 $this->completionItem('employee_staff_type', 'Jenis tendik/staf tersedia', filled($employee->staff_type)),
                 $this->completionItem('employee_position', 'Jabatan/posisi tersedia', filled($employee->position_title)),
                 $this->completionItem('employee_national_id', 'NIK / No. KTP tersedia', filled($employee->national_id_number)),
+                $this->completionItem('employee_birth_place', 'Tempat lahir tersedia', filled($this->valueIfColumnExists($employee, 'birth_place'))),
                 $this->completionItem('employee_birth_date', 'Tanggal lahir tersedia', filled($employee->birth_date)),
                 $this->completionItem('employee_gender', 'Jenis kelamin tersedia', filled($employee->gender)),
                 $this->completionItem('employee_unit', 'Unit kerja tersedia', filled($employee->department_id) || filled($employee->study_program_id)),
@@ -306,6 +346,7 @@ class CoreProfilePortalService
                     'Program Studi' => $student->studyProgram?->name,
                     'Fakultas/Departemen' => $student->studyProgram?->department?->name,
                     'Status Mahasiswa' => $student->status,
+                    'Tempat Lahir' => $this->valueIfColumnExists($student, 'birth_place'),
                     'Tanggal Lahir' => filled($student->birth_date) ? 'Tercatat' : 'Belum tercatat',
                 ],
                 'Kontak' => [
@@ -360,6 +401,7 @@ class CoreProfilePortalService
                     'Program Studi' => $lecturer->studyProgram?->name,
                     'Departemen' => $lecturer->department?->name,
                     'Status Dosen' => $lecturer->active ? 'active' : 'inactive',
+                    'Tempat Lahir' => $this->valueIfColumnExists($lecturer, 'birth_place'),
                     'Tanggal Lahir' => filled($lecturer->birth_date) ? 'Tercatat' : 'Belum tercatat',
                 ],
                 'Kontak' => [
@@ -405,6 +447,7 @@ class CoreProfilePortalService
                     'Jenis Staf' => $employee->staff_type,
                     'Jabatan/Posisi' => $employee->position_title,
                     'NIK / No. KTP' => $this->maskIdentifier($employee->national_id_number),
+                    'Tempat Lahir' => $this->valueIfColumnExists($employee, 'birth_place'),
                     'Status' => $employee->status,
                 ],
                 'Unit Kerja' => [
@@ -426,9 +469,9 @@ class CoreProfilePortalService
     private function profileStandards(): array
     {
         return [
-            'Mahasiswa' => ['NIM', 'nama resmi', 'program studi', 'status akademik', 'kontak aktif', 'alamat'],
-            'Dosen' => ['NIK/KTP', 'NIDN/NIDK', 'NIP bila ASN', 'NUPTK', 'homebase/unit', 'jabatan/status', 'kontak aktif'],
-            'Tendik' => ['NIK/KTP', 'nomor pegawai', 'NUPTK bila ada', 'unit kerja', 'jabatan/posisi', 'kontak aktif'],
+            'Mahasiswa' => ['NIM', 'nama resmi', 'program studi', 'tempat/tanggal lahir', 'kontak aktif', 'alamat', 'foto profil'],
+            'Dosen' => ['NIK/KTP', 'NIDN/NIDK', 'NIP bila ASN', 'NUPTK', 'homebase/unit', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
+            'Tendik' => ['NIK/KTP', 'nomor pegawai', 'NUPTK bila ada', 'unit kerja', 'jabatan/posisi', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
         ];
     }
 
@@ -483,6 +526,15 @@ class CoreProfilePortalService
         }
 
         return $value === null ? null : (string) $value;
+    }
+
+    private function profilePhotoUrl(User $user): ?string
+    {
+        if (! Schema::hasColumn($user->getTable(), 'profile_photo_path') || ! $user->profile_photo_path) {
+            return null;
+        }
+
+        return '/storage/'.ltrim((string) $user->profile_photo_path, '/');
     }
 
     private function maskIdentifier(?string $value): ?string

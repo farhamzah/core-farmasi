@@ -6,6 +6,7 @@ use App\Services\CoreProfilePortalService;
 use App\Models\UserActivityLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -117,6 +118,8 @@ class ProfilePortalController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:1000'],
             'alternate_email' => ['nullable', 'email', 'max:255'],
+            'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'birth_place' => ['nullable', 'string', 'max:255'],
             'birth_date' => ['nullable', 'date'],
             'enrolled_at' => ['nullable', 'date'],
             'national_id_number' => ['nullable', 'string', 'max:255'],
@@ -128,9 +131,15 @@ class ProfilePortalController extends Controller
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        $result = $this->profiles->updateSafeContactFields($request->user(), $validated, $request);
+        $profilePhoto = $validated['profile_photo'] ?? null;
+        unset($validated['profile_photo']);
 
-        if ($result['updated'] === []) {
+        $result = $this->profiles->updateSafeContactFields($request->user(), $validated, $request);
+        $photoResult = $profilePhoto instanceof UploadedFile
+            ? $this->profiles->storeProfilePhoto($request->user(), $profilePhoto, $request)
+            : ['updated' => []];
+
+        if ($result['updated'] === [] && $photoResult['updated'] === []) {
             return redirect()
                 ->route('profile.show')
                 ->with('status', 'Tidak ada perubahan kontak yang perlu disimpan.');
@@ -138,6 +147,6 @@ class ProfilePortalController extends Controller
 
         return redirect()
             ->route('profile.show')
-            ->with('status', 'Profil kontak berhasil diperbarui.');
+            ->with('status', 'Profil berhasil diperbarui.');
     }
 }

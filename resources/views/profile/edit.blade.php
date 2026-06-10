@@ -16,6 +16,8 @@
         $completion = $profile['completion'];
         $contact = $profile['contact_values'];
         $editValues = $profile['edit_values'] ?? $contact;
+        $profilePhotoUrl = $profile['user']['profile_photo_url'] ?? null;
+        $initial = strtoupper(substr((string) ($profile['user']['name'] ?? 'U'), 0, 1));
         $groupLabels = [
             'student' => ['title' => 'Profil Mahasiswa', 'subtitle' => 'Data pendukung mahasiswa. NIM, nama resmi, program studi, dan status tetap diverifikasi Admin Core.'],
             'lecturer' => ['title' => 'Profil Dosen', 'subtitle' => 'Data pendukung dosen. Nama, nomor utama, NIDN, dan NIDK tetap dikunci agar identitas resmi tidak berubah sepihak.'],
@@ -27,6 +29,7 @@
             'phone' => 'Telepon',
             'address' => 'Alamat',
             'alternate_email' => 'Email Alternatif',
+            'birth_place' => 'Tempat Lahir',
             'birth_date' => 'Tanggal Lahir',
             'enrolled_at' => 'Tanggal Masuk',
             'national_id_number' => 'NIK / No. KTP',
@@ -122,7 +125,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('profile.update') }}" class="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="grid gap-6 lg:grid-cols-[1fr_320px]">
             @csrf
             @method('PUT')
 
@@ -131,6 +134,38 @@
                 <h2 class="mt-2 text-2xl font-black text-slate-950">Profil yang Bisa Diperbarui</h2>
 
                 <div class="mt-6 grid gap-6">
+                    <section class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 sm:p-5">
+                        <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
+                            <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-blue-100 bg-white text-2xl font-black text-blue-700 shadow-sm" data-profile-photo-preview-frame>
+                                @if ($profilePhotoUrl)
+                                    <img src="{{ $profilePhotoUrl }}" alt="Foto profil saat ini" class="h-full w-full object-cover" data-profile-photo-preview>
+                                @else
+                                    <span data-profile-photo-initial>{{ $initial }}</span>
+                                    <img src="" alt="Preview foto profil" class="hidden h-full w-full object-cover" data-profile-photo-preview>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-base font-black text-slate-950">Foto Profil</h3>
+                                <p class="mt-1 text-xs leading-6 text-slate-600">Dipakai sebagai foto identitas umum untuk aplikasi Farmasi yang membaca Core. Gunakan JPG, PNG, atau WebP maksimal 2MB.</p>
+                                <label for="profile_photo" class="mt-3 inline-flex cursor-pointer items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700">
+                                    Pilih Foto
+                                </label>
+                                <input
+                                    id="profile_photo"
+                                    name="profile_photo"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    class="sr-only"
+                                    data-profile-photo-input
+                                >
+                                <p class="mt-3 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-blue-100" data-profile-photo-status>
+                                    {{ $profilePhotoUrl ? 'Foto saat ini akan tetap dipakai jika tidak memilih file baru.' : 'Belum ada file foto dipilih.' }}
+                                </p>
+                                <p class="mt-2 text-xs font-medium text-slate-500">Setelah memilih foto, klik tombol Simpan Profil di bawah.</p>
+                            </div>
+                        </div>
+                    </section>
+
                     @foreach ($editableGroups as $groupKey => $fields)
                         @php
                             $group = $groupLabels[$groupKey] ?? ['title' => str($groupKey)->replace('_', ' ')->title(), 'subtitle' => 'Field profil yang aman diperbarui mandiri.'];
@@ -197,7 +232,7 @@
                         Batal
                     </a>
                     <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
-                        Simpan Kontak
+                        Simpan Profil
                     </button>
                 </div>
             </section>
@@ -235,5 +270,36 @@
             </aside>
         </form>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.querySelector('[data-profile-photo-input]');
+            const preview = document.querySelector('[data-profile-photo-preview]');
+            const initial = document.querySelector('[data-profile-photo-initial]');
+            const status = document.querySelector('[data-profile-photo-status]');
+
+            input?.addEventListener('change', () => {
+                const file = input.files?.[0];
+
+                if (! file) {
+                    if (status) {
+                        status.textContent = 'Belum ada file foto dipilih.';
+                    }
+
+                    return;
+                }
+
+                if (status) {
+                    const sizeKb = Math.round(file.size / 1024);
+                    status.textContent = `${file.name} dipilih (${sizeKb} KB). Klik Simpan Profil untuk mengunggah.`;
+                }
+
+                if (preview && file.type.startsWith('image/')) {
+                    preview.src = URL.createObjectURL(file);
+                    preview.classList.remove('hidden');
+                    initial?.classList.add('hidden');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

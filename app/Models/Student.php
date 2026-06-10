@@ -18,6 +18,7 @@ class Student extends Model
         'email',
         'phone',
         'address',
+        'birth_place',
         'birth_date',
         'study_program_id',
         'enrolled_at',

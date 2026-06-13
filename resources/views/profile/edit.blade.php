@@ -5,6 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Edit Kontak - Core Farmasi UBP</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        .core-profile-photo-preview {
+            align-items: center;
+            aspect-ratio: 1 / 1;
+            display: inline-flex;
+            flex: 0 0 auto;
+            height: 5rem;
+            justify-content: center;
+            max-height: 5rem;
+            max-width: 5rem;
+            min-height: 5rem;
+            min-width: 5rem;
+            overflow: hidden;
+            width: 5rem;
+        }
+
+        .core-profile-photo-preview > img {
+            display: block;
+            height: 100%;
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: cover;
+            width: 100%;
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-[#f4f8ff] text-slate-950">
     @php
@@ -136,12 +161,12 @@
                 <div class="mt-6 grid gap-6">
                     <section class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 sm:p-5">
                         <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
-                            <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-blue-100 bg-white text-2xl font-black text-blue-700 shadow-sm" data-profile-photo-preview-frame>
+                            <div class="core-profile-photo-preview rounded-3xl border border-blue-100 bg-white text-2xl font-black text-blue-700 shadow-sm" data-profile-photo-preview-frame>
                                 @if ($profilePhotoUrl)
-                                    <img src="{{ $profilePhotoUrl }}" alt="Foto profil saat ini" class="h-full w-full object-cover" data-profile-photo-preview>
+                                    <img src="{{ $profilePhotoUrl }}" alt="Foto profil saat ini" data-profile-photo-preview>
                                 @else
                                     <span data-profile-photo-initial>{{ $initial }}</span>
-                                    <img src="" alt="Preview foto profil" class="hidden h-full w-full object-cover" data-profile-photo-preview>
+                                    <img src="" alt="Preview foto profil" class="hidden" data-profile-photo-preview>
                                 @endif
                             </div>
                             <div class="min-w-0 flex-1">

@@ -382,7 +382,14 @@ class CoreProfilePortalTest extends TestCase
         $this->actingAs($user)
             ->get('/profile')
             ->assertOk()
-            ->assertSee('/storage/'.$user->profile_photo_path, false);
+            ->assertSee('/storage/'.$user->profile_photo_path, false)
+            ->assertSee('core-profile-avatar', false);
+
+        $this->actingAs($user)
+            ->get('/profile/edit')
+            ->assertOk()
+            ->assertSee('/storage/'.$user->profile_photo_path, false)
+            ->assertSee('core-profile-photo-preview', false);
     }
 
     public function test_profile_page_shows_student_summary_with_safe_fields(): void

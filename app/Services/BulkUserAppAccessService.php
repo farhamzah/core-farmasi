@@ -18,7 +18,9 @@ class BulkUserAppAccessService
         'global_role' => 'Role Global',
         'student_nim_prefix' => 'Prefix NIM Mahasiswa',
         'student_study_program' => 'Program Studi Mahasiswa',
+        'lecturer_nidn_prefix' => 'Prefix NIDN Dosen',
         'lecturer_department' => 'Departemen Dosen',
+        'employee_staff_type' => 'Jenis Tendik / Staf / Laboran',
         'employee_department' => 'Departemen Tendik / Staf',
     ];
 
@@ -32,7 +34,7 @@ class BulkUserAppAccessService
         }
 
         $users = $this->eligibleUsersQuery($filters)
-            ->with(['roles:id,name,label', 'student:id,user_id,student_number,study_program_id', 'lecturer:id,user_id,lecturer_number,department_id', 'employee:id,user_id,employee_number,department_id'])
+            ->with(['roles:id,name,label', 'student:id,user_id,student_number,study_program_id', 'lecturer:id,user_id,lecturer_number,nidn,department_id', 'employee:id,user_id,employee_number,staff_type,department_id'])
             ->orderBy('name')
             ->get();
 
@@ -133,7 +135,9 @@ class BulkUserAppAccessService
             ->when($filters['target_scope'] === 'global_role', fn (Builder $query): Builder => $query->whereHas('roles', fn (Builder $roleQuery): Builder => $roleQuery->where('name', $filters['target_value'])))
             ->when($filters['target_scope'] === 'student_nim_prefix', fn (Builder $query): Builder => $query->whereHas('student', fn (Builder $studentQuery): Builder => $studentQuery->where('student_number', 'like', $filters['target_value'].'%')))
             ->when($filters['target_scope'] === 'student_study_program', fn (Builder $query): Builder => $query->whereHas('student', fn (Builder $studentQuery): Builder => $studentQuery->where('study_program_id', $filters['target_value'])))
+            ->when($filters['target_scope'] === 'lecturer_nidn_prefix', fn (Builder $query): Builder => $query->whereHas('lecturer', fn (Builder $lecturerQuery): Builder => $lecturerQuery->where('nidn', 'like', $filters['target_value'].'%')))
             ->when($filters['target_scope'] === 'lecturer_department', fn (Builder $query): Builder => $query->whereHas('lecturer', fn (Builder $lecturerQuery): Builder => $lecturerQuery->where('department_id', $filters['target_value'])))
+            ->when($filters['target_scope'] === 'employee_staff_type', fn (Builder $query): Builder => $query->whereHas('employee', fn (Builder $employeeQuery): Builder => $employeeQuery->where('staff_type', $filters['target_value'])))
             ->when($filters['target_scope'] === 'employee_department', fn (Builder $query): Builder => $query->whereHas('employee', fn (Builder $employeeQuery): Builder => $employeeQuery->where('department_id', $filters['target_value'])));
     }
 

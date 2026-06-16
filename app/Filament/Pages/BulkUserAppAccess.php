@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\Role;
 use App\Models\StudyProgram;
 use App\Services\BulkUserAppAccessService;
@@ -59,7 +60,7 @@ class BulkUserAppAccess extends Page
 
     public function getSubheading(): string | Htmlable | null
     {
-        return 'Berikan akses aplikasi secara kolektif berdasarkan jenis akun, role global, prefix NIM, prodi, atau departemen.';
+        return 'Berikan akses aplikasi secara kolektif berdasarkan jenis akun, role global, prefix NIM/NIDN, prodi, departemen, atau jenis tendik.';
     }
 
     public function updatedAppCode(): void
@@ -184,6 +185,14 @@ class BulkUserAppAccess extends Page
                 ->orderBy('name')
                 ->pluck('name', 'id')
                 ->all(),
+            'employee_staff_type' => Employee::query()
+                ->whereNotNull('staff_type')
+                ->where('staff_type', '!=', '')
+                ->distinct()
+                ->orderBy('staff_type')
+                ->pluck('staff_type', 'staff_type')
+                ->mapWithKeys(fn (string $staffType): array => [$staffType => str($staffType)->replace(['_', '-'], ' ')->title()->toString()])
+                ->all(),
             'lecturer_department', 'employee_department' => Department::query()
                 ->where('active', true)
                 ->orderBy('name')
@@ -195,7 +204,25 @@ class BulkUserAppAccess extends Page
 
     public function targetValueIsFreeText(): bool
     {
-        return $this->targetScope === 'student_nim_prefix';
+        return in_array($this->targetScope, ['student_nim_prefix', 'lecturer_nidn_prefix'], true);
+    }
+
+    public function targetValuePlaceholder(): string
+    {
+        return match ($this->targetScope) {
+            'lecturer_nidn_prefix' => 'Contoh: 04, 0403, 0430037804',
+            'student_nim_prefix' => 'Contoh: 22, 23, 244162',
+            default => 'Isi nilai target',
+        };
+    }
+
+    public function targetValueHelpText(): string
+    {
+        return match ($this->targetScope) {
+            'lecturer_nidn_prefix' => 'Untuk dosen, masukkan awalan NIDN. Contoh: 04 untuk semua NIDN yang dimulai dengan 04.',
+            'student_nim_prefix' => 'Untuk mahasiswa, masukkan awalan NIM. Contoh: 24 untuk angkatan 2024 jika pola NIM kampus memakai prefix tersebut.',
+            default => '',
+        };
     }
 
     protected function validateInput(bool $requireConfirmation = false): void

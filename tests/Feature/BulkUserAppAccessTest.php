@@ -6,6 +6,8 @@ use App\Filament\Pages\BulkUserAppAccess;
 use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
 use App\Models\Department;
+use App\Models\Employee;
+use App\Models\Lecturer;
 use App\Models\Role;
 use App\Models\Student;
 use App\Models\StudyProgram;
@@ -60,6 +62,44 @@ class BulkUserAppAccessTest extends TestCase
             'role_slug' => 'mahasiswa',
             'target_scope' => 'student_nim_prefix',
             'target_value' => '24',
+        ]);
+
+        $this->assertSame([], $preview['blockers']);
+        $this->assertSame(1, $preview['counts']['matched_users']);
+        $this->assertSame(1, $preview['counts']['planned_insert']);
+        $this->assertSame($matching->id, $preview['samples'][0]['user_id']);
+    }
+
+    public function test_bulk_preview_can_target_lecturers_by_nidn_prefix(): void
+    {
+        $this->createApplicationRole('kp-farmasi', 'pembimbing-dalam');
+        $matching = $this->createLecturerUser('0430037804');
+        $this->createLecturerUser('0520019901');
+
+        $preview = app(BulkUserAppAccessService::class)->preview([
+            'app_code' => 'kp-farmasi',
+            'role_slug' => 'pembimbing-dalam',
+            'target_scope' => 'lecturer_nidn_prefix',
+            'target_value' => '0430',
+        ]);
+
+        $this->assertSame([], $preview['blockers']);
+        $this->assertSame(1, $preview['counts']['matched_users']);
+        $this->assertSame(1, $preview['counts']['planned_insert']);
+        $this->assertSame($matching->id, $preview['samples'][0]['user_id']);
+    }
+
+    public function test_bulk_preview_can_target_employees_by_staff_type(): void
+    {
+        $this->createApplicationRole('tu-farmasi', 'laboran');
+        $matching = $this->createEmployeeUser('laboran');
+        $this->createEmployeeUser('tendik');
+
+        $preview = app(BulkUserAppAccessService::class)->preview([
+            'app_code' => 'tu-farmasi',
+            'role_slug' => 'laboran',
+            'target_scope' => 'employee_staff_type',
+            'target_value' => 'laboran',
         ]);
 
         $this->assertSame([], $preview['blockers']);
@@ -206,6 +246,53 @@ class BulkUserAppAccessTest extends TestCase
             'study_program_id' => $studyProgramId,
             'status' => 'active',
             'active' => $active,
+        ]);
+
+        return $user;
+    }
+
+    private function createLecturerUser(string $nidn, bool $active = true): User
+    {
+        $department = Department::create([
+            'code' => 'DEP'.$nidn,
+            'name' => 'Departemen '.$nidn,
+            'active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'active' => $active,
+            'identity_type' => 'lecturer',
+            'identity_number' => $nidn,
+        ]);
+
+        Lecturer::create([
+            'user_id' => $user->id,
+            'lecturer_number' => $nidn,
+            'nidn' => $nidn,
+            'name' => $user->name,
+            'email' => $user->email,
+            'department_id' => $department->id,
+            'active' => $active,
+        ]);
+
+        return $user;
+    }
+
+    private function createEmployeeUser(string $staffType, bool $active = true): User
+    {
+        $user = User::factory()->create([
+            'active' => $active,
+            'identity_type' => 'employee',
+            'identity_number' => fake()->unique()->numerify('EMP####'),
+        ]);
+
+        Employee::create([
+            'user_id' => $user->id,
+            'employee_number' => $user->identity_number,
+            'name' => $user->name,
+            'email' => $user->email,
+            'staff_type' => $staffType,
+            'status' => $active ? 'active' : 'inactive',
         ]);
 
         return $user;

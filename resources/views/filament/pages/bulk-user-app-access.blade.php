@@ -58,7 +58,7 @@
 
             <x-filament::section>
                 <x-slot name="heading">2. Target Kolektif</x-slot>
-                <x-slot name="description">Target bisa berdasarkan jenis akun, role global, prefix NIM, program studi, atau departemen.</x-slot>
+                <x-slot name="description">Target bisa berdasarkan jenis akun, role global, prefix NIM/NIDN, program studi, departemen, atau jenis tendik.</x-slot>
 
                 <div class="grid gap-5 lg:grid-cols-2">
                     <label class="space-y-2">
@@ -78,10 +78,10 @@
                                 wire:model="targetValue"
                                 type="text"
                                 maxlength="20"
-                                placeholder="Contoh: 22, 23, 244162"
+                                placeholder="{{ $this->targetValuePlaceholder() }}"
                                 class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                             >
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Untuk NIM, masukkan awalan angka. Contoh: 24 untuk angkatan 2024 jika pola NIM kampus memakai prefix tersebut.</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $this->targetValueHelpText() }}</p>
                         @else
                             <select wire:model="targetValue" class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                                 <option value="">Pilih nilai target</option>

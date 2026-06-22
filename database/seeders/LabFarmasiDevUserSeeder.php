@@ -2,9 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Department;
+use App\Models\Faculty;
+use App\Models\Lecturer;
 use App\Models\User;
 use App\Models\UserAppAccess;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class LabFarmasiDevUserSeeder extends Seeder
@@ -59,11 +63,86 @@ class LabFarmasiDevUserSeeder extends Seeder
                     'deactivated_at' => null,
                 ],
             );
+
+            if (($demoUser['lecturer'] ?? null) !== null) {
+                $this->ensureLecturerProfile($user, $demoUser['lecturer']);
+            }
         }
     }
 
     /**
-     * @return array<int, array{name: string, email: string, username: string, identity_number: string, role_slug: string}>
+     * @param  array{lecturer_number: string, name: string, email: string, front_title: string, back_title: string, nidn?: string, nip?: string}  $lecturerData
+     */
+    private function ensureLecturerProfile(User $user, array $lecturerData): void
+    {
+        if (! Schema::hasTable('lecturers') || ! Schema::hasTable('departments')) {
+            return;
+        }
+
+        $department = $this->ensureDemoDepartment();
+
+        if ($department === null) {
+            return;
+        }
+
+        $payload = [
+            'lecturer_number' => $lecturerData['lecturer_number'],
+            'name' => $lecturerData['name'],
+            'email' => $lecturerData['email'],
+            'department_id' => $department->id,
+            'active' => true,
+        ];
+
+        foreach ([
+            'front_title',
+            'back_title',
+            'nidn',
+            'nip',
+        ] as $column) {
+            if (Schema::hasColumn('lecturers', $column) && array_key_exists($column, $lecturerData)) {
+                $payload[$column] = $lecturerData[$column];
+            }
+        }
+
+        if (Schema::hasColumn('lecturers', 'title_updated_at')) {
+            $payload['title_updated_at'] = now();
+        }
+
+        Lecturer::updateOrCreate(
+            ['user_id' => $user->id],
+            $payload,
+        );
+    }
+
+    private function ensureDemoDepartment(): ?Department
+    {
+        $payload = [
+            'name' => 'Laboratorium Farmasi Demo',
+            'description' => 'Unit demo local/testing untuk Lab Farmasi.',
+            'active' => true,
+        ];
+
+        if (Schema::hasColumn('departments', 'faculty_id') && Schema::hasTable('faculties')) {
+            $faculty = Faculty::updateOrCreate(
+                ['code' => 'FF-DEMO'],
+                [
+                    'name' => 'Farmasi Demo',
+                    'description' => 'Fakultas demo local/testing.',
+                    'active' => true,
+                ],
+            );
+
+            $payload['faculty_id'] = $faculty->id;
+        }
+
+        return Department::updateOrCreate(
+            ['code' => 'LAB-DEMO'],
+            $payload,
+        );
+    }
+
+    /**
+     * @return array<int, array{name: string, email: string, username: string, identity_number: string, role_slug: string, lecturer?: array{lecturer_number: string, name: string, email: string, front_title: string, back_title: string, nidn?: string, nip?: string}}>
      */
     private function demoUsers(): array
     {
@@ -81,6 +160,15 @@ class LabFarmasiDevUserSeeder extends Seeder
                 'username' => 'lab-demo-dosen',
                 'identity_number' => 'LAB-DEMO-DSN-001',
                 'role_slug' => 'dosen',
+                'lecturer' => [
+                    'lecturer_number' => 'LAB-DEMO-DSN-001',
+                    'name' => 'Dosen Lab Demo',
+                    'email' => 'lab.demo.dosen@example.test',
+                    'front_title' => 'Dr.',
+                    'back_title' => 'M.Farm.',
+                    'nidn' => '0000000001',
+                    'nip' => 'LAB-DEMO-DSN-001',
+                ],
             ],
             [
                 'name' => 'Laboran Lab Demo',

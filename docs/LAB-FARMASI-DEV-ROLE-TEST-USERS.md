@@ -17,7 +17,7 @@ Seeder ini guarded untuk environment `local` dan `testing`. Jika dijalankan di l
 | Nama | Email | Username | Role Lab |
 | --- | --- | --- | --- |
 | Mahasiswa Lab Demo | lab.demo.mahasiswa@example.test | lab-demo-mahasiswa | mahasiswa |
-| Dosen Lab Demo | lab.demo.dosen@example.test | lab-demo-dosen | dosen |
+| Dr. Dosen Lab Demo, M.Farm. | lab.demo.dosen@example.test | lab-demo-dosen | dosen |
 | Laboran Lab Demo | lab.demo.laboran@example.test | lab-demo-laboran | laboran |
 | Teknisi Lab Demo | lab.demo.teknisi@example.test | lab-demo-teknisi | teknisi |
 | Koordinator Lab Demo | lab.demo.koordinator@example.test | lab-demo-koordinator | koordinator_lab |
@@ -25,6 +25,14 @@ Seeder ini guarded untuk environment `local` dan `testing`. Jika dijalankan di l
 | Viewer Lab Demo | lab.demo.viewer@example.test | lab-demo-viewer | viewer |
 
 Setiap user demo hanya diberi satu active `user_app_accesses` untuk `app_code=lab-farmasi` sesuai role pada tabel.
+
+`Dosen Lab Demo` juga dibuat sebagai profil lecturer Core local/dev dengan:
+
+- `front_title`: `Dr.`
+- `back_title`: `M.Farm.`
+- tampilan resmi/accessor Core: `Dr. Dosen Lab Demo, M.Farm.`
+
+Lab harus menampilkan nama bergelar ini di dropdown `/dev/core-user` dan header setelah user dipilih. Jika data Core production sudah mengisi `front_title`/`back_title`, Lab akan menampilkan nama bergelar dari Core dengan fallback ke `name` lama bila field gelar belum tersedia.
 
 ## Cara Test di Lab
 

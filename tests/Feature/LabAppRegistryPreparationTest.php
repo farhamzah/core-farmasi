@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
+use App\Models\Lecturer;
 use App\Models\UserAppAccess;
 use Database\Seeders\CoreApplicationSeeder;
 use Database\Seeders\LabFarmasiDevUserSeeder;
@@ -76,6 +77,18 @@ class LabAppRegistryPreparationTest extends TestCase
         $this->assertSame(7, UserAppAccess::where('app_code', 'lab-farmasi')
             ->whereIn('role_slug', array_values($this->demoUsers()))
             ->count());
+
+        $this->assertDatabaseHas('lecturers', [
+            'email' => 'lab.demo.dosen@example.test',
+            'name' => 'Dosen Lab Demo',
+            'front_title' => 'Dr.',
+            'back_title' => 'M.Farm.',
+        ]);
+
+        $this->assertSame(
+            'Dr. Dosen Lab Demo, M.Farm.',
+            Lecturer::where('email', 'lab.demo.dosen@example.test')->firstOrFail()->display_name_with_title,
+        );
     }
 
     /**

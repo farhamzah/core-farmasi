@@ -80,6 +80,10 @@ class TuPortalPasswordVerificationService
                     'id' => $user->lecturer->id,
                     'nidn' => $user->lecturer->lecturer_number,
                     'name' => $user->lecturer->name,
+                    'front_title' => $user->lecturer->front_title,
+                    'back_title' => $user->lecturer->back_title,
+                    'display_name_with_title' => $user->lecturer->display_name_with_title,
+                    'formal_name' => $user->lecturer->formal_name,
                 ] : null,
                 'employee' => $user->employee ? [
                     'id' => $user->employee->id,

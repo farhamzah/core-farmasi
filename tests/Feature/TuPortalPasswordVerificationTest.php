@@ -63,7 +63,11 @@ class TuPortalPasswordVerificationTest extends TestCase
     public function test_valid_user_password_and_active_access_returns_safe_identity(): void
     {
         $this->prepareClient();
-        $user = $this->makeAccessibleLecturerUser();
+        $user = $this->makeAccessibleLecturerUser([
+            'name' => 'Farhamzah',
+            'front_title' => 'Dr.',
+            'back_title' => 'M.Farm.',
+        ]);
 
         $this->postJson($this->endpoint(), [
             'login' => $user->email,
@@ -75,6 +79,11 @@ class TuPortalPasswordVerificationTest extends TestCase
             ->assertJsonPath('has_access', true)
             ->assertJsonPath('user.id', $user->id)
             ->assertJsonPath('user.profile_type', 'lecturer')
+            ->assertJsonPath('user.lecturer.name', 'Farhamzah')
+            ->assertJsonPath('user.lecturer.front_title', 'Dr.')
+            ->assertJsonPath('user.lecturer.back_title', 'M.Farm.')
+            ->assertJsonPath('user.lecturer.display_name_with_title', 'Dr. Farhamzah, M.Farm.')
+            ->assertJsonPath('user.lecturer.formal_name', 'Dr. Farhamzah, M.Farm.')
             ->assertJsonPath('user.lecturer.nidn', $user->lecturer->lecturer_number)
             ->assertJsonPath('app_access.app_code', 'tu-farmasi')
             ->assertJsonPath('app_access.roles.0', 'dosen');
@@ -361,6 +370,8 @@ class TuPortalPasswordVerificationTest extends TestCase
             'user_id' => $user->id,
             'lecturer_number' => $overrides['lecturer_number'] ?? fake()->unique()->numerify('NIDN######'),
             'name' => $user->name,
+            'front_title' => $overrides['front_title'] ?? null,
+            'back_title' => $overrides['back_title'] ?? null,
             'email' => 'lecturer-'.$user->id.'@example.test',
             'department_id' => $department->id,
             'active' => true,

@@ -122,6 +122,8 @@ class ProfilePortalController extends Controller
             'birth_place' => ['nullable', 'string', 'max:255'],
             'birth_date' => ['nullable', 'date'],
             'enrolled_at' => ['nullable', 'date'],
+            'front_title' => ['nullable', 'string', 'max:100'],
+            'back_title' => ['nullable', 'string', 'max:100'],
             'national_id_number' => ['nullable', 'string', 'max:255'],
             'nip' => ['nullable', 'string', 'max:255'],
             'nuptk' => ['nullable', 'string', 'max:255'],

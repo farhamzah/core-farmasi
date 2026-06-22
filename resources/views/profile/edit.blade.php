@@ -45,7 +45,7 @@
         $initial = strtoupper(substr((string) ($profile['user']['name'] ?? 'U'), 0, 1));
         $groupLabels = [
             'student' => ['title' => 'Profil Mahasiswa', 'subtitle' => 'Data pendukung mahasiswa. NIM, nama resmi, program studi, dan status tetap diverifikasi Admin Core.'],
-            'lecturer' => ['title' => 'Profil Dosen', 'subtitle' => 'Data pendukung dosen. Nama, nomor utama, NIDN, dan NIDK tetap dikunci agar identitas resmi tidak berubah sepihak.'],
+            'lecturer' => ['title' => 'Profil Dosen', 'subtitle' => 'Data pendukung dosen. Nama dasar, nomor utama, NIDN, dan NIDK tetap dikunci; gelar depan/belakang boleh dilengkapi mandiri.'],
             'employee' => ['title' => 'Profil Tendik / Staf / Laboran', 'subtitle' => 'Data pendukung kepegawaian. Nomor pegawai dan nama resmi tetap diverifikasi Admin Core.'],
             'user' => ['title' => 'Akun Core Sementara', 'subtitle' => 'Kontak dasar disimpan di akun Core sampai profil resmi ditautkan oleh Admin Core.'],
         ];
@@ -57,6 +57,8 @@
             'birth_place' => 'Tempat Lahir',
             'birth_date' => 'Tanggal Lahir',
             'enrolled_at' => 'Tanggal Masuk',
+            'front_title' => 'Gelar Depan',
+            'back_title' => 'Gelar Belakang',
             'national_id_number' => 'NIK / No. KTP',
             'nip' => 'NIP',
             'nuptk' => 'NUPTK',
@@ -238,7 +240,13 @@
                                             >
                                         @endif
 
-                                        <p class="mt-2 text-xs font-medium text-slate-500">Disimpan ke {{ $group['title'] }}.</p>
+                                        <p class="mt-2 text-xs font-medium text-slate-500">
+                                            @if (in_array($field, ['front_title', 'back_title'], true))
+                                                Isi sesuai format resmi, contoh: Dr., apt., M.Farm., S.Si. Nama dasar tetap terkunci.
+                                            @else
+                                                Disimpan ke {{ $group['title'] }}.
+                                            @endif
+                                        </p>
                                     </div>
                                 @endforeach
                             </div>

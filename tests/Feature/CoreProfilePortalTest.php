@@ -435,6 +435,8 @@ class CoreProfilePortalTest extends TestCase
             'nidk' => 'NIDK001122',
             'nuptk' => '1234567890123456',
             'name' => 'Dosen Uji',
+            'front_title' => 'Dr.',
+            'back_title' => 'M.Farm.',
             'email' => 'lecturer@example.test',
             'department_id' => $department->id,
             'study_program_id' => $studyProgram->id,
@@ -446,6 +448,8 @@ class CoreProfilePortalTest extends TestCase
         $this->actingAs($user)->get('/profile')
             ->assertOk()
             ->assertSee('Dosen')
+            ->assertSee('Dr. Dosen Uji, M.Farm.')
+            ->assertSee('Nama Resmi Bergelar')
             ->assertSee('DSN-001')
             ->assertSee('0011223344')
             ->assertSee('198801012020121001')
@@ -544,6 +548,9 @@ class CoreProfilePortalTest extends TestCase
         $this->assertTrue(Schema::hasColumn('lecturers', 'nidn'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'nidk'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'nuptk'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'front_title'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'back_title'));
+        $this->assertTrue(Schema::hasColumn('lecturers', 'title_updated_at'));
         $this->assertTrue(Schema::hasColumn('users', 'phone'));
         $this->assertTrue(Schema::hasColumn('users', 'address'));
         $this->assertTrue(Schema::hasColumn('users', 'alternate_email'));
@@ -708,6 +715,46 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('Catatan dosen aman.', $lecturer->notes);
     }
 
+    public function test_lecturer_can_update_titles_from_profile_portal_without_changing_base_name(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser();
+
+        $lecturer = Lecturer::create([
+            'user_id' => $user->id,
+            'lecturer_number' => 'DSN-004',
+            'nidn' => '0011223355',
+            'name' => 'Dosen Gelar',
+            'email' => 'lecturer-title-old@example.test',
+            'department_id' => $department->id,
+            'study_program_id' => $studyProgram->id,
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'name' => 'Nama Dasar Tidak Boleh Berubah',
+            'nidn' => 'NIDN-HACKED',
+            'front_title' => 'Dr.',
+            'back_title' => 'M.Farm.',
+            'email' => 'lecturer-title-new@example.test',
+        ])->assertRedirect('/profile');
+
+        $lecturer->refresh();
+
+        $this->assertSame('Dosen Gelar', $lecturer->name);
+        $this->assertSame('0011223355', $lecturer->nidn);
+        $this->assertSame('Dr.', $lecturer->front_title);
+        $this->assertSame('M.Farm.', $lecturer->back_title);
+        $this->assertSame('lecturer-title-new@example.test', $lecturer->email);
+        $this->assertSame('Dr. Dosen Gelar, M.Farm.', $lecturer->display_name_with_title);
+        $this->assertNotNull($lecturer->title_updated_at);
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertSee('Dr. Dosen Gelar, M.Farm.')
+            ->assertSee('Gelar dosen tersedia');
+    }
+
     public function test_lecturer_profile_completion_uses_lecturer_specific_items_and_form_fields(): void
     {
         $user = User::factory()->create(['active' => true]);
@@ -728,15 +775,18 @@ class CoreProfilePortalTest extends TestCase
             ->assertOk()
             ->assertSee('Profil Dosen')
             ->assertSee('NIK / No. KTP')
+            ->assertSee('Gelar Depan')
+            ->assertSee('Gelar Belakang')
             ->assertSee('NUPTK')
-            ->assertSee('38%')
-            ->assertSee('5/13')
+            ->assertSee('36%')
+            ->assertSee('5/14')
             ->assertDontSee('Jenis Tendik / Staf');
 
         $this->actingAs($user)
             ->get('/profile')
             ->assertOk()
             ->assertSee('NIK / No. KTP tersedia')
+            ->assertSee('Gelar dosen tersedia')
             ->assertSee('Foto profil tersedia')
             ->assertSee('Tempat lahir tersedia')
             ->assertSee('NUPTK tersedia jika ada')

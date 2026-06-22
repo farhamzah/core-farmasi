@@ -20,6 +20,9 @@ class Lecturer extends Model
         'nidk',
         'nuptk',
         'name',
+        'front_title',
+        'back_title',
+        'title_updated_at',
         'email',
         'birth_place',
         'birth_date',
@@ -34,8 +37,20 @@ class Lecturer extends Model
     protected $casts = [
         'active' => 'boolean',
         'birth_date' => 'date',
+        'title_updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    public function getDisplayNameWithTitleAttribute(): string
+    {
+        return app(\App\Services\CorePersonNameFormatter::class)
+            ->formatWithTitle($this->front_title, $this->name, $this->back_title);
+    }
+
+    public function getFormalNameAttribute(): string
+    {
+        return $this->display_name_with_title;
+    }
 
     public function department(): BelongsTo
     {

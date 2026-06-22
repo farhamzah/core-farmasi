@@ -62,6 +62,14 @@ class LecturerResource extends Resource
                             ->label('Nama')
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('front_title')
+                            ->label('Gelar Depan')
+                            ->helperText('Contoh: Dr., apt. Nama dasar tetap di field Nama.')
+                            ->maxLength(100),
+                        Forms\Components\TextInput::make('back_title')
+                            ->label('Gelar Belakang')
+                            ->helperText('Contoh: M.Farm., S.Si. Sistem akan menampilkan: Nama, Gelar Belakang.')
+                            ->maxLength(100),
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->required()
@@ -119,6 +127,7 @@ class LecturerResource extends Resource
                 TextColumn::make('nuptk')->label('NUPTK')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('national_id_number')->label('NIK')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')->label('Nama')->sortable()->searchable(),
+                TextColumn::make('display_name_with_title')->label('Nama Bergelar')->toggleable(),
                 TextColumn::make('email')->sortable()->searchable(),
                 TextColumn::make('department.name')->label('Department')->sortable(),
                 TextColumn::make('studyProgram.name')->label('Program Studi')->sortable(),

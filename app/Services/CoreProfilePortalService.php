@@ -82,6 +82,12 @@ class CoreProfilePortalService
                 continue;
             }
 
+            if ($profile instanceof Lecturer
+                && array_intersect(['front_title', 'back_title'], array_keys($changes))
+                && Schema::hasColumn($profile->getTable(), 'title_updated_at')) {
+                $changes['title_updated_at'] = now();
+            }
+
             $profile->fill($changes);
 
             if ($profile->isDirty()) {
@@ -164,7 +170,7 @@ class CoreProfilePortalService
     {
         $profileFields = [
             'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
-            'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
+            'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'front_title', 'back_title', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
             'employee' => $user->employee ? $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
         ];
 
@@ -256,6 +262,7 @@ class CoreProfilePortalService
             $lecturer = $user->lecturer;
             $items = [
                 ...$items,
+                $this->completionItem('lecturer_title', 'Gelar dosen tersedia', filled($this->valueIfColumnExists($lecturer, 'front_title')) || filled($this->valueIfColumnExists($lecturer, 'back_title'))),
                 $this->completionItem('lecturer_number', 'Nomor utama dosen tersedia', filled($lecturer->lecturer_number)),
                 $this->completionItem('lecturer_nidn_or_nidk', 'NIDN atau NIDK tersedia', filled($lecturer->nidn) || filled($lecturer->nidk)),
                 $this->completionItem('lecturer_national_id', 'NIK / No. KTP tersedia', filled($lecturer->national_id_number)),
@@ -367,10 +374,20 @@ class CoreProfilePortalService
             return null;
         }
 
+        $displayNameWithTitle = app(CorePersonNameFormatter::class)->formatWithTitle(
+            $this->valueIfColumnExists($lecturer, 'front_title'),
+            $lecturer->name,
+            $this->valueIfColumnExists($lecturer, 'back_title'),
+        );
+
         return [
             'type' => 'lecturer',
             'label' => 'Dosen',
-            'name' => $lecturer->name,
+            'name' => $displayNameWithTitle,
+            'name_without_title' => $lecturer->name,
+            'display_name_with_title' => $displayNameWithTitle,
+            'front_title' => $this->valueIfColumnExists($lecturer, 'front_title'),
+            'back_title' => $this->valueIfColumnExists($lecturer, 'back_title'),
             'identifier_label' => 'Nomor Utama Dosen',
             'identifier' => $lecturer->lecturer_number,
             'email' => $lecturer->email,
@@ -390,6 +407,10 @@ class CoreProfilePortalService
             ],
             'profile_sections' => [
                 'Identitas Resmi' => [
+                    'Nama Dasar' => $lecturer->name,
+                    'Gelar Depan' => $this->valueIfColumnExists($lecturer, 'front_title'),
+                    'Gelar Belakang' => $this->valueIfColumnExists($lecturer, 'back_title'),
+                    'Nama Resmi Bergelar' => $displayNameWithTitle,
                     'Nomor Utama' => $lecturer->lecturer_number,
                     'NIDN' => $this->valueIfColumnExists($lecturer, 'nidn'),
                     'NIDK' => $this->valueIfColumnExists($lecturer, 'nidk'),
@@ -470,7 +491,7 @@ class CoreProfilePortalService
     {
         return [
             'Mahasiswa' => ['NIM', 'nama resmi', 'program studi', 'tempat/tanggal lahir', 'kontak aktif', 'alamat', 'foto profil'],
-            'Dosen' => ['NIK/KTP', 'NIDN/NIDK', 'NIP bila ASN', 'NUPTK', 'homebase/unit', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
+            'Dosen' => ['gelar akademik/profesi', 'NIK/KTP', 'NIDN/NIDK', 'NIP bila ASN', 'NUPTK', 'homebase/unit', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
             'Tendik' => ['NIK/KTP', 'nomor pegawai', 'NUPTK bila ada', 'unit kerja', 'jabatan/posisi', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
         ];
     }

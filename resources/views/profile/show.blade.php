@@ -85,7 +85,7 @@
 
                         <div class="grid w-full shrink-0 grid-cols-1 gap-2 sm:grid-cols-3 xl:w-40 xl:grid-cols-1">
                             <a href="{{ route('profile.edit') }}" class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
-                                Edit Kontak
+                                Edit Profil
                             </a>
                             <a href="{{ route('profile.password.edit') }}" class="inline-flex items-center justify-center rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50">
                                 Ganti Password

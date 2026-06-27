@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Edit Kontak - Core Farmasi UBP</title>
+    <title>Edit Profil - Core Farmasi UBP</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .core-profile-photo-preview {
@@ -82,7 +82,7 @@
                 <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Core Farmasi UBP</p>
-                        <h1 class="mt-3 text-3xl font-black tracking-normal text-slate-950 sm:text-4xl">Edit Kontak Aman</h1>
+                        <h1 class="mt-3 text-3xl font-black tracking-normal text-slate-950 sm:text-4xl">Edit Profil Aman</h1>
                         <p class="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
                             Ubah biodata pendukung dan kontak yang boleh dikelola mandiri. Nama, NIM, NIDN, dan NIDK tetap dikunci agar identitas utama tidak berubah tanpa verifikasi Admin Core.
                         </p>

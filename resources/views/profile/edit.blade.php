@@ -11,14 +11,14 @@
             aspect-ratio: 1 / 1;
             display: inline-flex;
             flex: 0 0 auto;
-            height: 5rem;
+            height: 6rem;
             justify-content: center;
-            max-height: 5rem;
-            max-width: 5rem;
-            min-height: 5rem;
-            min-width: 5rem;
+            max-height: 6rem;
+            max-width: 6rem;
+            min-height: 6rem;
+            min-width: 6rem;
             overflow: hidden;
-            width: 5rem;
+            width: 6rem;
         }
 
         .core-profile-photo-preview > img {
@@ -27,7 +27,19 @@
             max-height: 100%;
             max-width: 100%;
             object-fit: cover;
+            object-position: center top;
             width: 100%;
+        }
+
+        @media (max-width: 640px) {
+            .core-profile-photo-preview {
+                height: 5.25rem;
+                max-height: 5.25rem;
+                max-width: 5.25rem;
+                min-height: 5.25rem;
+                min-width: 5.25rem;
+                width: 5.25rem;
+            }
         }
     </style>
 </head>
@@ -166,9 +178,9 @@
                 <h2 class="mt-2 text-2xl font-black text-slate-950">Profil yang Bisa Diperbarui</h2>
 
                 <div class="mt-6 grid gap-6">
-                    <section class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 sm:p-5">
-                        <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
-                            <div class="core-profile-photo-preview rounded-3xl border border-blue-100 bg-white text-2xl font-black text-blue-700 shadow-sm" data-profile-photo-preview-frame>
+                    <section class="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-emerald-50/50 p-4 shadow-sm sm:p-5">
+                        <div class="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
+                            <div class="core-profile-photo-preview rounded-[1.75rem] border border-blue-100 bg-white text-3xl font-black text-blue-700 shadow-[0_16px_34px_rgba(30,64,175,0.14)]" data-profile-photo-preview-frame>
                                 @if ($profilePhotoUrl)
                                     <img src="{{ $profilePhotoUrl }}" alt="Foto profil saat ini" data-profile-photo-preview>
                                 @else
@@ -177,11 +189,19 @@
                                 @endif
                             </div>
                             <div class="min-w-0 flex-1">
-                                <h3 class="text-base font-black text-slate-950">Foto Profil</h3>
-                                <p class="mt-1 text-xs leading-6 text-slate-600">Dipakai sebagai foto identitas umum untuk aplikasi Farmasi yang membaca Core. Gunakan JPG, PNG, atau WebP maksimal 2MB.</p>
-                                <label for="profile_photo" class="mt-3 inline-flex cursor-pointer items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700">
-                                    Pilih Foto
-                                </label>
+                                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <h3 class="text-lg font-black text-slate-950">Foto Profil</h3>
+                                        <p class="mt-1 text-xs leading-6 text-slate-600">Dipakai sebagai foto identitas umum untuk aplikasi Farmasi yang membaca Core.</p>
+                                    </div>
+                                    <span class="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">JPG / PNG / WebP</span>
+                                </div>
+                                <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                                    <label for="profile_photo" class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700">
+                                        Pilih Foto Baru
+                                    </label>
+                                    <span class="text-xs font-semibold text-slate-500">Maksimal 2MB, wajah sebaiknya tampak jelas.</span>
+                                </div>
                                 <input
                                     id="profile_photo"
                                     name="profile_photo"
@@ -190,10 +210,10 @@
                                     class="sr-only"
                                     data-profile-photo-input
                                 >
-                                <p class="mt-3 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-blue-100" data-profile-photo-status>
+                                <p class="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-blue-100" data-profile-photo-status>
                                     {{ $profilePhotoUrl ? 'Foto saat ini akan tetap dipakai jika tidak memilih file baru.' : 'Belum ada file foto dipilih.' }}
                                 </p>
-                                <p class="mt-2 text-xs font-medium text-slate-500">Setelah memilih foto, klik tombol Simpan Profil di bawah.</p>
+                                <p class="mt-2 text-xs font-medium text-slate-500">Preview akan tampil langsung. Klik Simpan Profil untuk menyimpan foto ke Core.</p>
                             </div>
                         </div>
                     </section>
@@ -322,6 +342,24 @@
                     if (status) {
                         status.textContent = 'Belum ada file foto dipilih.';
                     }
+
+                    return;
+                }
+
+                if (! file.type.startsWith('image/')) {
+                    if (status) {
+                        status.textContent = 'File harus berupa gambar JPG, PNG, atau WebP.';
+                    }
+                    input.value = '';
+
+                    return;
+                }
+
+                if (file.size > 2 * 1024 * 1024) {
+                    if (status) {
+                        status.textContent = 'Ukuran foto terlalu besar. Maksimal 2MB.';
+                    }
+                    input.value = '';
 
                     return;
                 }

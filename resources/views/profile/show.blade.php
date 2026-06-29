@@ -21,6 +21,15 @@
             height: 5rem;
         }
 
+        .core-profile-avatar.is-hero {
+            max-height: 6.5rem;
+            max-width: 6.5rem;
+            min-height: 6.5rem;
+            min-width: 6.5rem;
+            width: 6.5rem;
+            height: 6.5rem;
+        }
+
         .core-profile-avatar.is-small {
             max-height: 3.5rem;
             max-width: 3.5rem;
@@ -36,7 +45,19 @@
             max-height: 100%;
             max-width: 100%;
             object-fit: cover;
+            object-position: center top;
             width: 100%;
+        }
+
+        @media (max-width: 640px) {
+            .core-profile-avatar.is-hero {
+                max-height: 5.25rem;
+                max-width: 5.25rem;
+                min-height: 5.25rem;
+                min-width: 5.25rem;
+                width: 5.25rem;
+                height: 5.25rem;
+            }
         }
     </style>
 </head>
@@ -57,9 +78,9 @@
             <div class="grid gap-0 lg:grid-cols-[1fr_360px]">
                 <section class="relative p-6 sm:p-8">
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-700 via-cyan-500 to-emerald-400"></div>
-                    <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-                        <div class="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-start">
-                            <div class="core-profile-avatar rounded-3xl border border-blue-100 bg-blue-50 text-2xl font-black text-blue-700 shadow-sm">
+                    <div class="flex flex-col gap-7 xl:flex-row xl:items-start xl:justify-between">
+                        <div class="grid min-w-0 gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
+                            <div class="core-profile-avatar is-hero rounded-[1.75rem] border border-blue-100 bg-blue-50 text-3xl font-black text-blue-700 shadow-[0_18px_40px_rgba(30,64,175,0.16)]">
                                 <span class="{{ $profilePhotoUrl ? 'hidden' : '' }}" data-photo-fallback>{{ $initial }}</span>
                                 @if ($profilePhotoUrl)
                                     <img src="{{ $profilePhotoUrl }}" alt="Foto profil {{ $profile['user']['name'] ?? 'user' }}" onerror="this.classList.add('hidden'); this.previousElementSibling?.classList.remove('hidden');">
@@ -67,7 +88,7 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Core Farmasi UBP</p>
-                                <h1 class="mt-3 text-3xl font-black tracking-normal text-slate-950 sm:text-4xl">Profil Saya</h1>
+                                <h1 class="mt-3 break-words text-3xl font-black tracking-normal text-slate-950 sm:text-4xl">Profil Saya</h1>
                                 <div class="mt-4 flex flex-wrap items-center gap-2">
                                     <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{{ $roleLabel }}</span>
                                     <span class="rounded-full {{ ($profile['user']['active'] ?? false) ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }} px-3 py-1 text-xs font-bold">
@@ -109,7 +130,7 @@
                     <div class="mt-5 h-2 overflow-hidden rounded-full bg-white/20">
                         <div class="h-full rounded-full bg-white" style="width: {{ $completion['percentage'] }}%"></div>
                     </div>
-                    <dl class="mt-6 grid grid-cols-2 gap-3 text-sm">
+                    <dl class="mt-6 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                         <div class="rounded-2xl bg-white/12 p-4">
                             <dt class="text-blue-100">Kontak</dt>
                             <dd class="mt-1 font-bold">{{ $contactComplete ? 'Lengkap' : 'Belum lengkap' }}</dd>

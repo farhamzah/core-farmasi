@@ -47,6 +47,7 @@
             'student' => ['title' => 'Profil Mahasiswa', 'subtitle' => 'Data pendukung mahasiswa. NIM, nama resmi, program studi, dan status tetap diverifikasi Admin Core.'],
             'lecturer' => ['title' => 'Profil Dosen', 'subtitle' => 'Data pendukung dosen. Nama dasar, nomor utama, NIDN, dan NIDK tetap dikunci; gelar depan/belakang boleh dilengkapi mandiri.'],
             'employee' => ['title' => 'Profil Tendik / Staf / Laboran', 'subtitle' => 'Data pendukung kepegawaian. Nomor pegawai dan nama resmi tetap diverifikasi Admin Core.'],
+            'externalPerson' => ['title' => 'Profil Mitra Eksternal', 'subtitle' => 'Data umum mitra luar Fakultas Farmasi. Akses KP/TA tetap diberikan oleh Admin Core sesuai kebutuhan aplikasi.'],
             'user' => ['title' => 'Akun Core Sementara', 'subtitle' => 'Kontak dasar disimpan di akun Core sampai profil resmi ditautkan oleh Admin Core.'],
         ];
         $fieldLabels = [
@@ -65,6 +66,9 @@
             'gender' => 'Jenis Kelamin',
             'staff_type' => 'Jenis Tendik / Staf',
             'position_title' => 'Jabatan / Posisi',
+            'institution_name' => 'Instansi / Perusahaan',
+            'institution_type' => 'Jenis Instansi',
+            'profession' => 'Profesi',
             'notes' => 'Catatan Profil',
         ];
         $dateFields = ['birth_date', 'enrolled_at'];
@@ -72,6 +76,7 @@
         $selectOptions = [
             'gender' => ['' => 'Pilih jika ingin diisi', 'male' => 'Laki-laki', 'female' => 'Perempuan'],
             'staff_type' => ['' => 'Pilih jika ingin diisi', 'tendik' => 'Tendik', 'staf_tu' => 'Staf TU', 'laboran' => 'Laboran', 'admin' => 'Admin', 'other' => 'Lainnya'],
+            'institution_type' => ['' => 'Pilih jika ingin diisi', 'industry' => 'Industri', 'hospital' => 'Rumah Sakit', 'pharmacy' => 'Apotek', 'university' => 'Universitas / Kampus Lain', 'clinic' => 'Klinik', 'government' => 'Instansi Pemerintah', 'other' => 'Lainnya'],
         ];
     @endphp
 

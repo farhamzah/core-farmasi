@@ -78,7 +78,7 @@ class UserResource extends Resource
                             ->label('Username')
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->helperText('Mahasiswa memakai NIM. Dosen memakai NIDN/NIP/nomor dosen. Tendik/staf/laboran memakai nomor kepegawaian.'),
+                            ->helperText('Mahasiswa memakai NIM. Dosen memakai NIDN/NIP/nomor dosen. Tendik/staf/laboran memakai nomor kepegawaian. Mitra eksternal boleh memakai email atau nomor mitra bila ada.'),
                         Forms\Components\Select::make('identity_type')
                             ->label('Identity Type')
                             ->options(self::identityTypeOptions())

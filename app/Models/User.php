@@ -2,10 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\Role;
-use App\Models\UserActivityLog;
-use App\Models\UserAppAccess;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -93,6 +89,11 @@ class User extends Authenticatable implements FilamentUser
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    public function externalPerson(): HasOne
+    {
+        return $this->hasOne(ExternalPerson::class);
     }
 
     public function appAccesses(): HasMany

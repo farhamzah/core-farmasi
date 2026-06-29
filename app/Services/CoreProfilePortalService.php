@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Employee;
+use App\Models\ExternalPerson;
 use App\Models\Lecturer;
 use App\Models\Student;
 use App\Models\User;
@@ -25,12 +26,14 @@ class CoreProfilePortalService
             'lecturer.studyProgram',
             'employee.department',
             'employee.studyProgram',
+            'externalPerson',
         ]);
 
         $profiles = collect([
             $this->studentSummary($user->student),
             $this->lecturerSummary($user->lecturer),
             $this->employeeSummary($user->employee),
+            $this->externalPersonSummary($user->externalPerson),
         ])->filter()->values()->all();
 
         return [
@@ -61,7 +64,7 @@ class CoreProfilePortalService
         $editableFields = $this->editableFieldsFor($user);
         $updated = [];
 
-        foreach (['student', 'lecturer', 'employee'] as $relation) {
+        foreach (['student', 'lecturer', 'employee', 'externalPerson'] as $relation) {
             $profile = $user->{$relation};
 
             if (! $profile) {
@@ -172,9 +175,10 @@ class CoreProfilePortalService
             'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
             'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'front_title', 'back_title', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
             'employee' => $user->employee ? $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
+            'externalPerson' => $user->externalPerson ? $this->existingColumns(ExternalPerson::class, ['email', 'phone', 'address', 'institution_name', 'institution_type', 'position_title', 'profession', 'notes']) : [],
         ];
 
-        $hasEditableLinkedProfile = collect(['student', 'lecturer', 'employee'])
+        $hasEditableLinkedProfile = collect(['student', 'lecturer', 'employee', 'externalPerson'])
             ->contains(fn (string $relation): bool => (bool) $user->{$relation} && ($profileFields[$relation] ?? []) !== []);
 
         return [
@@ -190,7 +194,7 @@ class CoreProfilePortalService
     {
         $values = $this->contactValuesFor($user);
 
-        foreach (['student', 'lecturer', 'employee'] as $relation) {
+        foreach (['student', 'lecturer', 'employee', 'externalPerson'] as $relation) {
             $profile = $user->{$relation};
 
             if (! $profile) {
@@ -222,8 +226,8 @@ class CoreProfilePortalService
     private function contactValuesFor(User $user): array
     {
         return [
-            'phone' => $user->student?->phone ?? $user->lecturer?->phone ?? $user->employee?->phone ?? $this->valueIfColumnExists($user, 'phone'),
-            'address' => $user->student?->address ?? $user->lecturer?->address ?? $user->employee?->address ?? $this->valueIfColumnExists($user, 'address'),
+            'phone' => $user->student?->phone ?? $user->lecturer?->phone ?? $user->employee?->phone ?? $user->externalPerson?->phone ?? $this->valueIfColumnExists($user, 'phone'),
+            'address' => $user->student?->address ?? $user->lecturer?->address ?? $user->employee?->address ?? $user->externalPerson?->address ?? $this->valueIfColumnExists($user, 'address'),
             'alternate_email' => $this->valueFromFirstAvailableColumn($user, 'alternate_email') ?? $this->valueIfColumnExists($user, 'alternate_email'),
         ];
     }
@@ -288,6 +292,16 @@ class CoreProfilePortalService
                 $this->completionItem('employee_unit', 'Unit kerja tersedia', filled($employee->department_id) || filled($employee->study_program_id)),
                 $this->completionItem('employee_phone', 'Telepon tendik tersedia', filled($employee->phone)),
                 $this->completionItem('employee_address', 'Alamat tendik tersedia', filled($employee->address)),
+            ];
+        } elseif ($user->externalPerson) {
+            $externalPerson = $user->externalPerson;
+            $items = [
+                ...$items,
+                $this->completionItem('external_institution', 'Instansi mitra tersedia', filled($externalPerson->institution_name)),
+                $this->completionItem('external_institution_type', 'Jenis instansi tersedia', filled($externalPerson->institution_type)),
+                $this->completionItem('external_position', 'Jabatan/posisi tersedia', filled($externalPerson->position_title)),
+                $this->completionItem('external_phone', 'Telepon mitra tersedia', filled($externalPerson->phone)),
+                $this->completionItem('external_address', 'Alamat mitra tersedia', filled($externalPerson->address)),
             ];
         } else {
             $items = [
@@ -485,6 +499,49 @@ class CoreProfilePortalService
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    private function externalPersonSummary(?ExternalPerson $externalPerson): ?array
+    {
+        if (! $externalPerson) {
+            return null;
+        }
+
+        return [
+            'type' => 'external',
+            'label' => 'Mitra Eksternal',
+            'name' => $externalPerson->name,
+            'identifier_label' => 'Email / Nomor Mitra',
+            'identifier' => $externalPerson->external_number ?: $externalPerson->email,
+            'email' => $externalPerson->email,
+            'status' => $externalPerson->status,
+            'unit' => $externalPerson->institution_name,
+            'unit_secondary' => self::externalInstitutionTypeOptions()[$externalPerson->institution_type] ?? $externalPerson->institution_type,
+            'position_title' => $externalPerson->position_title,
+            'phone' => $externalPerson->phone,
+            'address' => $externalPerson->address,
+            'official_identifiers' => [
+                ['label' => 'Nomor Mitra', 'value' => $externalPerson->external_number, 'sensitive' => false],
+                ['label' => 'NIK / Identitas', 'value' => $this->maskIdentifier($externalPerson->identity_number), 'sensitive' => true],
+            ],
+            'profile_sections' => [
+                'Mitra' => [
+                    'Instansi / Perusahaan' => $externalPerson->institution_name,
+                    'Jenis Instansi' => self::externalInstitutionTypeOptions()[$externalPerson->institution_type] ?? $externalPerson->institution_type,
+                    'Jabatan/Posisi' => $externalPerson->position_title,
+                    'Profesi' => $externalPerson->profession,
+                    'Status' => $externalPerson->status,
+                ],
+                'Kontak' => [
+                    'Email Profil' => $externalPerson->email,
+                    'Telepon' => $externalPerson->phone,
+                    'Alamat' => $externalPerson->address,
+                ],
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, array<int, string>>
      */
     private function profileStandards(): array
@@ -493,6 +550,7 @@ class CoreProfilePortalService
             'Mahasiswa' => ['NIM', 'nama resmi', 'program studi', 'tempat/tanggal lahir', 'kontak aktif', 'alamat', 'foto profil'],
             'Dosen' => ['gelar akademik/profesi', 'NIK/KTP', 'NIDN/NIDK', 'NIP bila ASN', 'NUPTK', 'homebase/unit', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
             'Tendik' => ['NIK/KTP', 'nomor pegawai', 'NUPTK bila ada', 'unit kerja', 'jabatan/posisi', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
+            'Mitra Eksternal' => ['nama', 'email', 'telepon', 'instansi', 'jenis instansi', 'jabatan/posisi', 'alamat', 'foto profil'],
         ];
     }
 
@@ -523,7 +581,7 @@ class CoreProfilePortalService
 
     private function valueFromFirstAvailableColumn(User $user, string $column): ?string
     {
-        foreach (['student', 'lecturer', 'employee'] as $relation) {
+        foreach (['student', 'lecturer', 'employee', 'externalPerson'] as $relation) {
             $profile = $user->{$relation};
 
             if ($profile && Schema::hasColumn($profile->getTable(), $column)) {
@@ -556,6 +614,22 @@ class CoreProfilePortalService
         }
 
         return '/storage/'.ltrim((string) $user->profile_photo_path, '/');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function externalInstitutionTypeOptions(): array
+    {
+        return [
+            'industry' => 'Industri',
+            'hospital' => 'Rumah Sakit',
+            'pharmacy' => 'Apotek',
+            'university' => 'Universitas / Kampus Lain',
+            'clinic' => 'Klinik',
+            'government' => 'Instansi Pemerintah',
+            'other' => 'Lainnya',
+        ];
     }
 
     private function maskIdentifier(?string $value): ?string

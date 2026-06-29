@@ -6,6 +6,7 @@ use App\Models\AccountRequest;
 use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
 use App\Models\Employee;
+use App\Models\ExternalPerson;
 use App\Models\Lecturer;
 use App\Models\Role;
 use App\Models\Student;
@@ -89,8 +90,8 @@ class CoreAccountRequestService
             }
 
             if ($accountRequest->request_type === AccountRequest::TYPE_FIELD_SUPERVISOR) {
-                $profile = null;
                 $user = $this->createOrLinkFieldSupervisorUser($accountRequest);
+                $profile = $user ? $this->createOrUpdateExternalPerson($accountRequest, $user) : null;
             } else {
                 $profile = $this->createOrUpdateProfile($accountRequest);
                 $user = app(CoreProfileUserProvisioningService::class)->provisionFor($profile);
@@ -103,7 +104,9 @@ class CoreAccountRequestService
             }
 
             if ($profile) {
-                $this->syncApprovedUserIdentity($profile, $user, $accountRequest);
+                if (! $profile instanceof ExternalPerson) {
+                    $this->syncApprovedUserIdentity($profile, $user, $accountRequest);
+                }
             }
 
             $this->assignDefaultGlobalRole($user, $accountRequest);
@@ -174,6 +177,10 @@ class CoreAccountRequestService
         if (blank($accountRequest->email)) {
             $blockers[] = 'Email wajib diisi agar akun Core dapat dibuat.';
         }
+
+        $existingUser = filled($accountRequest->email)
+            ? User::query()->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $accountRequest->email))])->first()
+            : null;
 
         if ($accountRequest->request_type === AccountRequest::TYPE_STUDENT) {
             if (blank($accountRequest->student_number)) {
@@ -248,11 +255,11 @@ class CoreAccountRequestService
             if (blank($accountRequest->phone)) {
                 $blockers[] = 'Nomor telepon wajib diisi untuk pembimbing luar.';
             }
-        }
 
-        $existingUser = filled($accountRequest->email)
-            ? User::query()->whereRaw('LOWER(TRIM(email)) = ?', [strtolower(trim((string) $accountRequest->email))])->first()
-            : null;
+            if ($existingUser && ! in_array($existingUser->identity_type, ['external', 'field_supervisor'], true)) {
+                $blockers[] = 'Email sudah terhubung ke user internal. Gunakan email eksternal berbeda atau tautkan manual oleh Admin Core.';
+            }
+        }
 
         if ($existingUser) {
             $existingUser->loadMissing(['student', 'lecturer', 'employee']);
@@ -422,6 +429,16 @@ class CoreAccountRequestService
         $user = User::query()->whereRaw('LOWER(TRIM(email)) = ?', [$email])->first();
 
         if ($user) {
+            if (in_array($user->identity_type, [null, '', 'field_supervisor', 'external'], true)) {
+                $user->forceFill([
+                    'name' => $user->name ?: $accountRequest->name,
+                    'phone' => $user->phone ?: $accountRequest->phone,
+                    'address' => $user->address ?: $accountRequest->address,
+                    'identity_type' => 'external',
+                    'active' => true,
+                ])->saveQuietly();
+            }
+
             return $user;
         }
 
@@ -431,7 +448,7 @@ class CoreAccountRequestService
             'phone' => $accountRequest->phone,
             'address' => $accountRequest->address,
             'username' => $email,
-            'identity_type' => 'field_supervisor',
+            'identity_type' => 'external',
             'identity_number' => null,
             'password' => Hash::make(app(CoreProfileUserProvisioningService::class)->generateInitialPassword($accountRequest->name, $email)),
             'active' => true,
@@ -439,6 +456,42 @@ class CoreAccountRequestService
             'password_changed_at' => null,
             'last_password_reset_at' => now(),
         ]);
+    }
+
+    protected function createOrUpdateExternalPerson(AccountRequest $accountRequest, User $user): ExternalPerson
+    {
+        $email = strtolower(trim((string) $accountRequest->email));
+        $externalPerson = ExternalPerson::withTrashed()
+            ->where(function ($query) use ($email, $user): void {
+                $query->where('user_id', $user->id);
+
+                if (filled($email)) {
+                    $query->orWhereRaw('LOWER(TRIM(email)) = ?', [$email]);
+                }
+            })
+            ->first();
+
+        $externalPerson ??= new ExternalPerson;
+
+        if ($externalPerson->trashed()) {
+            $externalPerson->restore();
+        }
+
+        $externalPerson->fill([
+            'user_id' => $user->id,
+            'name' => $accountRequest->name,
+            'email' => $email,
+            'phone' => $accountRequest->phone,
+            'institution_name' => $accountRequest->position_title,
+            'institution_type' => null,
+            'position_title' => 'Pembimbing Luar',
+            'identity_number' => $accountRequest->identity_number,
+            'address' => $accountRequest->address,
+            'status' => 'active',
+            'notes' => $accountRequest->notes,
+        ])->save();
+
+        return $externalPerson;
     }
 
     protected function createOrUpdateStudent(AccountRequest $accountRequest): Student

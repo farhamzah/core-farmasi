@@ -172,6 +172,7 @@ class BulkUserAppAccess extends Page
                 'student' => 'Mahasiswa',
                 'lecturer' => 'Dosen',
                 'employee' => 'Tendik / Staf / Laboran',
+                'external' => 'Mitra Eksternal',
             ],
             'global_role' => Role::query()
                 ->where('active', true)

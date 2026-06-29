@@ -2,11 +2,11 @@
 
 return [
     'identity_types' => [
-        'student' => 'Student',
-        'lecturer' => 'Lecturer',
-        'employee' => 'Employee',
+        'student' => 'Mahasiswa',
+        'lecturer' => 'Dosen',
+        'employee' => 'Tendik / Staf',
         'admin' => 'Admin',
-        'external' => 'External',
+        'external' => 'Mitra Eksternal',
         'system' => 'System',
     ],
 

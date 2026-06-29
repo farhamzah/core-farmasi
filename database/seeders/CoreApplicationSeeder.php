@@ -109,6 +109,7 @@ class CoreApplicationSeeder extends Seeder
                 ['role_slug' => 'pembimbing-dalam', 'role_name' => 'Pembimbing Dalam'],
                 ['role_slug' => 'pembimbing-lapangan', 'role_name' => 'Pembimbing Lapangan'],
                 ['role_slug' => 'penguji', 'role_name' => 'Penguji'],
+                ['role_slug' => 'penguji-luar', 'role_name' => 'Penguji Luar'],
                 ['role_slug' => 'admin-kp', 'role_name' => 'Admin KP'],
             ],
             'tu-farmasi' => [
@@ -150,7 +151,9 @@ class CoreApplicationSeeder extends Seeder
                 ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa', 'description' => 'Mahasiswa peserta tugas akhir.'],
                 ['role_slug' => 'dosen', 'role_name' => 'Dosen', 'description' => 'Dosen yang terlibat dalam tugas akhir.'],
                 ['role_slug' => 'dosen-pembimbing', 'role_name' => 'Dosen Pembimbing', 'description' => 'Pembimbing tugas akhir.'],
+                ['role_slug' => 'pembimbing-luar', 'role_name' => 'Pembimbing Luar', 'description' => 'Pembimbing tugas akhir dari luar Fakultas Farmasi UBP.'],
                 ['role_slug' => 'penguji', 'role_name' => 'Penguji', 'description' => 'Penguji tugas akhir.'],
+                ['role_slug' => 'penguji-luar', 'role_name' => 'Penguji Luar', 'description' => 'Penguji tugas akhir dari luar Fakultas Farmasi UBP.'],
                 ['role_slug' => 'koordinator-ta', 'role_name' => 'Koordinator TA', 'description' => 'Koordinator pelaksanaan tugas akhir.'],
                 ['role_slug' => 'admin-ta', 'role_name' => 'Admin TA', 'description' => 'Admin aplikasi TA.'],
                 ['role_slug' => 'kaprodi', 'role_name' => 'Kaprodi', 'description' => 'Peran aplikasi untuk kebutuhan koordinasi prodi; jabatan resmi tetap dari leadership Core.'],

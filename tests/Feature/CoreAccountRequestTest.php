@@ -7,6 +7,7 @@ use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\ExternalPerson;
 use App\Models\Lecturer;
 use App\Models\Role;
 use App\Models\Student;
@@ -65,8 +66,33 @@ class CoreAccountRequestTest extends TestCase
         }
     }
 
+    public function test_external_people_table_exists_with_expected_columns(): void
+    {
+        $this->assertTrue(Schema::hasTable('external_people'));
+
+        foreach ([
+            'user_id',
+            'external_number',
+            'name',
+            'email',
+            'phone',
+            'institution_name',
+            'institution_type',
+            'position_title',
+            'profession',
+            'identity_number',
+            'address',
+            'status',
+            'notes',
+        ] as $column) {
+            $this->assertTrue(Schema::hasColumn('external_people', $column), "Missing column {$column}");
+        }
+    }
+
     public function test_public_account_request_is_disabled_by_default(): void
     {
+        config(['core_account.public_account_request_enabled' => false]);
+
         $this->get('/account-request')
             ->assertOk()
             ->assertSee('Registrasi akun tidak dibuka secara mandiri.')
@@ -79,6 +105,8 @@ class CoreAccountRequestTest extends TestCase
 
     public function test_register_alias_does_not_show_active_registration_form(): void
     {
+        config(['core_account.public_account_request_enabled' => false]);
+
         $this->get('/register')->assertRedirect('/account-request');
 
         $this->followingRedirects()
@@ -90,6 +118,8 @@ class CoreAccountRequestTest extends TestCase
 
     public function test_guest_post_is_rejected_when_account_request_disabled(): void
     {
+        config(['core_account.public_account_request_enabled' => false]);
+
         $this->post('/account-request', [
             'request_type' => AccountRequest::TYPE_STUDENT,
             'name' => 'Calon Mahasiswa',
@@ -103,6 +133,8 @@ class CoreAccountRequestTest extends TestCase
 
     public function test_config_default_disables_public_account_request(): void
     {
+        config(['core_account.public_account_request_enabled' => false]);
+
         $this->assertFalse(config('core_account.public_account_request_enabled'));
     }
 
@@ -835,7 +867,7 @@ class CoreAccountRequestTest extends TestCase
         $this->assertSame(0, UserAppAccess::where('user_id', $user->id)->count());
     }
 
-    public function test_approve_field_supervisor_request_creates_core_user_only(): void
+    public function test_approve_field_supervisor_request_creates_external_user_and_profile(): void
     {
         $admin = $this->createCoreAdmin('admin-core');
         Role::create(['name' => 'pembimbing-lapangan', 'label' => 'Pembimbing Lapangan', 'active' => true]);
@@ -857,14 +889,48 @@ class CoreAccountRequestTest extends TestCase
 
         $this->assertTrue($request->isApproved());
         $this->assertSame($user->id, $request->approved_user_id);
-        $this->assertSame('field_supervisor', $user->identity_type);
+        $this->assertSame('external', $user->identity_type);
         $this->assertSame('pembimbing.luar@example.test', $user->username);
         $this->assertTrue(Hash::check('Pembimbingtest!', $user->password));
         $this->assertTrue($user->roles()->where('name', 'pembimbing-lapangan')->exists());
         $this->assertSame(0, Student::count());
         $this->assertSame(0, Lecturer::count());
         $this->assertSame(0, Employee::count());
+        $this->assertDatabaseHas('external_people', [
+            'user_id' => $user->id,
+            'name' => 'Pembimbing Luar',
+            'email' => 'pembimbing.luar@example.test',
+            'phone' => '081234567890',
+            'institution_name' => 'RS Mitra Farmasi',
+            'position_title' => 'Pembimbing Luar',
+            'status' => 'active',
+        ]);
         $this->assertSame(0, UserAppAccess::where('user_id', $user->id)->count());
+    }
+
+    public function test_field_supervisor_request_cannot_reuse_internal_user_email(): void
+    {
+        User::factory()->create([
+            'email' => 'internal.lecturer@example.test',
+            'identity_type' => 'lecturer',
+            'active' => true,
+        ]);
+
+        $request = AccountRequest::create([
+            'request_type' => AccountRequest::TYPE_FIELD_SUPERVISOR,
+            'name' => 'Pembimbing Luar',
+            'email' => 'internal.lecturer@example.test',
+            'phone' => '081234567890',
+            'position_title' => 'RS Mitra Farmasi',
+            'requested_role' => 'pembimbing-lapangan',
+            'status' => AccountRequest::STATUS_PENDING,
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(CoreAccountRequestService::class)->approveAndProvision($request, null);
+
+        $this->assertSame(0, ExternalPerson::count());
     }
 
     public function test_approve_blocks_duplicate_identifier_with_different_email(): void

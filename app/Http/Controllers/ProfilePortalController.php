@@ -130,6 +130,9 @@ class ProfilePortalController extends Controller
             'gender' => ['nullable', 'string', 'max:50'],
             'staff_type' => ['nullable', 'string', 'max:255'],
             'position_title' => ['nullable', 'string', 'max:255'],
+            'institution_name' => ['nullable', 'string', 'max:255'],
+            'institution_type' => ['nullable', 'string', 'max:100'],
+            'profession' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 

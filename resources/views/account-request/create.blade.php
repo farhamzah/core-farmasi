@@ -29,12 +29,14 @@
                 'role' => 'tata-usaha',
             ],
             \App\Models\AccountRequest::TYPE_FIELD_SUPERVISOR => [
-                'label' => 'Pembimbing Luar',
-                'description' => 'Untuk pembimbing lapangan dari instansi/mitra KP.',
-                'badge' => 'Kontak Mitra',
+                'label' => 'Mitra Eksternal',
+                'description' => 'Untuk pembimbing atau penguji dari industri, RS, apotek, klinik, atau kampus lain.',
+                'badge' => 'Mitra / RS / Industri',
                 'role' => 'pembimbing-lapangan',
             ],
         ];
+
+        $institutionTypes = \App\Models\AccountRequest::externalInstitutionTypeOptions();
     @endphp
 
     <main class="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -210,10 +212,10 @@
                     <div class="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm" data-profile-panel="field_supervisor" hidden>
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <h3 class="text-base font-bold text-slate-950">Data Pembimbing Luar</h3>
-                                <p class="mt-1 text-sm text-slate-600">Profil pembimbing lapangan tetap diverifikasi admin. Isi kontak yang mudah dihubungi.</p>
+                                <h3 class="text-base font-bold text-slate-950">Data Mitra Eksternal</h3>
+                                <p class="mt-1 text-sm text-slate-600">Untuk pembimbing/penguji luar KP atau TA. Isi data kontak dan instansi dulu, detail akses diverifikasi Admin Core.</p>
                             </div>
-                            <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Mitra KP</span>
+                            <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Mitra Eksternal</span>
                         </div>
                         <div class="mt-4 grid gap-5 md:grid-cols-2">
                             <label class="grid gap-2">
@@ -222,8 +224,23 @@
                             </label>
 
                             <label class="grid gap-2">
-                                <span class="text-sm font-semibold text-slate-800">Instansi / Perusahaan</span>
-                                <input name="position_title" value="{{ old('position_title') }}" maxlength="255" placeholder="Opsional, contoh: Apotek / RS / Industri" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                <span class="text-sm font-semibold text-slate-800">Instansi / Perusahaan <span class="text-red-600">*</span></span>
+                                <input name="institution_name" value="{{ old('institution_name') }}" maxlength="255" placeholder="Contoh: RS Mitra Farmasi, Apotek Sehat, PT Industri Farma" data-required-for="field_supervisor" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            </label>
+
+                            <label class="grid gap-2">
+                                <span class="text-sm font-semibold text-slate-800">Jenis Instansi</span>
+                                <select name="institution_type" class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                    <option value="">Boleh dikosongkan dulu</option>
+                                    @foreach ($institutionTypes as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('institution_type') === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+
+                            <label class="grid gap-2">
+                                <span class="text-sm font-semibold text-slate-800">Profesi / Jabatan</span>
+                                <input name="profession" value="{{ old('profession') }}" maxlength="255" placeholder="Opsional, contoh: Apoteker, Preseptor, HRD, Dosen Tamu" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             </label>
                         </div>
                     </div>

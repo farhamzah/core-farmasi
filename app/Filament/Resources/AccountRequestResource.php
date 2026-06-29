@@ -95,6 +95,16 @@ class AccountRequestResource extends Resource
                         Forms\Components\TextInput::make('position_title')
                             ->label('Jabatan/Posisi')
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('institution_name')
+                            ->label('Instansi / Perusahaan')
+                            ->maxLength(255),
+                        Forms\Components\Select::make('institution_type')
+                            ->label('Jenis Instansi')
+                            ->options(AccountRequest::externalInstitutionTypeOptions())
+                            ->searchable(),
+                        Forms\Components\TextInput::make('profession')
+                            ->label('Profesi / Keahlian')
+                            ->maxLength(255),
                         Forms\Components\Select::make('study_program_id')
                             ->label('Program Studi')
                             ->relationship('studyProgram', 'name')

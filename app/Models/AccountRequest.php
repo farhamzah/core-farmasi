@@ -41,6 +41,9 @@ class AccountRequest extends Model
         'employee_number',
         'staff_type',
         'position_title',
+        'institution_name',
+        'institution_type',
+        'profession',
         'study_program_id',
         'department_id',
         'requested_role',
@@ -105,8 +108,24 @@ class AccountRequest extends Model
             self::TYPE_STUDENT => 'Mahasiswa',
             self::TYPE_LECTURER => 'Dosen',
             self::TYPE_EMPLOYEE => 'Tendik / Staf / Laboran',
-            self::TYPE_FIELD_SUPERVISOR => 'Pembimbing Luar',
+            self::TYPE_FIELD_SUPERVISOR => 'Mitra Eksternal',
             self::TYPE_OTHER => 'Lainnya',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function externalInstitutionTypeOptions(): array
+    {
+        return [
+            'industry' => 'Industri',
+            'hospital' => 'Rumah Sakit',
+            'pharmacy' => 'Apotek',
+            'university' => 'Universitas / Kampus Lain',
+            'clinic' => 'Klinik',
+            'government' => 'Instansi Pemerintah',
+            'other' => 'Lainnya',
         ];
     }
 

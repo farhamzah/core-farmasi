@@ -48,6 +48,9 @@ class CoreAccountRequestTest extends TestCase
             'employee_number',
             'staff_type',
             'position_title',
+            'institution_name',
+            'institution_type',
+            'profession',
             'study_program_id',
             'department_id',
             'requested_role',
@@ -149,7 +152,7 @@ class CoreAccountRequestTest extends TestCase
             ->assertSee('Mahasiswa')
             ->assertSee('Dosen')
             ->assertSee('Tendik / Staf')
-            ->assertSee('Pembimbing Luar')
+            ->assertSee('Mitra Eksternal')
             ->assertDontSee('NIK / No. KTP')
             ->assertDontSee('Tanggal Lahir')
             ->assertDontSee('Alamat')
@@ -259,6 +262,7 @@ class CoreAccountRequestTest extends TestCase
                 'name' => 'Existing User',
                 'email' => 'existing.user@example.test',
                 'phone' => '081234567890',
+                'institution_name' => 'RS Mitra Farmasi',
             ])
             ->assertRedirect('/account-request')
             ->assertSessionHasErrors('email');
@@ -563,7 +567,9 @@ class CoreAccountRequestTest extends TestCase
             'name' => 'Pembimbing Luar',
             'email' => 'pembimbing.luar@example.test',
             'phone' => '081234567890',
-            'position_title' => 'RS Mitra Farmasi',
+            'institution_name' => 'RS Mitra Farmasi',
+            'institution_type' => 'hospital',
+            'profession' => 'Apoteker Preseptor',
             'requested_role' => 'pembimbing-lapangan',
         ])->assertRedirect('/account-request/success');
 
@@ -572,7 +578,9 @@ class CoreAccountRequestTest extends TestCase
             'name' => 'Pembimbing Luar',
             'email' => 'pembimbing.luar@example.test',
             'phone' => '081234567890',
-            'position_title' => 'RS Mitra Farmasi',
+            'institution_name' => 'RS Mitra Farmasi',
+            'institution_type' => 'hospital',
+            'profession' => 'Apoteker Preseptor',
             'requested_role' => 'pembimbing-lapangan',
             'status' => AccountRequest::STATUS_PENDING,
         ]);
@@ -877,7 +885,9 @@ class CoreAccountRequestTest extends TestCase
             'name' => 'Pembimbing Luar',
             'email' => 'pembimbing.luar@example.test',
             'phone' => '081234567890',
-            'position_title' => 'RS Mitra Farmasi',
+            'institution_name' => 'RS Mitra Farmasi',
+            'institution_type' => 'hospital',
+            'profession' => 'Apoteker Preseptor',
             'requested_role' => 'pembimbing-lapangan',
             'status' => AccountRequest::STATUS_PENDING,
         ]);
@@ -902,7 +912,9 @@ class CoreAccountRequestTest extends TestCase
             'email' => 'pembimbing.luar@example.test',
             'phone' => '081234567890',
             'institution_name' => 'RS Mitra Farmasi',
-            'position_title' => 'Pembimbing Luar',
+            'institution_type' => 'hospital',
+            'position_title' => 'Mitra Eksternal',
+            'profession' => 'Apoteker Preseptor',
             'status' => 'active',
         ]);
         $this->assertSame(0, UserAppAccess::where('user_id', $user->id)->count());
@@ -921,7 +933,7 @@ class CoreAccountRequestTest extends TestCase
             'name' => 'Pembimbing Luar',
             'email' => 'internal.lecturer@example.test',
             'phone' => '081234567890',
-            'position_title' => 'RS Mitra Farmasi',
+            'institution_name' => 'RS Mitra Farmasi',
             'requested_role' => 'pembimbing-lapangan',
             'status' => AccountRequest::STATUS_PENDING,
         ]);

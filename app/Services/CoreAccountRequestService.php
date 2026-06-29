@@ -253,7 +253,11 @@ class CoreAccountRequestService
 
         if ($accountRequest->request_type === AccountRequest::TYPE_FIELD_SUPERVISOR) {
             if (blank($accountRequest->phone)) {
-                $blockers[] = 'Nomor telepon wajib diisi untuk pembimbing luar.';
+                $blockers[] = 'Nomor telepon wajib diisi untuk mitra eksternal.';
+            }
+
+            if (blank($accountRequest->institution_name)) {
+                $blockers[] = 'Instansi/perusahaan wajib diisi untuk mitra eksternal.';
             }
 
             if ($existingUser && ! in_array($existingUser->identity_type, ['external', 'field_supervisor'], true)) {
@@ -309,6 +313,9 @@ class CoreAccountRequestService
             'employee_number',
             'staff_type',
             'position_title',
+            'institution_name',
+            'institution_type',
+            'profession',
             'requested_role',
             'requested_app_code',
         ] as $key) {
@@ -482,9 +489,10 @@ class CoreAccountRequestService
             'name' => $accountRequest->name,
             'email' => $email,
             'phone' => $accountRequest->phone,
-            'institution_name' => $accountRequest->position_title,
-            'institution_type' => null,
-            'position_title' => 'Pembimbing Luar',
+            'institution_name' => $accountRequest->institution_name ?: $accountRequest->position_title,
+            'institution_type' => $accountRequest->institution_type,
+            'position_title' => $accountRequest->position_title ?: 'Mitra Eksternal',
+            'profession' => $accountRequest->profession,
             'identity_number' => $accountRequest->identity_number,
             'address' => $accountRequest->address,
             'status' => 'active',

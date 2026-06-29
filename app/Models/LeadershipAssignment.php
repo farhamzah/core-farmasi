@@ -64,6 +64,10 @@ class LeadershipAssignment extends Model
                 return $this->official_name_snapshot;
             }
 
+            if ($this->person instanceof Lecturer) {
+                return $this->person->display_name_with_title;
+            }
+
             return $this->person?->name;
         });
     }

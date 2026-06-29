@@ -45,7 +45,11 @@ class LeadershipAssignmentTest extends TestCase
 
     public function test_leadership_assignment_model_casts_and_person_resolution_work(): void
     {
-        $lecturer = $this->createLecturer('Dr. Dekan');
+        $lecturer = $this->createLecturer('Dekan');
+        $lecturer->forceFill([
+            'front_title' => 'Dr.',
+            'back_title' => 'M.Farm.',
+        ])->save();
 
         $assignment = LeadershipAssignment::create([
             'position_type' => 'dekan',
@@ -61,7 +65,28 @@ class LeadershipAssignmentTest extends TestCase
         $this->assertSame(now()->subMonth()->toDateString(), $assignment->start_date->toDateString());
         $this->assertSame(now()->addMonth()->toDateString(), $assignment->end_date->toDateString());
         $this->assertTrue($assignment->person->is($lecturer));
-        $this->assertSame('Dr. Dekan', $assignment->person_display_name);
+        $this->assertSame('Dr. Dekan, M.Farm.', $assignment->person_display_name);
+    }
+
+    public function test_official_name_snapshot_overrides_current_profile_title_for_historical_documents(): void
+    {
+        $lecturer = $this->createLecturer('Dekan Historis');
+        $lecturer->forceFill([
+            'front_title' => 'Prof.',
+            'back_title' => 'Ph.D.',
+        ])->save();
+
+        $assignment = LeadershipAssignment::create([
+            'position_type' => 'dekan',
+            'unit_type' => 'faculty',
+            'person_type' => 'lecturer',
+            'person_id' => $lecturer->id,
+            'official_name_snapshot' => 'Dr. Dekan Historis, M.Si.',
+            'start_date' => now()->subMonth(),
+            'is_active' => true,
+        ]);
+
+        $this->assertSame('Dr. Dekan Historis, M.Si.', $assignment->person_display_name);
     }
 
     public function test_resolver_returns_current_active_dean(): void
@@ -193,7 +218,12 @@ class LeadershipAssignmentTest extends TestCase
 
         $this->actingAs($user)
             ->get('/admin/leadership-assignments/create')
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('Pilih Unit')
+            ->assertSee('Pilih Pejabat')
+            ->assertSee('Arsip SK Khusus')
+            ->assertDontSee('ID Pejabat')
+            ->assertDontSee('Isi ID Dosen');
 
         $this->actingAs($user)
             ->get("/admin/leadership-assignments/{$assignment->id}/edit")

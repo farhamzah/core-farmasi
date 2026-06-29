@@ -3,7 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\LeadershipAssignmentResource\Pages;
+use App\Models\Department;
+use App\Models\Employee;
+use App\Models\Faculty;
 use App\Models\LeadershipAssignment;
+use App\Models\Lecturer;
+use App\Models\StudyProgram;
 use BackedEnum;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -42,9 +47,12 @@ class LeadershipAssignmentResource extends Resource
                             ->label('Jenis Jabatan')
                             ->options(self::positionTypeOptions())
                             ->required()
+                            ->live()
+                            ->afterStateUpdated(fn ($set, ?string $state): mixed => $set('position_title', self::defaultPositionTitle($state)))
                             ->helperText('Sumber resmi jabatan seperti Dekan/Kaprodi.'),
                         Forms\Components\TextInput::make('position_title')
                             ->label('Nama Jabatan Tampil')
+                            ->helperText('Boleh otomatis mengikuti Jenis Jabatan, atau disesuaikan seperti Ketua Program Studi S1 Farmasi.')
                             ->maxLength(255),
                         Forms\Components\TextInput::make('decree_number')
                             ->label('Nomor SK')
@@ -59,11 +67,15 @@ class LeadershipAssignmentResource extends Resource
                         Forms\Components\Select::make('unit_type')
                             ->label('Jenis Unit')
                             ->options(self::unitTypeOptions())
-                            ->required(),
-                        Forms\Components\TextInput::make('unit_id')
-                            ->label('ID Unit')
-                            ->numeric()
-                            ->helperText('Untuk study_program gunakan ID Program Studi; untuk department/faculty gunakan ID Department. Boleh kosong untuk unit umum seperti fakultas.'),
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(fn ($set): mixed => $set('unit_id', null)),
+                        Forms\Components\Select::make('unit_id')
+                            ->label('Pilih Unit')
+                            ->options(fn ($get): array => self::unitOptions($get('unit_type')))
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Pilih unit sesuai jenis unit. Boleh kosong untuk jabatan umum fakultas jika tidak perlu target spesifik.'),
                     ])
                     ->columns(2),
                 Section::make('Pejabat')
@@ -71,24 +83,36 @@ class LeadershipAssignmentResource extends Resource
                         Forms\Components\Select::make('person_type')
                             ->label('Jenis Pejabat')
                             ->options(self::personTypeOptions())
-                            ->required(),
-                        Forms\Components\TextInput::make('person_id')
-                            ->label('ID Pejabat')
-                            ->numeric()
                             ->required()
-                            ->helperText('Isi ID Dosen jika jenis pejabat Dosen, atau ID Tendik/Staff jika jenis pejabat Tendik / Staff.'),
+                            ->live()
+                            ->afterStateUpdated(fn ($set): mixed => $set('person_id', null)),
+                        Forms\Components\Select::make('person_id')
+                            ->label('Pilih Pejabat')
+                            ->options(fn ($get): array => self::personOptions($get('person_type')))
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->helperText('Cari berdasarkan nama atau email. Nama bergelar dosen otomatis diambil dari profil dosen Core.'),
+                    ])
+                    ->columns(2),
+                Section::make('Arsip SK Khusus')
+                    ->schema([
                         Forms\Components\TextInput::make('title_prefix')
                             ->label('Gelar Depan')
+                            ->helperText('Opsional. Kosongkan agar mengikuti gelar dari profil dosen.')
                             ->maxLength(255),
                         Forms\Components\TextInput::make('title_suffix')
                             ->label('Gelar Belakang')
+                            ->helperText('Opsional. Kosongkan agar mengikuti gelar dari profil dosen.')
                             ->maxLength(255),
                         Forms\Components\TextInput::make('official_name_snapshot')
                             ->label('Snapshot Nama Resmi')
-                            ->helperText('Opsional. Jika diisi, nama ini dipakai untuk menjaga konsistensi dokumen historis.')
+                            ->helperText('Opsional. Isi hanya jika nama di SK lama harus dipertahankan persis dan tidak mengikuti perubahan profil.')
                             ->maxLength(255)
                             ->columnSpanFull(),
                     ])
+                    ->collapsible()
+                    ->collapsed()
                     ->columns(2),
                 Section::make('Periode')
                     ->schema([
@@ -198,5 +222,41 @@ class LeadershipAssignmentResource extends Resource
     public static function personTypeOptions(): array
     {
         return config('core_leadership.person_types', []);
+    }
+
+    public static function unitOptions(?string $unitType): array
+    {
+        return match ($unitType) {
+            'faculty' => Faculty::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'department', 'laboratory' => Department::query()->orderBy('name')->pluck('name', 'id')->all(),
+            'study_program' => StudyProgram::query()->orderBy('name')->pluck('name', 'id')->all(),
+            default => [],
+        };
+    }
+
+    public static function personOptions(?string $personType): array
+    {
+        return match ($personType) {
+            'lecturer' => Lecturer::query()
+                ->orderBy('name')
+                ->get()
+                ->mapWithKeys(fn (Lecturer $lecturer): array => [
+                    $lecturer->id => trim($lecturer->display_name_with_title.' - '.$lecturer->email),
+                ])
+                ->all(),
+            'employee' => Employee::query()
+                ->orderBy('name')
+                ->get()
+                ->mapWithKeys(fn (Employee $employee): array => [
+                    $employee->id => trim($employee->name.' - '.$employee->email),
+                ])
+                ->all(),
+            default => [],
+        };
+    }
+
+    private static function defaultPositionTitle(?string $positionType): ?string
+    {
+        return self::positionTypeOptions()[$positionType] ?? null;
     }
 }

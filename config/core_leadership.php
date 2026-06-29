@@ -9,6 +9,8 @@ return [
         'kepala_departemen' => 'Kepala Departemen',
         'kepala_lab' => 'Kepala Laboratorium',
         'koordinator_kp' => 'Koordinator KP',
+        'koordinator_ta' => 'Koordinator TA',
+        'kepala_tu' => 'Kepala TU',
         'other' => 'Lainnya',
     ],
 

@@ -43,6 +43,12 @@ class LeadershipAssignmentTest extends TestCase
         }
     }
 
+    public function test_leadership_position_catalog_includes_ta_and_tu_roles(): void
+    {
+        $this->assertSame('Koordinator TA', config('core_leadership.position_types.koordinator_ta'));
+        $this->assertSame('Kepala TU', config('core_leadership.position_types.kepala_tu'));
+    }
+
     public function test_leadership_assignment_model_casts_and_person_resolution_work(): void
     {
         $lecturer = $this->createLecturer('Dekan');

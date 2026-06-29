@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountRequestController;
 use App\Http\Controllers\ProfileAuthController;
+use App\Http\Controllers\ProfilePasswordResetController;
 use App\Http\Controllers\ProfilePortalController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,7 +19,12 @@ Route::redirect('/register', '/account-request')->name('register');
 
 Route::get('/profile/login', [ProfileAuthController::class, 'showLoginForm'])->name('profile.login');
 Route::post('/profile/login', [ProfileAuthController::class, 'login'])->middleware('throttle:10,1')->name('profile.login.store');
+Route::get('/profile/forgot-password', [ProfilePasswordResetController::class, 'requestForm'])->name('profile.password.request');
+Route::post('/profile/forgot-password', [ProfilePasswordResetController::class, 'sendLink'])->middleware('throttle:5,1')->name('profile.password.email');
+Route::get('/profile/reset-password/{token}', [ProfilePasswordResetController::class, 'resetForm'])->name('profile.password.reset.edit');
+Route::post('/profile/reset-password', [ProfilePasswordResetController::class, 'reset'])->middleware('throttle:5,1')->name('profile.password.reset.update');
 Route::redirect('/profil-saya/login', '/profile/login')->name('profile.login.local');
+Route::redirect('/profil-saya/lupa-password', '/profile/forgot-password')->name('profile.password.request.local');
 
 Route::middleware('auth')->group(function (): void {
     Route::post('/profile/logout', [ProfileAuthController::class, 'logout'])->name('profile.logout');

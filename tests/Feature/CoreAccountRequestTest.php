@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AccountRequestApprovedMail;
 use App\Models\AccountRequest;
 use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
@@ -17,6 +18,7 @@ use App\Models\UserAppAccess;
 use App\Services\CoreAccountRequestService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -768,6 +770,8 @@ class CoreAccountRequestTest extends TestCase
 
     public function test_approve_student_request_can_create_requested_app_access_when_confirmed(): void
     {
+        Mail::fake();
+
         $admin = $this->createCoreAdmin('admin-core');
         $studyProgram = $this->createStudyProgram();
         Role::create(['name' => 'mahasiswa', 'label' => 'Mahasiswa', 'active' => true]);
@@ -806,6 +810,19 @@ class CoreAccountRequestTest extends TestCase
             'app_code' => 'kp-farmasi',
             'role_slug' => 'mahasiswa',
             'is_active' => true,
+        ]);
+
+        Mail::assertSent(AccountRequestApprovedMail::class, function (AccountRequestApprovedMail $mail) use ($user): bool {
+            return $mail->hasTo($user->email)
+                && $mail->user->is($user)
+                && filled($mail->passwordSetupUrl)
+                && $mail->appAccess?->app_code === 'kp-farmasi'
+                && $mail->appAccess?->role_slug === 'mahasiswa';
+        });
+
+        $this->assertDatabaseHas('user_activity_logs', [
+            'user_id' => $user->id,
+            'action' => 'account_request.approval_email_sent',
         ]);
     }
 

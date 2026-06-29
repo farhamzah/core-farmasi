@@ -87,14 +87,27 @@
 
                     <div>
                         <label for="password" class="text-sm font-bold text-slate-800">Password</label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            autocomplete="current-password"
-                            required
-                            class="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100"
-                        >
+                        <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-100">
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                autocomplete="current-password"
+                                required
+                                class="min-w-0 flex-1 border-0 bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-0"
+                            >
+                            <button
+                                type="button"
+                                data-password-toggle
+                                data-target="password"
+                                class="shrink-0 border-l border-slate-200 px-4 text-sm font-black text-blue-700 transition hover:bg-blue-50 focus:outline-none"
+                                aria-controls="password"
+                                aria-label="Lihat password"
+                            >Lihat</button>
+                        </div>
+                        <div class="mt-2 flex justify-end">
+                            <a href="{{ route('profile.password.request') }}" class="text-xs font-black text-blue-700 underline underline-offset-4">Lupa Password?</a>
+                        </div>
                     </div>
 
                     <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
@@ -112,5 +125,24 @@
             </div>
         </section>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const input = document.getElementById(button.dataset.target);
+
+                    if (! input) {
+                        return;
+                    }
+
+                    const isHidden = input.type === 'password';
+                    input.type = isHidden ? 'text' : 'password';
+                    button.textContent = isHidden ? 'Sembunyikan' : 'Lihat';
+                    button.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Lihat password');
+                    input.focus();
+                });
+            });
+        });
+    </script>
 </body>
 </html>

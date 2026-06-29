@@ -32,11 +32,12 @@
                 'label' => 'Mitra Eksternal',
                 'description' => 'Untuk pembimbing atau penguji dari industri, RS, apotek, klinik, atau kampus lain.',
                 'badge' => 'Mitra / RS / Industri',
-                'role' => 'pembimbing-lapangan',
+                'role' => '',
             ],
         ];
 
         $institutionTypes = \App\Models\AccountRequest::externalInstitutionTypeOptions();
+        $applicationRoles = $applicationRoles ?? [];
     @endphp
 
     <main class="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -247,13 +248,13 @@
 
                     <section class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">Tujuan Akses</h2>
-                        <p class="mt-1 text-sm text-slate-500">Opsional. Isi jika sudah tahu aplikasi yang ingin dipakai. Admin tetap memverifikasi aksesnya.</p>
+                        <p class="mt-1 text-sm text-slate-500">Opsional. Isi jika sudah tahu aplikasi dan peran yang ingin dipakai. Admin tetap memverifikasi aksesnya sebelum akun diberi akses.</p>
                     </section>
 
                     <div class="grid gap-5 md:grid-cols-2">
                         <label class="grid gap-2">
                             <span class="text-sm font-semibold text-slate-800">Aplikasi yang Dituju</span>
-                            <select name="requested_app_code" class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <select name="requested_app_code" data-requested-app-code class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                                 <option value="">Boleh dikosongkan dulu</option>
                                 @foreach ($applications as $appCode => $name)
                                     <option value="{{ $appCode }}" @selected(old('requested_app_code') === $appCode)>{{ $name }}</option>
@@ -262,12 +263,18 @@
                         </label>
 
                         <label class="grid gap-2">
+                            <span class="text-sm font-semibold text-slate-800">Peran yang Diminta</span>
+                            <select name="requested_role" data-requested-role class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                <option value="">Pilih aplikasi dulu atau kosongkan dulu</option>
+                            </select>
+                            <span class="text-xs leading-5 text-slate-500">Contoh: KP Pembimbing Lapangan, KP Penguji, TA Pembimbing Luar, atau TA Penguji Luar. Jika belum yakin, kosongkan dan jelaskan di catatan.</span>
+                        </label>
+
+                        <label class="grid gap-2 md:col-span-2">
                             <span class="text-sm font-semibold text-slate-800">Catatan Singkat</span>
                             <input name="notes" value="{{ old('notes') }}" maxlength="5000" placeholder="Opsional, contoh: perlu akses KP semester ini" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         </label>
                     </div>
-
-                    <input type="hidden" name="requested_role" value="{{ old('requested_role') }}" data-requested-role>
 
                     <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
                         Setelah disetujui, akun Core dibuat atau ditautkan. Data resmi tambahan, role, dan app access tetap diverifikasi di Core.
@@ -289,7 +296,47 @@
             const form = document.querySelector('[data-account-request-form]');
             const panels = Array.from(document.querySelectorAll('[data-profile-panel]'));
             const roleInput = document.querySelector('[data-requested-role]');
+            const appInput = document.querySelector('[data-requested-app-code]');
             const options = Array.from(document.querySelectorAll('[data-request-type-option]'));
+            const oldRequestedRole = @json(old('requested_role'));
+            const applicationRoles = @json($applicationRoles);
+
+            const roleLabel = (role) => `${role.name} (${role.slug})`;
+
+            const refreshRoleOptions = () => {
+                if (! roleInput) {
+                    return;
+                }
+
+                const appCode = appInput?.value || '';
+                const roles = applicationRoles[appCode] || [];
+                const selectedType = options.find((option) => option.checked);
+                const defaultRole = selectedType?.dataset.defaultRole || '';
+                const preferredValue = roleInput.value || oldRequestedRole || defaultRole;
+
+                roleInput.innerHTML = '';
+
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = appCode ? 'Pilih peran jika sudah tahu' : 'Pilih aplikasi dulu atau kosongkan dulu';
+                roleInput.appendChild(placeholder);
+
+                roles.forEach((role) => {
+                    const option = document.createElement('option');
+                    option.value = role.slug;
+                    option.textContent = roleLabel(role);
+                    option.selected = role.slug === preferredValue;
+                    roleInput.appendChild(option);
+                });
+
+                if (preferredValue && roles.some((role) => role.slug === preferredValue)) {
+                    roleInput.value = preferredValue;
+                } else if (! oldRequestedRole && defaultRole && roles.some((role) => role.slug === defaultRole)) {
+                    roleInput.value = defaultRole;
+                } else if (! roles.some((role) => role.slug === roleInput.value)) {
+                    roleInput.value = '';
+                }
+            };
 
             const setType = (type) => {
                 panels.forEach((panel) => {
@@ -306,13 +353,24 @@
                 });
 
                 const selected = options.find((option) => option.value === type);
-                if (roleInput && selected && ! roleInput.value) {
-                    roleInput.value = selected.dataset.defaultRole || '';
+                const defaultRole = selected?.dataset.defaultRole || '';
+                if (roleInput && defaultRole && ! roleInput.value) {
+                    roleInput.value = defaultRole;
                 }
+
+                refreshRoleOptions();
             };
 
             options.forEach((option) => {
                 option.addEventListener('change', () => setType(option.value));
+            });
+
+            appInput?.addEventListener('change', () => {
+                if (roleInput) {
+                    roleInput.value = '';
+                }
+
+                refreshRoleOptions();
             });
 
             const checked = options.find((option) => option.checked);
@@ -320,7 +378,7 @@
 
             form?.addEventListener('submit', () => {
                 const checkedOption = options.find((option) => option.checked);
-                if (roleInput && checkedOption && ! roleInput.value) {
+                if (roleInput && checkedOption && ! roleInput.value && checkedOption.dataset.defaultRole) {
                     roleInput.value = checkedOption.dataset.defaultRole || '';
                 }
             });

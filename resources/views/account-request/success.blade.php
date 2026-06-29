@@ -16,13 +16,22 @@
                 <p class="mt-5 text-sm font-semibold uppercase tracking-wide text-blue-700">Core Farmasi UBP</p>
                 <h1 class="mt-2 text-3xl font-bold leading-tight text-slate-950">Permohonan Akun Diterima</h1>
                 <p class="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600">
-                    Permohonan Anda sudah tersimpan dan masuk antrean verifikasi Admin Core.
+                    Permohonan Anda sudah tersimpan dan masuk antrean verifikasi Admin Core. Hasil persetujuan akan dikirim ke email yang Anda daftarkan.
                 </p>
             </div>
 
             <div class="px-6 py-6 sm:px-10">
-                <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-                    Akun, akses aplikasi, token, atau sesi login tidak dibuat otomatis dari pengiriman form ini. Admin akan mengaktifkan akun setelah data diverifikasi.
+                <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4 text-left text-sm leading-6 text-blue-900">
+                    <p class="font-bold">Langkah berikutnya</p>
+                    <ul class="mt-2 space-y-1">
+                        <li>1. Admin Core memeriksa data dan tujuan akses Anda.</li>
+                        <li>2. Jika disetujui, informasi akun awal dan instruksi melengkapi profil akan dikirim ke email.</li>
+                        <li>3. Akun belum bisa dipakai sebelum proses verifikasi selesai.</li>
+                    </ul>
+                </div>
+
+                <div class="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    Cek Inbox, Spam, atau Promotions secara berkala. Jika belum ada kabar, hubungi Admin Core.
                 </div>
 
                 <a href="{{ route('account-request.create') }}" class="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-blue-200 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto sm:py-2.5">

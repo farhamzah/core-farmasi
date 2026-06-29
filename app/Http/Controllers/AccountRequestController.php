@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AccountRequest;
 use App\Models\CoreApplication;
+use App\Models\CoreApplicationRole;
 use App\Models\Department;
 use App\Models\StudyProgram;
 use App\Services\CoreAccountRequestService;
@@ -25,6 +26,18 @@ class AccountRequestController extends Controller
             'studyPrograms' => StudyProgram::query()->where('active', true)->orderBy('name')->pluck('name', 'id')->all(),
             'departments' => Department::query()->where('active', true)->orderBy('name')->pluck('name', 'id')->all(),
             'applications' => CoreApplication::query()->active()->orderBy('name')->pluck('name', 'app_code')->all(),
+            'applicationRoles' => CoreApplicationRole::query()
+                ->active()
+                ->orderBy('app_code')
+                ->orderBy('sort_order')
+                ->orderBy('role_name')
+                ->get(['app_code', 'role_slug', 'role_name'])
+                ->groupBy('app_code')
+                ->map(fn ($roles) => $roles->map(fn (CoreApplicationRole $role): array => [
+                    'slug' => $role->role_slug,
+                    'name' => $role->role_name,
+                ])->values()->all())
+                ->all(),
         ]);
     }
 

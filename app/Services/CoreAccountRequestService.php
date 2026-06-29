@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\AccountRequestApprovedMail;
 use App\Models\AccountRequest;
 use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
@@ -16,6 +17,8 @@ use App\Models\UserActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\ValidationException;
 
 class CoreAccountRequestService
@@ -135,6 +138,8 @@ class CoreAccountRequestService
                     'app_access_id' => $appAccess?->id,
                 ],
             ]);
+
+            $this->sendApprovalEmail($accountRequest->fresh(), $user, $appAccess);
 
             return $accountRequest->fresh();
         });
@@ -795,5 +800,53 @@ class CoreAccountRequestService
             AccountRequest::TYPE_FIELD_SUPERVISOR => $accountRequest->email,
             default => null,
         };
+    }
+
+    protected function sendApprovalEmail(AccountRequest $accountRequest, User $user, ?UserAppAccess $appAccess): void
+    {
+        if (blank($user->email)) {
+            return;
+        }
+
+        try {
+            $passwordSetupExpiresInMinutes = (int) config('auth.passwords.users.expire', 60);
+            $passwordSetupUrl = route('profile.password.reset.edit', [
+                'token' => PasswordBroker::broker()->createToken($user),
+                'email' => $user->email,
+            ]);
+
+            Mail::to($user->email)->send(new AccountRequestApprovedMail(
+                $accountRequest,
+                $user,
+                $appAccess,
+                $passwordSetupUrl,
+                $passwordSetupExpiresInMinutes,
+            ));
+
+            UserActivityLog::create([
+                'user_id' => $user->id,
+                'action' => 'account_request.approval_email_sent',
+                'meta' => [
+                    'account_request_id' => $accountRequest->id,
+                    'app_access_id' => $appAccess?->id,
+                    'source' => 'core_account_request',
+                    'password_setup_link' => 'created',
+                    'password_setup_expires_in_minutes' => $passwordSetupExpiresInMinutes,
+                ],
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            UserActivityLog::create([
+                'user_id' => $user->id,
+                'action' => 'account_request.approval_email_failed',
+                'meta' => [
+                    'account_request_id' => $accountRequest->id,
+                    'app_access_id' => $appAccess?->id,
+                    'source' => 'core_account_request',
+                    'error_class' => $exception::class,
+                ],
+            ]);
+        }
     }
 }

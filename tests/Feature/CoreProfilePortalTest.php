@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ProfilePasswordResetLinkMail;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Lecturer;
@@ -13,6 +14,8 @@ use App\Models\UserActivityLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -32,9 +35,100 @@ class CoreProfilePortalTest extends TestCase
             ->assertOk()
             ->assertSee('Portal Profil Core Farmasi')
             ->assertSee('Username / Email / Nomor Identitas')
+            ->assertSee('Lupa Password?')
+            ->assertSee('data-password-toggle', false)
+            ->assertSee('Lihat')
             ->assertDontSee('remember_token')
             ->assertDontSee('api_token')
             ->assertDontSee('password_hash');
+    }
+
+    public function test_guest_can_request_profile_password_reset_link_without_account_enumeration(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create([
+            'active' => true,
+            'username' => 'MHS-RESET-001',
+            'email' => 'profile-reset@example.test',
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $this->from('/profile/forgot-password')
+            ->post('/profile/forgot-password', [
+                'login' => 'MHS-RESET-001',
+            ])
+            ->assertRedirect('/profile/forgot-password')
+            ->assertSessionHas('status');
+
+        Mail::assertSent(ProfilePasswordResetLinkMail::class, function (ProfilePasswordResetLinkMail $mail) use ($user): bool {
+            return $mail->hasTo($user->email)
+                && str_contains($mail->resetUrl, '/profile/reset-password/');
+        });
+
+        $this->assertDatabaseHas('user_activity_logs', [
+            'user_id' => $user->id,
+            'action' => 'profile.password_reset_requested',
+        ]);
+
+        $this->from('/profile/forgot-password')
+            ->post('/profile/forgot-password', [
+                'login' => 'unknown-account@example.test',
+            ])
+            ->assertRedirect('/profile/forgot-password')
+            ->assertSessionHas('status');
+
+        Mail::assertSent(ProfilePasswordResetLinkMail::class, 1);
+    }
+
+    public function test_guest_can_reset_profile_password_from_email_token(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'email' => 'reset-token@example.test',
+            'password' => Hash::make('old-password'),
+            'must_change_password' => true,
+            'password_changed_at' => null,
+        ]);
+        $token = PasswordBroker::broker()->createToken($user);
+
+        $this->post('/profile/reset-password', [
+            'token' => $token,
+            'email' => 'reset-token@example.test',
+            'password' => 'new-secure-password',
+            'password_confirmation' => 'new-secure-password',
+        ])->assertRedirect('/profile/edit');
+
+        $user->refresh();
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertFalse(Hash::check('old-password', $user->password));
+        $this->assertTrue(Hash::check('new-secure-password', $user->password));
+        $this->assertFalse($user->must_change_password);
+        $this->assertNotNull($user->password_changed_at);
+        $this->assertDatabaseHas('user_activity_logs', [
+            'user_id' => $user->id,
+            'action' => 'profile.password_reset_completed',
+        ]);
+    }
+
+    public function test_profile_password_reset_rejects_invalid_token(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'email' => 'invalid-token@example.test',
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $this->post('/profile/reset-password', [
+            'token' => 'invalid-token',
+            'email' => 'invalid-token@example.test',
+            'password' => 'new-secure-password',
+            'password_confirmation' => 'new-secure-password',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertTrue(Hash::check('old-password', $user->fresh()->password));
+        $this->assertGuest();
     }
 
     public function test_logged_in_user_is_redirected_away_from_profile_login(): void

@@ -59,6 +59,9 @@ class EmployeeResource extends Resource
                             ->required(),
                         Forms\Components\DatePicker::make('birth_date')
                             ->label('Birth Date'),
+                        Forms\Components\TextInput::make('birth_place')
+                            ->label('Tempat Lahir')
+                            ->maxLength(255),
                         Forms\Components\Select::make('gender')
                             ->options([
                                 'male' => 'Male',

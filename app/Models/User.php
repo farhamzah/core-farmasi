@@ -76,6 +76,12 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsToMany(Role::class, 'user_roles');
     }
 
+    public function setNameAttribute(?string $value): void
+    {
+        $this->attributes['name'] = app(\App\Services\CorePersonNameFormatter::class)
+            ->normalizePersonName($value);
+    }
+
     public function student(): HasOne
     {
         return $this->hasOne(Student::class);

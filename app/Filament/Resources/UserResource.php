@@ -72,6 +72,32 @@ class UserResource extends Resource
                             ->helperText('Role global Core. Role aplikasi dikelola melalui User App Access.'),
                     ])
                     ->columns(2),
+                Section::make('Foto & Kontak Aman')
+                    ->schema([
+                        Forms\Components\FileUpload::make('profile_photo_path')
+                            ->label('Foto Profil')
+                            ->image()
+                            ->disk('public')
+                            ->directory('profile-photos')
+                            ->visibility('public')
+                            ->maxSize(2048)
+                            ->helperText('Foto identitas umum untuk Profile Portal dan aplikasi yang membaca Core. JPG, PNG, atau WebP maksimal 2MB.'),
+                        Forms\Components\TextInput::make('phone')
+                            ->label('Telepon')
+                            ->tel()
+                            ->maxLength(50),
+                        Forms\Components\TextInput::make('alternate_email')
+                            ->label('Email Alternatif')
+                            ->email()
+                            ->maxLength(255),
+                        Forms\Components\Textarea::make('address')
+                            ->label('Alamat')
+                            ->rows(3)
+                            ->maxLength(65535)
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2)
+                    ->description('Dipakai bila akun belum punya profil resmi tertaut. Jika sudah tertaut ke Mahasiswa/Dosen/Tendik/Mitra, kontak resmi sebaiknya diubah di resource profil tersebut.'),
                 Section::make('Identitas Login')
                     ->schema([
                         Forms\Components\TextInput::make('username')

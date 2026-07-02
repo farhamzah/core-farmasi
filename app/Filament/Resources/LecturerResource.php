@@ -77,6 +77,9 @@ class LecturerResource extends Resource
                         Forms\Components\DatePicker::make('birth_date')
                             ->label('Tanggal Lahir')
                             ->helperText('Dipakai untuk reset password awal. Tidak ditampilkan default di tabel.'),
+                        Forms\Components\TextInput::make('birth_place')
+                            ->label('Tempat Lahir')
+                            ->maxLength(255),
                     ])
                     ->columns(3),
                 Section::make('Penempatan')
@@ -100,6 +103,7 @@ class LecturerResource extends Resource
                 Section::make('Kontak & Akun')
                     ->schema([
                         Forms\Components\TextInput::make('phone')
+                            ->label('Telepon')
                             ->tel()
                             ->maxLength(50),
                         Forms\Components\Select::make('user_id')
@@ -108,6 +112,11 @@ class LecturerResource extends Resource
                             ->searchable()
                             ->preload()
                             ->unique(ignoreRecord: true),
+                        Forms\Components\Textarea::make('address')
+                            ->label('Alamat')
+                            ->rows(3)
+                            ->maxLength(65535)
+                            ->columnSpanFull(),
                         Forms\Components\Textarea::make('notes')
                             ->rows(4)
                             ->maxLength(65535)

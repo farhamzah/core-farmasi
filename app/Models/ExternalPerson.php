@@ -31,6 +31,12 @@ class ExternalPerson extends Model
         'deleted_at' => 'datetime',
     ];
 
+    public function setNameAttribute(?string $value): void
+    {
+        $this->attributes['name'] = app(\App\Services\CorePersonNameFormatter::class)
+            ->normalizePersonName($value);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

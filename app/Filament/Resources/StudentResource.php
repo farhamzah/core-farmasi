@@ -51,9 +51,25 @@ class StudentResource extends Resource
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true),
+                        Forms\Components\TextInput::make('birth_place')
+                            ->label('Tempat Lahir')
+                            ->maxLength(255),
                         Forms\Components\DatePicker::make('birth_date')
                             ->label('Tanggal Lahir')
                             ->helperText('Dipakai untuk reset password awal. Tidak ditampilkan default di tabel.'),
+                    ])
+                    ->columns(2),
+                Section::make('Kontak Aman')
+                    ->schema([
+                        Forms\Components\TextInput::make('phone')
+                            ->label('Telepon')
+                            ->tel()
+                            ->maxLength(50),
+                        Forms\Components\Textarea::make('address')
+                            ->label('Alamat')
+                            ->rows(3)
+                            ->maxLength(65535)
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
                 Section::make('Akademik')

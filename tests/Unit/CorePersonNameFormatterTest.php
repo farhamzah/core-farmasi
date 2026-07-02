@@ -24,4 +24,14 @@ class CorePersonNameFormatterTest extends TestCase
         $this->assertSame('Farhamzah', $formatter->formatWithTitle(null, 'Farhamzah', null));
         $this->assertSame('Farhamzah, M.Farm.', $formatter->formatWithTitle('', 'Farhamzah', 'M.Farm.'));
     }
+
+    public function test_it_normalizes_person_name_case(): void
+    {
+        $formatter = new CorePersonNameFormatter();
+
+        $this->assertSame('Nia Yuniarti', $formatter->normalizePersonName('NIA Yuniarti'));
+        $this->assertSame('Muhamad Fajar Pahreji', $formatter->normalizePersonName('  MUHAMAD   FAJAR PAHREJI  '));
+        $this->assertSame('Mahasiswa QA Core', $formatter->normalizePersonName('MAHASISWA QA CORE'));
+        $this->assertSame('Dekan API', $formatter->normalizePersonName('DEKAN API'));
+    }
 }

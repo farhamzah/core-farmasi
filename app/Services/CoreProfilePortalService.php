@@ -85,7 +85,7 @@ class CoreProfilePortalService
                 continue;
             }
 
-            if ($profile instanceof Lecturer
+            if (($profile instanceof Lecturer || $profile instanceof ExternalPerson)
                 && array_intersect(['front_title', 'back_title'], array_keys($changes))
                 && Schema::hasColumn($profile->getTable(), 'title_updated_at')) {
                 $changes['title_updated_at'] = now();
@@ -175,7 +175,7 @@ class CoreProfilePortalService
             'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
             'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'front_title', 'back_title', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
             'employee' => $user->employee ? $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
-            'externalPerson' => $user->externalPerson ? $this->existingColumns(ExternalPerson::class, ['email', 'phone', 'address', 'institution_name', 'institution_type', 'position_title', 'profession', 'notes']) : [],
+            'externalPerson' => $user->externalPerson ? $this->existingColumns(ExternalPerson::class, ['email', 'front_title', 'back_title', 'phone', 'address', 'institution_name', 'institution_type', 'position_title', 'profession', 'notes']) : [],
         ];
 
         $hasEditableLinkedProfile = collect(['student', 'lecturer', 'employee', 'externalPerson'])
@@ -297,6 +297,7 @@ class CoreProfilePortalService
             $externalPerson = $user->externalPerson;
             $items = [
                 ...$items,
+                $this->completionItem('external_title', 'Gelar mitra tersedia jika ada', filled($this->valueIfColumnExists($externalPerson, 'front_title')) || filled($this->valueIfColumnExists($externalPerson, 'back_title')) || filled($externalPerson->profession)),
                 $this->completionItem('external_institution', 'Instansi mitra tersedia', filled($externalPerson->institution_name)),
                 $this->completionItem('external_institution_type', 'Jenis instansi tersedia', filled($externalPerson->institution_type)),
                 $this->completionItem('external_position', 'Jabatan/posisi tersedia', filled($externalPerson->position_title)),
@@ -507,10 +508,20 @@ class CoreProfilePortalService
             return null;
         }
 
+        $displayNameWithTitle = app(CorePersonNameFormatter::class)->formatWithTitle(
+            $this->valueIfColumnExists($externalPerson, 'front_title'),
+            $externalPerson->name,
+            $this->valueIfColumnExists($externalPerson, 'back_title'),
+        );
+
         return [
             'type' => 'external',
             'label' => 'Mitra Eksternal',
-            'name' => $externalPerson->name,
+            'name' => $displayNameWithTitle,
+            'name_without_title' => $externalPerson->name,
+            'display_name_with_title' => $displayNameWithTitle,
+            'front_title' => $this->valueIfColumnExists($externalPerson, 'front_title'),
+            'back_title' => $this->valueIfColumnExists($externalPerson, 'back_title'),
             'identifier_label' => 'Email / Nomor Mitra',
             'identifier' => $externalPerson->external_number ?: $externalPerson->email,
             'email' => $externalPerson->email,
@@ -525,6 +536,12 @@ class CoreProfilePortalService
                 ['label' => 'NIK / Identitas', 'value' => $this->maskIdentifier($externalPerson->identity_number), 'sensitive' => true],
             ],
             'profile_sections' => [
+                'Identitas Resmi' => [
+                    'Nama Dasar' => $externalPerson->name,
+                    'Gelar Depan' => $this->valueIfColumnExists($externalPerson, 'front_title'),
+                    'Gelar Belakang' => $this->valueIfColumnExists($externalPerson, 'back_title'),
+                    'Nama Resmi Bergelar' => $displayNameWithTitle,
+                ],
                 'Mitra' => [
                     'Instansi / Perusahaan' => $externalPerson->institution_name,
                     'Jenis Instansi' => self::externalInstitutionTypeOptions()[$externalPerson->institution_type] ?? $externalPerson->institution_type,
@@ -550,7 +567,7 @@ class CoreProfilePortalService
             'Mahasiswa' => ['NIM', 'nama resmi', 'program studi', 'tempat/tanggal lahir', 'kontak aktif', 'alamat', 'foto profil'],
             'Dosen' => ['gelar akademik/profesi', 'NIK/KTP', 'NIDN/NIDK', 'NIP bila ASN', 'NUPTK', 'homebase/unit', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
             'Tendik' => ['NIK/KTP', 'nomor pegawai', 'NUPTK bila ada', 'unit kerja', 'jabatan/posisi', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
-            'Mitra Eksternal' => ['nama', 'email', 'telepon', 'instansi', 'jenis instansi', 'jabatan/posisi', 'alamat', 'foto profil'],
+            'Mitra Eksternal' => ['nama resmi dan gelar jika ada', 'email', 'telepon', 'instansi', 'jenis instansi', 'jabatan/posisi', 'alamat', 'foto profil'],
         ];
     }
 

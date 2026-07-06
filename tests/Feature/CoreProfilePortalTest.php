@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Mail\ProfilePasswordResetLinkMail;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\ExternalPerson;
 use App\Models\Lecturer;
 use App\Models\Role;
 use App\Models\Student;
@@ -650,6 +651,9 @@ class CoreProfilePortalTest extends TestCase
         $this->assertTrue(Schema::hasColumn('users', 'alternate_email'));
         $this->assertTrue(Schema::hasColumn('users', 'profile_photo_path'));
         $this->assertTrue(Schema::hasColumn('employees', 'birth_place'));
+        $this->assertTrue(Schema::hasColumn('external_people', 'front_title'));
+        $this->assertTrue(Schema::hasColumn('external_people', 'back_title'));
+        $this->assertTrue(Schema::hasColumn('external_people', 'title_updated_at'));
     }
 
     public function test_student_can_update_phone_and_address(): void
@@ -885,6 +889,74 @@ class CoreProfilePortalTest extends TestCase
             ->assertSee('Tempat lahir tersedia')
             ->assertSee('NUPTK tersedia jika ada')
             ->assertSee('Alamat dosen tersedia');
+    }
+
+    public function test_external_person_can_update_titles_from_profile_portal_without_changing_base_name(): void
+    {
+        $user = User::factory()->create(['active' => true]);
+
+        $externalPerson = ExternalPerson::create([
+            'user_id' => $user->id,
+            'name' => 'Mitra Praktik',
+            'email' => 'mitra-title-old@example.test',
+            'phone' => '0800000010',
+            'institution_name' => 'RS Mitra Farmasi',
+            'institution_type' => 'hospital',
+            'position_title' => 'Pembimbing Lapangan',
+            'profession' => 'Apoteker',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'name' => 'Nama Mitra Tidak Boleh Berubah',
+            'front_title' => 'apt.',
+            'back_title' => 'M.Farm.',
+            'email' => 'mitra-title-new@example.test',
+            'phone' => '081234567890',
+            'institution_name' => 'RS Mitra Farmasi Karawang',
+        ])->assertRedirect('/profile');
+
+        $externalPerson->refresh();
+
+        $this->assertSame('Mitra Praktik', $externalPerson->name);
+        $this->assertSame('apt.', $externalPerson->front_title);
+        $this->assertSame('M.Farm.', $externalPerson->back_title);
+        $this->assertSame('mitra-title-new@example.test', $externalPerson->email);
+        $this->assertSame('081234567890', $externalPerson->phone);
+        $this->assertSame('RS Mitra Farmasi Karawang', $externalPerson->institution_name);
+        $this->assertSame('apt. Mitra Praktik, M.Farm.', $externalPerson->display_name_with_title);
+        $this->assertNotNull($externalPerson->title_updated_at);
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertSee('apt. Mitra Praktik, M.Farm.')
+            ->assertSee('Nama Resmi Bergelar')
+            ->assertSee('Gelar mitra tersedia jika ada');
+    }
+
+    public function test_external_person_profile_form_shows_external_specific_title_fields(): void
+    {
+        $user = User::factory()->create(['active' => true]);
+
+        ExternalPerson::create([
+            'user_id' => $user->id,
+            'name' => 'Mitra Eksternal',
+            'email' => 'mitra-form@example.test',
+            'institution_name' => 'Industri Mitra',
+            'institution_type' => 'industry',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/profile/edit')
+            ->assertOk()
+            ->assertSee('Profil Mitra Eksternal')
+            ->assertSee('Gelar Depan')
+            ->assertSee('Gelar Belakang')
+            ->assertSee('Instansi / Perusahaan')
+            ->assertSee('Jenis Instansi')
+            ->assertDontSee('Profil Dosen');
     }
 
     public function test_employee_can_update_safe_profile_fields_but_not_name_or_employee_number(): void

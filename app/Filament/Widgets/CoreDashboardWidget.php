@@ -45,7 +45,7 @@ class CoreDashboardWidget extends Widget
             ->whereIn('status', [AccountRequest::STATUS_PENDING, AccountRequest::STATUS_IN_REVIEW])
             ->count();
 
-        $appCodes = ['kp-farmasi', 'tu-farmasi', 'ta-farmasi', 'lab-farmasi'];
+        $appCodes = ['kp-farmasi', 'tu-farmasi', 'ta-farmasi', 'lab-farmasi', 'obe-farmasi'];
         $applications = CoreApplication::query()
             ->whereIn('app_code', $appCodes)
             ->get()
@@ -157,7 +157,7 @@ class CoreDashboardWidget extends Widget
                 ],
                 [
                     'label' => 'Kelola aplikasi',
-                    'description' => 'Pastikan KP, TU, TA, dan Lab terdaftar serta aktif di registry Core.',
+                    'description' => 'Pastikan KP, TU, TA, Lab, dan OBE terdaftar serta aktif di registry Core.',
                     'url' => CoreApplicationResource::getUrl('index'),
                 ],
             ],

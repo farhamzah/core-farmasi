@@ -158,12 +158,18 @@ class CoreManualQaAccountsCommandTest extends TestCase
             'is_active' => true,
         ]);
         $this->assertDatabaseHas('user_app_accesses', [
+            'user_id' => $lecturer->id,
+            'app_code' => 'obe-farmasi',
+            'role_slug' => 'dosen-pengampu',
+            'is_active' => true,
+        ]);
+        $this->assertDatabaseHas('user_app_accesses', [
             'user_id' => $employee->id,
             'app_code' => 'lab-farmasi',
             'role_slug' => 'laboran',
             'is_active' => true,
         ]);
-        $this->assertSame(8, UserAppAccess::query()->count());
+        $this->assertSame(9, UserAppAccess::query()->count());
     }
 
     public function test_command_does_not_expose_password_hash_or_secret(): void
@@ -213,7 +219,7 @@ class CoreManualQaAccountsCommandTest extends TestCase
 
     private function appAccessCatalog(): void
     {
-        foreach (['tu-farmasi', 'ta-farmasi', 'lab-farmasi'] as $appCode) {
+        foreach (['tu-farmasi', 'ta-farmasi', 'lab-farmasi', 'obe-farmasi'] as $appCode) {
             CoreApplication::create([
                 'app_code' => $appCode,
                 'name' => $appCode,
@@ -230,6 +236,7 @@ class CoreManualQaAccountsCommandTest extends TestCase
             ['tu-farmasi', 'staf-tu'],
             ['ta-farmasi', 'mahasiswa'],
             ['ta-farmasi', 'dosen-pembimbing'],
+            ['obe-farmasi', 'dosen-pengampu'],
             ['lab-farmasi', 'mahasiswa'],
             ['lab-farmasi', 'dosen'],
             ['lab-farmasi', 'laboran'],

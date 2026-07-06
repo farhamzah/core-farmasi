@@ -40,6 +40,14 @@ class ExternalPersonResource extends Resource
                             ->label('Nama')
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('front_title')
+                            ->label('Gelar Depan')
+                            ->maxLength(100)
+                            ->helperText('Contoh: Dr., apt. Kosongkan jika tidak ada.'),
+                        Forms\Components\TextInput::make('back_title')
+                            ->label('Gelar Belakang')
+                            ->maxLength(100)
+                            ->helperText('Contoh: M.Farm., S.Si., M.Si. Kosongkan jika tidak ada.'),
                         Forms\Components\TextInput::make('email')
                             ->label('Email')
                             ->email()
@@ -109,7 +117,14 @@ class ExternalPersonResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Nama')->searchable()->sortable(),
+                TextColumn::make('display_name_with_title')
+                    ->label('Nama Bergelar')
+                    ->searchable(['name', 'front_title', 'back_title']),
+                TextColumn::make('name')
+                    ->label('Nama Dasar')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('institution_name')->label('Instansi')->searchable()->sortable(),
                 TextColumn::make('institution_type')
                     ->label('Jenis')

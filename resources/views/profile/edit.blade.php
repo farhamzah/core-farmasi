@@ -59,7 +59,7 @@
             'student' => ['title' => 'Profil Mahasiswa', 'subtitle' => 'Data pendukung mahasiswa. NIM, nama resmi, program studi, dan status tetap diverifikasi Admin Core.'],
             'lecturer' => ['title' => 'Profil Dosen', 'subtitle' => 'Data pendukung dosen. Nama dasar, nomor utama, NIDN, dan NIDK tetap dikunci; gelar depan/belakang boleh dilengkapi mandiri.'],
             'employee' => ['title' => 'Profil Tendik / Staf / Laboran', 'subtitle' => 'Data pendukung kepegawaian. Nomor pegawai dan nama resmi tetap diverifikasi Admin Core.'],
-            'externalPerson' => ['title' => 'Profil Mitra Eksternal', 'subtitle' => 'Data umum mitra luar Fakultas Farmasi. Akses KP/TA tetap diberikan oleh Admin Core sesuai kebutuhan aplikasi.'],
+            'externalPerson' => ['title' => 'Profil Mitra Eksternal', 'subtitle' => 'Data umum mitra luar Fakultas Farmasi. Gelar depan/belakang, profesi, instansi, dan kontak boleh dilengkapi mandiri; akses KP/TA tetap diberikan oleh Admin Core.'],
             'user' => ['title' => 'Akun Core Sementara', 'subtitle' => 'Kontak dasar disimpan di akun Core sampai profil resmi ditautkan oleh Admin Core.'],
         ];
         $fieldLabels = [

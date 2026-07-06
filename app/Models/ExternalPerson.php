@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\CorePersonNameFormatter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +16,9 @@ class ExternalPerson extends Model
         'user_id',
         'external_number',
         'name',
+        'front_title',
+        'back_title',
+        'title_updated_at',
         'email',
         'phone',
         'institution_name',
@@ -28,13 +32,23 @@ class ExternalPerson extends Model
     ];
 
     protected $casts = [
+        'title_updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
 
     public function setNameAttribute(?string $value): void
     {
-        $this->attributes['name'] = app(\App\Services\CorePersonNameFormatter::class)
+        $this->attributes['name'] = app(CorePersonNameFormatter::class)
             ->normalizePersonName($value);
+    }
+
+    public function getDisplayNameWithTitleAttribute(): string
+    {
+        return app(CorePersonNameFormatter::class)->formatWithTitle(
+            $this->front_title,
+            $this->name,
+            $this->back_title,
+        );
     }
 
     public function user(): BelongsTo

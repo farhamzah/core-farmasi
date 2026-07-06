@@ -77,6 +77,7 @@ class CoreManualQaAccountsCommand extends Command
             ['app_code' => 'tu-farmasi', 'role_slug' => 'dosen'],
             ['app_code' => 'ta-farmasi', 'role_slug' => 'dosen-pembimbing'],
             ['app_code' => 'lab-farmasi', 'role_slug' => 'dosen'],
+            ['app_code' => 'obe-farmasi', 'role_slug' => 'dosen-pengampu'],
         ],
         'employee' => [
             ['app_code' => 'tu-farmasi', 'role_slug' => 'staf-tu'],

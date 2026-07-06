@@ -271,6 +271,22 @@ class AppConnectionReadinessService
                     'viewer',
                 ],
             ],
+            'obe-farmasi' => [
+                'name' => 'OBE Farmasi',
+                'abilities' => $standardReadAbilities,
+                'roles' => [
+                    'super-admin',
+                    'admin-fakultas',
+                    'dekan',
+                    'kaprodi-s1',
+                    'kaprodi-psppa',
+                    'gpm-upm',
+                    'koordinator-kurikulum',
+                    'koordinator-mk',
+                    'dosen-pengampu',
+                    'auditor',
+                ],
+            ],
             'helpdesk-farmasi' => [
                 'name' => 'Helpdesk Farmasi',
                 'abilities' => $standardReadAbilities,

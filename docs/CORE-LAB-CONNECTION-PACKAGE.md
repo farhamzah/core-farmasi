@@ -19,24 +19,24 @@ Core application `lab-farmasi` harus:
 
 ## Required App Roles
 Role aplikasi Lab yang perlu tersedia di Core app role catalog:
-- `mahasiswa`
-- `dosen`
-- `laboran`
 - `admin_lab`
 - `koordinator_lab`
+- `laboran`
 - `teknisi`
+- `dosen`
+- `mahasiswa`
 - `viewer`
-
-Legacy/alias role yang masih dapat dipetakan oleh Lab:
-- `kepala-lab`
-- `admin-lab`
-- `pengguna-lab`
-- `peminjam-alat`
 
 Catatan:
 - `admin_lab`, `koordinator_lab`, `laboran`, `teknisi`, `dosen`, `mahasiswa`, dan `viewer` adalah role canonical Lab saat ini.
-- `kepala-lab`, `admin-lab`, `pengguna-lab`, dan `peminjam-alat` adalah legacy/alias app-specific roles.
+- Legacy/alias app-specific roles seperti `kepala-lab`, `admin-lab`, `pengguna-lab`, `peminjam-alat`, dan `lab-*` tidak boleh ditampilkan sebagai pilihan aktif baru di Core.
+- Jika legacy role sudah ada pada database lama, jalankan normalisasi terkontrol:
+  ```bash
+  php artisan core:normalize-lab-farmasi-roles
+  php artisan core:normalize-lab-farmasi-roles --apply
+  ```
 - Kepala Lab sebagai jabatan resmi sebaiknya diambil dari Core leadership assignments jika dipakai untuk dokumen resmi.
+- Untuk akses aplikasi Lab, Kepala Lab memakai role app access `koordinator_lab`.
 
 ## Required Abilities
 Future Lab app client minimal membutuhkan:

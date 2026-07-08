@@ -17,15 +17,13 @@ class LabAppReadinessCommand extends Command
     {
         $appCode = 'lab-farmasi';
         $requiredRoles = [
-            'lab-admin',
-            'lab-koordinator',
-            'lab-kepala-lab',
-            'lab-laboran',
-            'lab-dosen',
-            'lab-asisten',
-            'lab-mahasiswa',
-            'lab-teknisi',
-            'lab-viewer',
+            'admin_lab',
+            'koordinator_lab',
+            'laboran',
+            'teknisi',
+            'dosen',
+            'mahasiswa',
+            'viewer',
         ];
 
         $applications = CoreApplication::query()->where('app_code', $appCode)->get();
@@ -40,11 +38,18 @@ class LabAppReadinessCommand extends Command
             ->where('app_code', $appCode)
             ->where('is_active', true)
             ->count();
+        $activeLegacyRoles = CoreApplicationRole::query()
+            ->where('app_code', $appCode)
+            ->where('is_active', true)
+            ->whereNotIn('role_slug', $requiredRoles)
+            ->pluck('role_slug')
+            ->all();
 
         $verdict = $this->verdict(
             duplicateCount: $applications->count(),
             applicationActive: (bool) $application?->is_active,
             missingRoles: $missingRoles,
+            activeLegacyRoles: $activeLegacyRoles,
         );
 
         $this->line('Core Lab Farmasi app readiness');
@@ -58,6 +63,7 @@ class LabAppReadinessCommand extends Command
                 ['Application public visible', $this->yesNo((bool) $application?->is_public_visible)],
                 ['Requires login', $this->yesNo((bool) $application?->requires_login)],
                 ['Required roles missing', $missingRoles === [] ? '-' : implode(', ', $missingRoles)],
+                ['Active non-canonical roles', $activeLegacyRoles === [] ? '-' : implode(', ', $activeLegacyRoles)],
                 ['Active user app access count', (string) $activeAccessCount],
                 ['Readiness verdict', $verdict],
             ],
@@ -76,7 +82,7 @@ class LabAppReadinessCommand extends Command
     /**
      * @param  array<int, string>  $missingRoles
      */
-    protected function verdict(int $duplicateCount, bool $applicationActive, array $missingRoles): string
+    protected function verdict(int $duplicateCount, bool $applicationActive, array $missingRoles, array $activeLegacyRoles): string
     {
         if ($duplicateCount !== 1) {
             return 'warning_duplicate_or_missing_application';
@@ -88,6 +94,10 @@ class LabAppReadinessCommand extends Command
 
         if ($missingRoles !== []) {
             return 'warning_missing_roles';
+        }
+
+        if ($activeLegacyRoles !== []) {
+            return 'warning_active_non_canonical_roles';
         }
 
         return 'ready';

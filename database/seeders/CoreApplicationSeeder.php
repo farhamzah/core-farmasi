@@ -141,25 +141,12 @@ class CoreApplicationSeeder extends Seeder
             ],
             'lab-farmasi' => [
                 ['role_slug' => 'admin_lab', 'role_name' => 'Admin Lab', 'description' => 'Admin aplikasi Lab dengan akses operasional penuh.'],
-                ['role_slug' => 'koordinator_lab', 'role_name' => 'Koordinator Lab', 'description' => 'Koordinasi operasional dan monitoring Lab.'],
+                ['role_slug' => 'koordinator_lab', 'role_name' => 'Koordinator/Kepala Lab', 'description' => 'Koordinasi, monitoring, review, dan approval operasional Lab.'],
+                ['role_slug' => 'laboran', 'role_name' => 'Laboran', 'description' => 'Operasional harian lab, stok, alat, K3, dan maintenance.'],
+                ['role_slug' => 'teknisi', 'role_name' => 'Teknisi', 'description' => 'Maintenance, kalibrasi, inspeksi, dan tindak lanjut teknis alat.'],
+                ['role_slug' => 'dosen', 'role_name' => 'Dosen', 'description' => 'Supervisi praktikum, penelitian, scan/logbook, dan review laporan sesuai akses.'],
                 ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa', 'description' => 'Pengguna mahasiswa untuk aktivitas laboratorium.'],
-                ['role_slug' => 'dosen', 'role_name' => 'Dosen', 'description' => 'Pengguna dosen untuk aktivitas laboratorium.'],
-                ['role_slug' => 'laboran', 'role_name' => 'Laboran', 'description' => 'Operasional lab, stok, alat, K3, dan maintenance.'],
-                ['role_slug' => 'kepala-lab', 'role_name' => 'Kepala Lab', 'description' => 'Pejabat/pengelola kepala lab dalam konteks aplikasi Lab.'],
-                ['role_slug' => 'admin-lab', 'role_name' => 'Admin Lab', 'description' => 'Mengelola konfigurasi dan seluruh modul Lab.'],
-                ['role_slug' => 'pengguna-lab', 'role_name' => 'Pengguna Lab', 'description' => 'Pengguna umum fasilitas dan layanan lab.'],
-                ['role_slug' => 'peminjam-alat', 'role_name' => 'Peminjam Alat', 'description' => 'Mengajukan atau mengelola peminjaman alat lab.'],
-                ['role_slug' => 'teknisi', 'role_name' => 'Teknisi', 'description' => 'Maintenance dan kalibrasi alat.'],
                 ['role_slug' => 'viewer', 'role_name' => 'Viewer', 'description' => 'Akses baca dashboard dan laporan terbatas.'],
-                ['role_slug' => 'lab-admin', 'role_name' => 'Admin Lab', 'description' => 'Mengelola konfigurasi dan seluruh modul Lab.'],
-                ['role_slug' => 'lab-koordinator', 'role_name' => 'Koordinator Lab', 'description' => 'Monitoring dan koordinasi operasional lab.'],
-                ['role_slug' => 'lab-kepala-lab', 'role_name' => 'Kepala Lab', 'description' => 'Monitoring dan persetujuan tingkat kepala lab.'],
-                ['role_slug' => 'lab-laboran', 'role_name' => 'Laboran', 'description' => 'Operasional lab, stok, alat, K3, dan maintenance.'],
-                ['role_slug' => 'lab-dosen', 'role_name' => 'Dosen', 'description' => 'Akses kegiatan dosen, praktikum, dan penelitian.'],
-                ['role_slug' => 'lab-asisten', 'role_name' => 'Asisten Praktikum', 'description' => 'Akses bantuan praktikum dan operasional terbatas.'],
-                ['role_slug' => 'lab-mahasiswa', 'role_name' => 'Mahasiswa', 'description' => 'Scan attendance, penggunaan alat sesuai izin, dan melihat riwayat sendiri.'],
-                ['role_slug' => 'lab-teknisi', 'role_name' => 'Teknisi', 'description' => 'Maintenance dan kalibrasi alat.'],
-                ['role_slug' => 'lab-viewer', 'role_name' => 'Viewer', 'description' => 'Akses baca dashboard dan laporan terbatas.'],
             ],
             'ta-farmasi' => [
                 ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa', 'description' => 'Mahasiswa peserta tugas akhir.'],
@@ -213,6 +200,13 @@ class CoreApplicationSeeder extends Seeder
                         'sort_order' => ($index + 1) * 10,
                     ],
                 );
+            }
+
+            if ($appCode === 'lab-farmasi') {
+                CoreApplicationRole::query()
+                    ->where('app_code', $appCode)
+                    ->whereNotIn('role_slug', collect($appRoles)->pluck('role_slug')->all())
+                    ->update(['is_active' => false]);
             }
         }
     }

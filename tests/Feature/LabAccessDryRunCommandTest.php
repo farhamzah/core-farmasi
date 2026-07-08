@@ -16,9 +16,9 @@ class LabAccessDryRunCommandTest extends TestCase
     public function test_dry_run_does_not_create_access(): void
     {
         $user = User::factory()->create(['active' => true, 'name' => 'Demo Lab User']);
-        $this->labAppAndRole('lab-viewer');
+        $this->labAppAndRole('viewer');
 
-        $this->artisan('core:lab-access-dry-run', ['core_user_id' => $user->id, 'role' => 'lab-viewer'])
+        $this->artisan('core:lab-access-dry-run', ['core_user_id' => $user->id, 'role' => 'viewer'])
             ->expectsOutputToContain('dry-run')
             ->expectsOutputToContain('would-create')
             ->doesntExpectOutputToContain('password')
@@ -30,37 +30,37 @@ class LabAccessDryRunCommandTest extends TestCase
     public function test_apply_creates_one_explicit_access_and_revoke_disables_it(): void
     {
         $user = User::factory()->create(['active' => true]);
-        $this->labAppAndRole('lab-laboran');
+        $this->labAppAndRole('laboran');
 
-        $this->artisan('core:lab-access-dry-run', ['core_user_id' => $user->id, 'role' => 'lab-laboran', '--apply' => true])
+        $this->artisan('core:lab-access-dry-run', ['core_user_id' => $user->id, 'role' => 'laboran', '--apply' => true])
             ->expectsOutputToContain('Lab app access created.')
             ->assertExitCode(0);
 
         $this->assertDatabaseHas('user_app_accesses', [
             'user_id' => $user->id,
             'app_code' => 'lab-farmasi',
-            'role_slug' => 'lab-laboran',
+            'role_slug' => 'laboran',
             'is_active' => true,
         ]);
         $this->assertSame(1, UserAppAccess::query()->count());
 
-        $this->artisan('core:lab-access-dry-run', ['core_user_id' => $user->id, 'role' => 'lab-laboran', '--revoke' => true])
+        $this->artisan('core:lab-access-dry-run', ['core_user_id' => $user->id, 'role' => 'laboran', '--revoke' => true])
             ->expectsOutputToContain('Lab app access deactivated.')
             ->assertExitCode(0);
 
         $this->assertDatabaseHas('user_app_accesses', [
             'user_id' => $user->id,
             'app_code' => 'lab-farmasi',
-            'role_slug' => 'lab-laboran',
+            'role_slug' => 'laboran',
             'is_active' => false,
         ]);
     }
 
     public function test_command_refuses_missing_role_or_user(): void
     {
-        $this->labAppAndRole('lab-viewer');
+        $this->labAppAndRole('viewer');
 
-        $this->artisan('core:lab-access-dry-run', ['core_user_id' => 999, 'role' => 'lab-viewer'])
+        $this->artisan('core:lab-access-dry-run', ['core_user_id' => 999, 'role' => 'viewer'])
             ->expectsOutputToContain('Core user not found or inactive.')
             ->assertExitCode(1);
 

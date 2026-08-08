@@ -133,8 +133,6 @@ class CoreApplicationSeeder extends Seeder
                 ['role_slug' => 'laboran', 'role_name' => 'Laboran'],
                 ['role_slug' => 'dosen', 'role_name' => 'Dosen'],
                 ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa'],
-                ['role_slug' => 'validator', 'role_name' => 'Validator'],
-                ['role_slug' => 'penandatangan', 'role_name' => 'Penandatangan'],
             ],
             'safa-ubp' => [
                 ['role_slug' => 'admin-safa', 'role_name' => 'Admin SAFA'],
@@ -202,7 +200,7 @@ class CoreApplicationSeeder extends Seeder
                 );
             }
 
-            if ($appCode === 'lab-farmasi') {
+            if (in_array($appCode, ['lab-farmasi', 'tu-farmasi'], true)) {
                 CoreApplicationRole::query()
                     ->where('app_code', $appCode)
                     ->whereNotIn('role_slug', collect($appRoles)->pluck('role_slug')->all())

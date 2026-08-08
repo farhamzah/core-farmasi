@@ -38,7 +38,10 @@ class TuConnectionReadinessTest extends TestCase
         $this->assertContains('staf-tu', $roles['missing']);
         $this->assertContains('tendik', $roles['missing']);
         $this->assertContains('laboran', $roles['missing']);
-        $this->assertContains('penandatangan', $roles['missing']);
+        $this->assertContains('dosen', $roles['missing']);
+        $this->assertContains('mahasiswa', $roles['missing']);
+        $this->assertNotContains('penandatangan', $roles['missing']);
+        $this->assertNotContains('validator', $roles['missing']);
     }
 
     public function test_service_detects_active_api_client_without_exposing_secret(): void

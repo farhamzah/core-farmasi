@@ -238,10 +238,10 @@ class AppConnectionReadinessService
                 'roles' => [
                     'admin-tu',
                     'staf-tu',
+                    'tendik',
+                    'laboran',
                     'dosen',
                     'mahasiswa',
-                    'validator',
-                    'penandatangan',
                 ],
             ],
             'kp-farmasi' => [

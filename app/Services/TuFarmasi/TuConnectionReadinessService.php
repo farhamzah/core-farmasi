@@ -39,8 +39,6 @@ class TuConnectionReadinessService
             'laboran',
             'dosen',
             'mahasiswa',
-            'validator',
-            'penandatangan',
         ];
     }
 

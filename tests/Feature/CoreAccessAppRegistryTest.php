@@ -102,7 +102,7 @@ class CoreAccessAppRegistryTest extends TestCase
         $this->assertTrue($core->requires_login);
         $this->assertTrue($core->is_sensitive);
 
-        foreach (['kp-farmasi', 'safa-ubp', 'tu-farmasi', 'obe-farmasi'] as $appCode) {
+        foreach (['kp-farmasi', 'safa-ubp', 'tu-farmasi', 'obe-farmasi', 'kppspa-farmasi'] as $appCode) {
             $this->assertTrue(CoreApplication::where('app_code', $appCode)->exists());
         }
     }

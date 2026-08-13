@@ -285,6 +285,19 @@ class AppConnectionReadinessService
                     'auditor',
                 ],
             ],
+            'kppspa-farmasi' => [
+                'name' => 'KPSPPA Farmasi',
+                'abilities' => $standardReadAbilities,
+                'roles' => [
+                    'admin-kppspa',
+                    'koordinator-kppspa',
+                    'dosen',
+                    'mahasiswa',
+                    'pembimbing',
+                    'penguji',
+                    'viewer',
+                ],
+            ],
             'helpdesk-farmasi' => [
                 'name' => 'Helpdesk Farmasi',
                 'abilities' => $standardReadAbilities,

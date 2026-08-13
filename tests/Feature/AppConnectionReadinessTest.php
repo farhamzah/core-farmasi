@@ -125,6 +125,7 @@ class AppConnectionReadinessTest extends TestCase
             'kp_applications' => CoreApplication::where('app_code', 'kp-farmasi')->count(),
             'lab_applications' => CoreApplication::where('app_code', 'lab-farmasi')->count(),
             'obe_applications' => CoreApplication::where('app_code', 'obe-farmasi')->count(),
+            'kppspa_applications' => CoreApplication::where('app_code', 'kppspa-farmasi')->count(),
             'helpdesk_applications' => CoreApplication::where('app_code', 'helpdesk-farmasi')->count(),
             'ta_roles' => CoreApplicationRole::where('app_code', 'ta-farmasi')->count(),
             'tu_required_roles' => CoreApplicationRole::where('app_code', 'tu-farmasi')
@@ -138,6 +139,9 @@ class AppConnectionReadinessTest extends TestCase
                 ->count(),
             'obe_required_roles' => CoreApplicationRole::where('app_code', 'obe-farmasi')
                 ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('obe-farmasi'))
+                ->count(),
+            'kppspa_required_roles' => CoreApplicationRole::where('app_code', 'kppspa-farmasi')
+                ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('kppspa-farmasi'))
                 ->count(),
             'helpdesk_required_roles' => CoreApplicationRole::where('app_code', 'helpdesk-farmasi')
                 ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('helpdesk-farmasi'))
@@ -158,6 +162,7 @@ class AppConnectionReadinessTest extends TestCase
             'lab-farmasi' => 'Lab Farmasi',
             'kp-farmasi' => 'KP Farmasi',
             'obe-farmasi' => 'OBE Farmasi',
+            'kppspa-farmasi' => 'KPSPPA Farmasi',
             'helpdesk-farmasi' => 'Helpdesk Farmasi',
         ];
     }

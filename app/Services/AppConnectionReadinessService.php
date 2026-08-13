@@ -286,7 +286,7 @@ class AppConnectionReadinessService
                 ],
             ],
             'kppspa-farmasi' => [
-                'name' => 'KPSPPA Farmasi',
+                'name' => 'KPPSPA Farmasi',
                 'abilities' => $standardReadAbilities,
                 'roles' => [
                     'admin-kppspa',

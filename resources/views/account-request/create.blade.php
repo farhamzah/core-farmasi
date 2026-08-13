@@ -263,18 +263,23 @@
 
                     <section class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">Tujuan Akses</h2>
-                        <p class="mt-1 text-sm text-slate-500">Opsional. Isi jika sudah tahu aplikasi dan peran yang ingin dipakai. Admin tetap memverifikasi aksesnya sebelum akun diberi akses.</p>
+                        <p class="mt-1 text-sm text-slate-500">Wajib pilih aplikasi tujuan agar Admin Core tahu layanan mana yang perlu diverifikasi. Peran boleh dipilih jika sudah tahu, dan tetap diverifikasi sebelum akses diberikan.</p>
                     </section>
 
                     <div class="grid gap-5 md:grid-cols-2">
                         <label class="grid gap-2">
-                            <span class="text-sm font-semibold text-slate-800">Aplikasi yang Dituju</span>
-                            <select name="requested_app_code" data-requested-app-code class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
-                                <option value="">Boleh dikosongkan dulu</option>
+                            <span class="text-sm font-semibold text-slate-800">Aplikasi yang Dituju <span class="text-red-600">*</span></span>
+                            <select name="requested_app_code" data-requested-app-code required class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                <option value="" disabled @selected(blank(old('requested_app_code')))>Pilih aplikasi tujuan</option>
                                 @foreach ($applications as $appCode => $name)
                                     <option value="{{ $appCode }}" @selected(old('requested_app_code') === $appCode)>{{ $name }}</option>
                                 @endforeach
                             </select>
+                            @error('requested_app_code')
+                                <span class="text-xs font-semibold text-red-600">{{ $message }}</span>
+                            @else
+                                <span class="text-xs leading-5 text-slate-500">Contoh: KPPSPA - Kerja praktek prodi apoteker, KP Farmasi, TA Farmasi, atau Lab Farmasi.</span>
+                            @enderror
                         </label>
 
                         <label class="grid gap-2">
@@ -282,7 +287,7 @@
                             <select name="requested_role" data-requested-role class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                                 <option value="">Pilih aplikasi dulu atau kosongkan dulu</option>
                             </select>
-                            <span class="text-xs leading-5 text-slate-500">Contoh: KP Pembimbing Lapangan, KP Penguji, TA Pembimbing Luar, atau TA Penguji Luar. Jika belum yakin, kosongkan dan jelaskan di catatan.</span>
+                            <span class="text-xs leading-5 text-slate-500">Contoh: KP Pembimbing Lapangan, KP Penguji, TA Pembimbing Luar, atau TA Penguji Luar. Jika belum yakin, pilih aplikasi saja dan jelaskan di catatan.</span>
                         </label>
 
                         <label class="grid gap-2 md:col-span-2">
@@ -292,7 +297,7 @@
                     </div>
 
                     <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-                        Setelah disetujui, cek email terdaftar. Gunakan tombol Buat Password Core, login ke Profile Portal, lengkapi profil, lalu buka aplikasi sesuai akses yang diberikan Admin Core.
+                        Setelah disetujui, cek email terdaftar. Jika tidak ada di Inbox, cek Spam, Promotions, atau Updates. Gunakan tombol Buat Password Core, login ke Profile Portal, lengkapi profil, lalu buka aplikasi sesuai akses yang diberikan Admin Core.
                     </div>
 
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -333,7 +338,7 @@
 
                 const placeholder = document.createElement('option');
                 placeholder.value = '';
-                placeholder.textContent = appCode ? 'Pilih peran jika sudah tahu' : 'Pilih aplikasi dulu atau kosongkan dulu';
+                placeholder.textContent = appCode ? 'Pilih peran jika sudah tahu' : 'Pilih aplikasi dulu';
                 roleInput.appendChild(placeholder);
 
                 roles.forEach((role) => {

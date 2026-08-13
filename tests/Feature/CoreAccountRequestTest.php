@@ -146,11 +146,13 @@ class CoreAccountRequestTest extends TestCase
     public function test_guest_can_view_account_request_form_when_enabled(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication('kppspa-farmasi', 'KPPSPA Farmasi', 'Kerja praktek prodi apoteker');
 
         $this->get('/account-request')
             ->assertOk()
             ->assertSee('Permohonan Akun')
             ->assertSee('Pilih Jenis Akun')
+            ->assertSee('KPPSPA - Kerja praktek prodi apoteker')
             ->assertSee('Mahasiswa')
             ->assertSee('Dosen')
             ->assertSee('Tendik / Staf')
@@ -166,11 +168,7 @@ class CoreAccountRequestTest extends TestCase
     public function test_guest_can_submit_valid_request_without_creating_user_or_app_access_when_enabled(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
-        CoreApplication::create([
-            'app_code' => 'kp-farmasi',
-            'name' => 'KP Farmasi',
-            'is_active' => true,
-        ]);
+        $this->createActiveApplication();
 
         $this->post('/account-request', [
             'request_type' => AccountRequest::TYPE_STUDENT,
@@ -201,12 +199,14 @@ class CoreAccountRequestTest extends TestCase
     public function test_guest_can_submit_minimal_student_request_without_study_program(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
 
         $this->post('/account-request', [
             'request_type' => AccountRequest::TYPE_STUDENT,
             'name' => 'Mahasiswa Minimal',
             'email' => 'mahasiswa.minimal@example.test',
             'student_number' => 'MIN-001',
+            'requested_app_code' => 'kp-farmasi',
         ])->assertRedirect('/account-request/success');
 
         $this->assertDatabaseHas('account_requests', [
@@ -214,6 +214,7 @@ class CoreAccountRequestTest extends TestCase
             'email' => 'mahasiswa.minimal@example.test',
             'student_number' => 'MIN-001',
             'study_program_id' => null,
+            'requested_app_code' => 'kp-farmasi',
             'status' => AccountRequest::STATUS_PENDING,
         ]);
 
@@ -222,9 +223,28 @@ class CoreAccountRequestTest extends TestCase
         $this->assertSame(0, UserAppAccess::count());
     }
 
+    public function test_guest_must_choose_requested_application(): void
+    {
+        config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
+
+        $this->from('/account-request')
+            ->post('/account-request', [
+                'request_type' => AccountRequest::TYPE_STUDENT,
+                'name' => 'Mahasiswa Tanpa App',
+                'email' => 'mahasiswa.tanpa.app@example.test',
+                'student_number' => 'NOAPP-001',
+            ])
+            ->assertRedirect('/account-request')
+            ->assertSessionHasErrors('requested_app_code');
+
+        $this->assertSame(0, AccountRequest::count());
+    }
+
     public function test_guest_cannot_submit_duplicate_active_account_request_email(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
 
         AccountRequest::create([
             'request_type' => AccountRequest::TYPE_LECTURER,
@@ -240,6 +260,7 @@ class CoreAccountRequestTest extends TestCase
                 'name' => 'Ermi Abriyani',
                 'email' => 'ERMI.ABRIYANI@ubpkarawang.ac.id',
                 'lecturer_number' => 'NEW-LECTURER-NUMBER',
+                'requested_app_code' => 'kp-farmasi',
             ])
             ->assertRedirect('/account-request')
             ->assertSessionHasErrors([
@@ -252,6 +273,7 @@ class CoreAccountRequestTest extends TestCase
     public function test_guest_cannot_submit_account_request_for_existing_user_email(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
 
         User::factory()->create([
             'email' => 'existing.user@example.test',
@@ -265,6 +287,7 @@ class CoreAccountRequestTest extends TestCase
                 'email' => 'existing.user@example.test',
                 'phone' => '081234567890',
                 'institution_name' => 'RS Mitra Farmasi',
+                'requested_app_code' => 'kp-farmasi',
             ])
             ->assertRedirect('/account-request')
             ->assertSessionHasErrors('email');
@@ -275,6 +298,7 @@ class CoreAccountRequestTest extends TestCase
     public function test_guest_cannot_submit_duplicate_student_number(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
 
         Student::create([
             'student_number' => '221011402637',
@@ -289,6 +313,7 @@ class CoreAccountRequestTest extends TestCase
                 'name' => 'Duplicate Student',
                 'email' => 'duplicate.student@example.test',
                 'student_number' => '221011402637',
+                'requested_app_code' => 'kp-farmasi',
             ])
             ->assertRedirect('/account-request')
             ->assertSessionHasErrors([
@@ -301,6 +326,7 @@ class CoreAccountRequestTest extends TestCase
     public function test_guest_cannot_submit_duplicate_pending_student_number(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
 
         AccountRequest::create([
             'request_type' => AccountRequest::TYPE_STUDENT,
@@ -316,6 +342,7 @@ class CoreAccountRequestTest extends TestCase
                 'name' => 'Duplicate Pending NIM',
                 'email' => 'duplicate.pending.student@example.test',
                 'student_number' => '221011402637',
+                'requested_app_code' => 'kp-farmasi',
             ])
             ->assertRedirect('/account-request')
             ->assertSessionHasErrors([
@@ -563,6 +590,7 @@ class CoreAccountRequestTest extends TestCase
     public function test_guest_can_submit_field_supervisor_request(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
 
         $this->post('/account-request', [
             'request_type' => AccountRequest::TYPE_FIELD_SUPERVISOR,
@@ -572,6 +600,7 @@ class CoreAccountRequestTest extends TestCase
             'institution_name' => 'RS Mitra Farmasi',
             'institution_type' => 'hospital',
             'profession' => 'Apoteker Preseptor',
+            'requested_app_code' => 'kp-farmasi',
             'requested_role' => 'pembimbing-lapangan',
         ])->assertRedirect('/account-request/success');
 
@@ -583,6 +612,7 @@ class CoreAccountRequestTest extends TestCase
             'institution_name' => 'RS Mitra Farmasi',
             'institution_type' => 'hospital',
             'profession' => 'Apoteker Preseptor',
+            'requested_app_code' => 'kp-farmasi',
             'requested_role' => 'pembimbing-lapangan',
             'status' => AccountRequest::STATUS_PENDING,
         ]);
@@ -594,6 +624,7 @@ class CoreAccountRequestTest extends TestCase
     public function test_submit_does_not_require_or_store_password_field(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
 
         $this->post('/account-request', [
             'request_type' => AccountRequest::TYPE_LECTURER,
@@ -601,6 +632,7 @@ class CoreAccountRequestTest extends TestCase
             'email' => 'calon.dosen@example.test',
             'lecturer_number' => 'LEC-REQ-001',
             'department_id' => $this->createDepartment()->id,
+            'requested_app_code' => 'kp-farmasi',
             'password' => 'ignored-password',
         ])->assertRedirect('/account-request/success');
 
@@ -613,12 +645,16 @@ class CoreAccountRequestTest extends TestCase
     public function test_invalid_email_is_rejected(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
+        $this->createActiveApplication();
 
         $this->from('/account-request')
             ->post('/account-request', [
                 'request_type' => AccountRequest::TYPE_EMPLOYEE,
                 'name' => 'Calon Tendik',
                 'email' => 'not-an-email',
+                'employee_number' => 'EMP-REQ-001',
+                'staff_type' => 'tendik',
+                'requested_app_code' => 'kp-farmasi',
             ])
             ->assertRedirect('/account-request')
             ->assertSessionHasErrors('email');
@@ -1026,6 +1062,19 @@ class CoreAccountRequestTest extends TestCase
             'code' => $attributes['code'] ?? 'PRODI-'.Str::random(8),
             'name' => $attributes['name'] ?? 'S1 Farmasi',
             'active' => $attributes['active'] ?? true,
+        ]);
+    }
+
+    private function createActiveApplication(
+        string $appCode = 'kp-farmasi',
+        string $name = 'KP Farmasi',
+        ?string $description = null,
+    ): CoreApplication {
+        return CoreApplication::create([
+            'app_code' => $appCode,
+            'name' => $name,
+            'description' => $description,
+            'is_active' => true,
         ]);
     }
 }

@@ -10,6 +10,7 @@ use App\Models\StudyProgram;
 use App\Services\CoreAccountRequestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -25,7 +26,14 @@ class AccountRequestController extends Controller
             'requestTypes' => AccountRequest::typeOptions(),
             'studyPrograms' => StudyProgram::query()->where('active', true)->orderBy('name')->pluck('name', 'id')->all(),
             'departments' => Department::query()->where('active', true)->orderBy('name')->pluck('name', 'id')->all(),
-            'applications' => CoreApplication::query()->active()->orderBy('name')->pluck('name', 'app_code')->all(),
+            'applications' => CoreApplication::query()
+                ->active()
+                ->orderBy('name')
+                ->get(['app_code', 'name', 'description'])
+                ->mapWithKeys(fn (CoreApplication $application): array => [
+                    $application->app_code => $this->accountRequestApplicationLabel($application),
+                ])
+                ->all(),
             'applicationRoles' => CoreApplicationRole::query()
                 ->active()
                 ->orderBy('app_code')
@@ -69,7 +77,7 @@ class AccountRequestController extends Controller
             'study_program_id' => ['nullable', 'integer', 'exists:study_programs,id'],
             'department_id' => ['nullable', 'integer', 'exists:departments,id'],
             'requested_role' => ['nullable', 'string', 'max:255'],
-            'requested_app_code' => ['nullable', 'string', 'max:255', 'exists:core_applications,app_code'],
+            'requested_app_code' => ['required', 'string', 'max:255', 'exists:core_applications,app_code'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
@@ -81,5 +89,23 @@ class AccountRequestController extends Controller
     public function success(): View
     {
         return view('account-request.success');
+    }
+
+    private function accountRequestApplicationLabel(CoreApplication $application): string
+    {
+        return match ($application->app_code) {
+            'core-farmasi' => 'Core Farmasi - Profil dan akun pusat',
+            'helpdesk-farmasi' => 'Helpdesk Farmasi - Bantuan layanan',
+            'kp-farmasi' => 'KP Farmasi - Kerja praktek S1 Farmasi',
+            'kppspa-farmasi' => 'KPPSPA - Kerja praktek prodi apoteker',
+            'lab-farmasi' => 'Lab Farmasi - Praktikum dan laboratorium',
+            'obe-farmasi' => 'OBE Farmasi - Kurikulum dan capaian pembelajaran',
+            'safa-ubp' => 'SAFA UBP - Portal satu akses Farmasi',
+            'ta-farmasi' => 'TA Farmasi - Tugas akhir',
+            'tu-farmasi' => 'TU Farmasi - Layanan tata usaha',
+            default => $application->name.($application->description
+                ? ' - '.Str::limit(strip_tags($application->description), 70, '')
+                : ''),
+        };
     }
 }

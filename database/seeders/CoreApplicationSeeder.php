@@ -91,8 +91,8 @@ class CoreApplicationSeeder extends Seeder
             ],
             [
                 'app_code' => 'kppspa-farmasi',
-                'name' => 'KPSPPA Farmasi',
-                'description' => 'Aplikasi KPSPPA Farmasi untuk kebutuhan layanan akademik dan profesi apoteker yang memakai identity dan app access dari Core.',
+                'name' => 'KPPSPA Farmasi',
+                'description' => 'Aplikasi KPPSPA Farmasi untuk kerja praktek prodi apoteker yang memakai identity dan app access dari Core.',
                 'base_url' => env('KPPSPA_FARMASI_BASE_URL', null),
                 'admin_url' => env('KPPSPA_FARMASI_ADMIN_URL', null),
                 'icon' => 'academic-cap',
@@ -101,7 +101,7 @@ class CoreApplicationSeeder extends Seeder
                 'requires_login' => true,
                 'is_sensitive' => false,
                 'sort_order' => 68,
-                'notes' => 'KPSPPA registry readiness. Uses Core account identity and app access. No SSO, no token URL, no auto-login, and no automatic mass user access grant.',
+                'notes' => 'KPPSPA registry readiness. Uses Core account identity and app access. No SSO, no token URL, no auto-login, and no automatic mass user access grant.',
             ],
             [
                 'app_code' => 'helpdesk-farmasi',
@@ -186,12 +186,12 @@ class CoreApplicationSeeder extends Seeder
                 ['role_slug' => 'auditor', 'role_name' => 'Auditor', 'description' => 'Akses audit/read-only untuk data dan dokumen OBE.'],
             ],
             'kppspa-farmasi' => [
-                ['role_slug' => 'admin-kppspa', 'role_name' => 'Admin KPSPPA', 'description' => 'Admin aplikasi KPSPPA Farmasi.'],
-                ['role_slug' => 'koordinator-kppspa', 'role_name' => 'Koordinator KPSPPA', 'description' => 'Koordinator layanan dan proses akademik/profesi KPSPPA.'],
-                ['role_slug' => 'dosen', 'role_name' => 'Dosen', 'description' => 'Dosen yang terlibat dalam layanan KPSPPA.'],
-                ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa', 'description' => 'Mahasiswa/peserta profesi yang memakai layanan KPSPPA.'],
-                ['role_slug' => 'pembimbing', 'role_name' => 'Pembimbing', 'description' => 'Pembimbing kegiatan akademik/profesi KPSPPA.'],
-                ['role_slug' => 'penguji', 'role_name' => 'Penguji', 'description' => 'Penguji kegiatan akademik/profesi KPSPPA.'],
+                ['role_slug' => 'admin-kppspa', 'role_name' => 'Admin KPPSPA', 'description' => 'Admin aplikasi KPPSPA Farmasi.'],
+                ['role_slug' => 'koordinator-kppspa', 'role_name' => 'Koordinator KPPSPA', 'description' => 'Koordinator layanan dan proses akademik/profesi KPPSPA.'],
+                ['role_slug' => 'dosen', 'role_name' => 'Dosen', 'description' => 'Dosen yang terlibat dalam layanan KPPSPA.'],
+                ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa', 'description' => 'Mahasiswa/peserta profesi yang memakai layanan KPPSPA.'],
+                ['role_slug' => 'pembimbing', 'role_name' => 'Pembimbing', 'description' => 'Pembimbing kegiatan akademik/profesi KPPSPA.'],
+                ['role_slug' => 'penguji', 'role_name' => 'Penguji', 'description' => 'Penguji kegiatan akademik/profesi KPPSPA.'],
                 ['role_slug' => 'viewer', 'role_name' => 'Viewer', 'description' => 'Akses baca dashboard dan laporan terbatas.'],
             ],
             'helpdesk-farmasi' => [

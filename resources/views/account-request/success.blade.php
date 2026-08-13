@@ -24,14 +24,15 @@
                 <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4 text-left text-sm leading-6 text-blue-900">
                     <p class="font-bold">Langkah berikutnya</p>
                     <ul class="mt-2 space-y-1">
-                        <li>1. Admin Core memeriksa data dan tujuan akses Anda.</li>
-                        <li>2. Jika disetujui, informasi akun awal dan instruksi melengkapi profil akan dikirim ke email.</li>
-                        <li>3. Akun belum bisa dipakai sebelum proses verifikasi selesai.</li>
+                        <li>1. Admin Core memeriksa data identitas dan tujuan akses Anda.</li>
+                        <li>2. Hasil persetujuan akan dikirim ke email yang didaftarkan.</li>
+                        <li>3. Jika disetujui, email berisi username dan tombol Buat Password Core, bukan password mentah.</li>
+                        <li>4. Setelah membuat password, login ke Profile Portal, lengkapi profil, lalu buka aplikasi yang diberi akses.</li>
                     </ul>
                 </div>
 
                 <div class="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                    Cek Inbox, Spam, atau Promotions secara berkala. Jika belum ada kabar, hubungi Admin Core.
+                    Cek Inbox, Spam, Promotions, atau Updates secara berkala. Jika belum ada kabar setelah diverifikasi, hubungi Admin Core.
                 </div>
 
                 <a href="{{ route('account-request.create') }}" class="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-blue-200 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto sm:py-2.5">

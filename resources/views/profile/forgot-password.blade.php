@@ -46,6 +46,7 @@
                             <div>
                                 <p class="font-black">Permintaan reset sudah diproses.</p>
                                 <p class="mt-1 leading-6">{{ session('status') }}</p>
+                                <p class="mt-2 leading-6">Silakan cek Inbox, Spam, Promotions, atau Updates pada email terdaftar.</p>
                             </div>
                         </div>
                     </div>

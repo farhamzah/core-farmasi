@@ -813,11 +813,17 @@ class CoreAccountRequestTest extends TestCase
         ]);
 
         Mail::assertSent(AccountRequestApprovedMail::class, function (AccountRequestApprovedMail $mail) use ($user): bool {
+            $rendered = $mail->render();
+
             return $mail->hasTo($user->email)
                 && $mail->user->is($user)
                 && filled($mail->passwordSetupUrl)
                 && $mail->appAccess?->app_code === 'kp-farmasi'
-                && $mail->appAccess?->role_slug === 'mahasiswa';
+                && $mail->appAccess?->role_slug === 'mahasiswa'
+                && str_contains($rendered, 'Buat Password Core')
+                && str_contains($rendered, 'Lengkapi profil')
+                && str_contains($rendered, 'Inbox, Spam, Promotions, atau Updates')
+                && str_contains($rendered, 'Email ini tidak memuat password mentah');
         });
 
         $this->assertDatabaseHas('user_activity_logs', [

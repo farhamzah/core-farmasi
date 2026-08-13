@@ -51,12 +51,22 @@
         </a>
     </p>
 
-    <p>Setelah password dibuat, masuk ke Profile Portal untuk melengkapi profil. Password Core ini juga dipakai oleh aplikasi Farmasi yang sudah terhubung dan sudah diberi akses.</p>
+    <div style="margin: 20px 0; padding: 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
+        <p style="margin: 0 0 8px; font-weight: bold;">Panduan setelah akun disetujui</p>
+        <ol style="margin: 0; padding-left: 20px;">
+            <li>Klik tombol <strong>Buat Password Core</strong>. Link berlaku selama {{ $passwordSetupExpiresInMinutes }} menit.</li>
+            <li>Buat password baru yang aman dan simpan sendiri. Jangan membagikan password kepada siapa pun.</li>
+            <li>Masuk ke <strong>Profile Portal</strong> memakai email/username di atas dan password Core yang baru dibuat.</li>
+            <li>Lengkapi profil terlebih dahulu, termasuk foto, nomor telepon, alamat, dan data pendukung yang tersedia.</li>
+            <li>Setelah profil siap, buka aplikasi Farmasi yang sudah diberi akses seperti KP, TA, TU, Lab, atau aplikasi lain yang terhubung.</li>
+            <li>Jika email tidak terlihat, cek folder Inbox, Spam, Promotions, atau Updates, lalu tandai sebagai bukan spam jika diperlukan.</li>
+        </ol>
+    </div>
 
     @unless ($appAccess)
         <p>Akses aplikasi seperti KP, TA, TU, atau Lab dapat diberikan terpisah oleh Admin Core sesuai kebutuhan.</p>
     @endunless
 
-    <p style="font-size: 13px; color: #475569;">Jika email berikutnya tidak terlihat di Inbox, cek folder Spam, Promotions, atau Updates. Email ini tidak memuat password. Jangan membagikan password kepada siapa pun.</p>
+    <p style="font-size: 13px; color: #475569;">Email ini tidak memuat password mentah. Jika link kedaluwarsa, gunakan menu Lupa Password di Profile Portal untuk meminta link baru.</p>
 </body>
 </html>

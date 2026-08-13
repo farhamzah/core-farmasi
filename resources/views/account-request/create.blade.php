@@ -58,7 +58,7 @@
                     </div>
 
                     <div class="rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm leading-6 text-blue-900 shadow-sm">
-                        Tidak ada password di form ini. Admin Core akan membuat akun dengan password awal sementara, lalu pemilik akun wajib menggantinya saat login pertama.
+                        Tidak ada password di form ini. Setelah disetujui, Core mengirim email berisi username dan tombol aman untuk membuat password. Cek Inbox, Spam, Promotions, atau Updates.
                     </div>
                 </div>
             </div>
@@ -74,6 +74,21 @@
                         </ul>
                     </div>
                 @endif
+
+                <div class="mb-6 grid gap-3 lg:grid-cols-3">
+                    <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950">
+                        <p class="font-bold">1. Isi data minimum</p>
+                        <p class="mt-1 text-blue-950/70">Pilih jenis akun dan isi data wajib saja dulu supaya proses awal tidak berat.</p>
+                    </div>
+                    <div class="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+                        <p class="font-bold">2. Tunggu verifikasi</p>
+                        <p class="mt-1 text-amber-950/75">Admin Core mencocokkan identitas, role, dan akses aplikasi yang diminta.</p>
+                    </div>
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950">
+                        <p class="font-bold">3. Cek email</p>
+                        <p class="mt-1 text-emerald-950/75">Jika disetujui, instruksi akun dikirim ke email. Periksa Inbox dan Spam.</p>
+                    </div>
+                </div>
 
                 <form method="POST" action="{{ route('account-request.store') }}" class="grid gap-6" data-account-request-form>
                     @csrf
@@ -277,7 +292,7 @@
                     </div>
 
                     <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-                        Setelah disetujui, akun Core dibuat atau ditautkan. Data resmi tambahan, role, dan app access tetap diverifikasi di Core.
+                        Setelah disetujui, cek email terdaftar. Gunakan tombol Buat Password Core, login ke Profile Portal, lengkapi profil, lalu buka aplikasi sesuai akses yang diberikan Admin Core.
                     </div>
 
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">

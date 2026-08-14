@@ -122,6 +122,7 @@ class CoreInternalApiTest extends TestCase
         ]);
         $student = Student::create([
             'student_number' => '230001',
+            'student_class' => 'FM23A',
             'name' => 'Mahasiswa API',
             'email' => 'student-api@example.test',
             'birth_date' => '2001-08-07',
@@ -165,6 +166,11 @@ class CoreInternalApiTest extends TestCase
             $this->assertStringNotContainsString('birth_date', $content);
             $this->assertStringNotContainsString($admin->api_token, $content);
         }
+
+        $this->withToken($token)
+            ->getJson("/api/v1/students/{$student->id}")
+            ->assertOk()
+            ->assertJsonPath('student_class', 'FM23A');
     }
 
     public function test_current_leadership_endpoint_returns_safe_current_position(): void
@@ -254,6 +260,7 @@ class CoreInternalApiTest extends TestCase
         ]);
         $student = Student::create([
             'student_number' => '240001',
+            'student_class' => 'FM24A',
             'name' => 'Mahasiswa Directory',
             'email' => 'student-directory@example.test',
             'birth_date' => '2002-01-01',
@@ -309,7 +316,13 @@ class CoreInternalApiTest extends TestCase
         $this->withHeaders($this->clientHeaders($client, $secret))
             ->getJson("/api/v1/internal/directory/students/{$student->id}")
             ->assertOk()
-            ->assertJsonPath('data.id', $student->id);
+            ->assertJsonPath('data.id', $student->id)
+            ->assertJsonPath('data.student_class', 'FM24A');
+
+        $this->withHeaders($this->clientHeaders($client, $secret))
+            ->getJson('/api/v1/internal/directory/students?student_class=fm24a')
+            ->assertOk()
+            ->assertJsonPath('data.0.student_class', 'FM24A');
     }
 
     public function test_directory_requests_are_audited_and_invalid_client_is_rejected(): void

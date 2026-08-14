@@ -43,6 +43,12 @@ class StudentResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(100),
+                        Forms\Components\TextInput::make('student_class')
+                            ->label('Kelas')
+                            ->placeholder('FM24A')
+                            ->helperText('Format: kode prodi + 2 digit angkatan + kelas. Contoh Farmasi 2024 kelas A = FM24A.')
+                            ->maxLength(20)
+                            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? strtoupper(trim($state)) : null),
                         Forms\Components\TextInput::make('name')
                             ->label('Nama')
                             ->required()
@@ -108,6 +114,12 @@ class StudentResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('student_number')->label('NIM')->sortable()->searchable(),
+                TextColumn::make('student_class')
+                    ->label('Kelas')
+                    ->badge()
+                    ->placeholder('-')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('name')->label('Nama')->sortable()->searchable(),
                 TextColumn::make('email')->sortable()->searchable(),
                 TextColumn::make('studyProgram.name')->label('Program Studi')->sortable(),

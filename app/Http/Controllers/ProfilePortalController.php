@@ -115,6 +115,7 @@ class ProfilePortalController extends Controller
 
         $validated = $request->validate([
             'email' => ['nullable', 'email', 'max:255'],
+            'student_class' => ['nullable', 'string', 'max:20'],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:1000'],
             'alternate_email' => ['nullable', 'email', 'max:255'],

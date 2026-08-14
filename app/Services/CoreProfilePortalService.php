@@ -172,7 +172,7 @@ class CoreProfilePortalService
     public function editableFieldsFor(User $user): array
     {
         $profileFields = [
-            'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
+            'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'student_class', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
             'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'front_title', 'back_title', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
             'employee' => $user->employee ? $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
             'externalPerson' => $user->externalPerson ? $this->existingColumns(ExternalPerson::class, ['email', 'front_title', 'back_title', 'phone', 'address', 'institution_name', 'institution_type', 'position_title', 'profession', 'notes']) : [],
@@ -251,6 +251,7 @@ class CoreProfilePortalService
             $items = [
                 ...$items,
                 $this->completionItem('student_number', 'NIM tersedia', filled($student->student_number)),
+                $this->completionItem('student_class', 'Kelas mahasiswa tersedia', filled($this->valueIfColumnExists($student, 'student_class'))),
                 $this->completionItem('student_program', 'Program studi tersedia', filled($student->study_program_id)),
                 $this->completionItem('student_status', 'Status mahasiswa tersedia', filled($student->status)),
                 $this->completionItem('student_birth_place', 'Tempat lahir tersedia', filled($this->valueIfColumnExists($student, 'birth_place'))),
@@ -353,6 +354,7 @@ class CoreProfilePortalService
             'name' => $student->name,
             'identifier_label' => 'NIM',
             'identifier' => $student->student_number,
+            'student_class' => $this->valueIfColumnExists($student, 'student_class'),
             'email' => $student->email,
             'status' => $student->status,
             'unit' => $student->studyProgram?->name,
@@ -366,6 +368,7 @@ class CoreProfilePortalService
             'profile_sections' => [
                 'Akademik' => [
                     'Program Studi' => $student->studyProgram?->name,
+                    'Kelas' => $this->valueIfColumnExists($student, 'student_class'),
                     'Fakultas/Departemen' => $student->studyProgram?->department?->name,
                     'Status Mahasiswa' => $student->status,
                     'Tempat Lahir' => $this->valueIfColumnExists($student, 'birth_place'),
@@ -564,7 +567,7 @@ class CoreProfilePortalService
     private function profileStandards(): array
     {
         return [
-            'Mahasiswa' => ['NIM', 'nama resmi', 'program studi', 'tempat/tanggal lahir', 'kontak aktif', 'alamat', 'foto profil'],
+            'Mahasiswa' => ['NIM', 'nama resmi', 'program studi', 'kelas mahasiswa', 'tempat/tanggal lahir', 'kontak aktif', 'alamat', 'foto profil'],
             'Dosen' => ['gelar akademik/profesi', 'NIK/KTP', 'NIDN/NIDK', 'NIP bila ASN', 'NUPTK', 'homebase/unit', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
             'Tendik' => ['NIK/KTP', 'nomor pegawai', 'NUPTK bila ada', 'unit kerja', 'jabatan/posisi', 'tempat/tanggal lahir', 'kontak aktif', 'foto profil'],
             'Mitra Eksternal' => ['nama resmi dan gelar jika ada', 'email', 'telepon', 'instansi', 'jenis instansi', 'jabatan/posisi', 'alamat', 'foto profil'],

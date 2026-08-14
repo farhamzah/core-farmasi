@@ -636,6 +636,7 @@ class CoreProfilePortalTest extends TestCase
         $this->assertTrue(Schema::hasColumn('students', 'phone'));
         $this->assertTrue(Schema::hasColumn('students', 'address'));
         $this->assertTrue(Schema::hasColumn('students', 'birth_place'));
+        $this->assertTrue(Schema::hasColumn('students', 'student_class'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'address'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'birth_place'));
         $this->assertTrue(Schema::hasColumn('lecturers', 'national_id_number'));
@@ -675,6 +676,7 @@ class CoreProfilePortalTest extends TestCase
         $this->actingAs($user)->put('/profile', [
             'phone' => '0819999999',
             'address' => 'Alamat Baru Mahasiswa',
+            'student_class' => 'fm24a',
             'study_program_id' => $studyProgram->id + 100,
             'student_number' => 'MHS-HACKED',
         ])->assertRedirect('/profile');
@@ -683,6 +685,7 @@ class CoreProfilePortalTest extends TestCase
 
         $this->assertSame('0819999999', $student->phone);
         $this->assertSame('Alamat Baru Mahasiswa', $student->address);
+        $this->assertSame('FM24A', $student->student_class);
         $this->assertSame('MHS-002', $student->student_number);
         $this->assertSame($studyProgram->id, $student->study_program_id);
     }
@@ -711,6 +714,7 @@ class CoreProfilePortalTest extends TestCase
             'email' => 'student-safe-new@example.test',
             'phone' => '08122223333',
             'address' => 'Alamat Baru',
+            'student_class' => 'FM24B',
             'birth_place' => 'Karawang',
             'birth_date' => '2002-01-15',
             'enrolled_at' => '2024-09-01',
@@ -723,6 +727,7 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('student-safe-new@example.test', $student->email);
         $this->assertSame('08122223333', $student->phone);
         $this->assertSame('Alamat Baru', $student->address);
+        $this->assertSame('FM24B', $student->student_class);
         $this->assertSame('Karawang', $student->birth_place);
         $this->assertSame('2002-01-15', $student->birth_date?->toDateString());
         $this->assertSame('2024-09-01', $student->enrolled_at?->toDateString());

@@ -50,6 +50,7 @@ class CoreApiResponseSanitizer
             'user_id' => $student->user_id,
             'nim' => $student->student_number,
             'student_number' => $student->student_number,
+            'student_class' => $student->student_class,
             'name' => $student->name,
             'email' => $student->email,
             'status' => $student->status,

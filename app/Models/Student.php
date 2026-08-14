@@ -14,6 +14,7 @@ class Student extends Model
     protected $fillable = [
         'user_id',
         'student_number',
+        'student_class',
         'name',
         'email',
         'phone',
@@ -37,6 +38,13 @@ class Student extends Model
     {
         $this->attributes['name'] = app(\App\Services\CorePersonNameFormatter::class)
             ->normalizePersonName($value);
+    }
+
+    public function setStudentClassAttribute(?string $value): void
+    {
+        $normalized = $value === null ? null : strtoupper(trim($value));
+
+        $this->attributes['student_class'] = $normalized === '' ? null : $normalized;
     }
 
     public function studyProgram(): BelongsTo

@@ -64,6 +64,7 @@
         ];
         $fieldLabels = [
             'email' => 'Email Profil',
+            'student_class' => 'Kelas Mahasiswa',
             'phone' => 'Telepon',
             'address' => 'Alamat',
             'alternate_email' => 'Email Alternatif',
@@ -268,6 +269,8 @@
                                         <p class="mt-2 text-xs font-medium text-slate-500">
                                             @if (in_array($field, ['front_title', 'back_title'], true))
                                                 Isi sesuai format resmi, contoh: Dr., apt., M.Farm., S.Si. Nama dasar tetap terkunci.
+                                            @elseif ($field === 'student_class')
+                                                Format contoh: FM24A untuk Farmasi angkatan 2024 kelas A.
                                             @else
                                                 Disimpan ke {{ $group['title'] }}.
                                             @endif

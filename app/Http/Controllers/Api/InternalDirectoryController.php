@@ -64,6 +64,7 @@ class InternalDirectoryController extends Controller
             'q' => ['nullable', 'string', 'max:100'],
             'nim' => ['nullable', 'string', 'max:100'],
             'student_number' => ['nullable', 'string', 'max:100'],
+            'student_class' => ['nullable', 'string', 'max:20'],
             'study_program_id' => ['nullable', 'integer', 'min:1'],
             'active' => ['nullable', 'boolean'],
             'status' => ['nullable', 'string', 'max:50'],
@@ -77,9 +78,11 @@ class InternalDirectoryController extends Controller
                 $like = $this->like($q);
                 $query->where('name', 'like', $like)
                     ->orWhere('email', 'like', $like)
-                    ->orWhere('student_number', 'like', $like);
+                    ->orWhere('student_number', 'like', $like)
+                    ->orWhere('student_class', 'like', $like);
             }))
             ->when($filters['nim'] ?? $filters['student_number'] ?? null, fn (Builder $query, string $number) => $query->where('student_number', $number))
+            ->when($filters['student_class'] ?? null, fn (Builder $query, string $studentClass) => $query->where('student_class', strtoupper(trim($studentClass))))
             ->when($filters['study_program_id'] ?? null, fn (Builder $query, int $id) => $query->where('study_program_id', $id))
             ->when(array_key_exists('active', $filters), fn (Builder $query) => $query->where('active', $this->booleanFilter($filters['active'])))
             ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))

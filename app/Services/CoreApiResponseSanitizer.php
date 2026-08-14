@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\ExternalPerson;
 use App\Models\LeadershipAssignment;
 use App\Models\Lecturer;
 use App\Models\Student;
@@ -137,6 +138,31 @@ class CoreApiResponseSanitizer
             ] : null,
             'user' => $employee->relationLoaded('user') && $employee->user
                 ? $this->userSummary($employee->user)
+                : null,
+        ];
+    }
+
+    public function externalPerson(ExternalPerson $externalPerson): array
+    {
+        return [
+            'id' => $externalPerson->id,
+            'user_id' => $externalPerson->user_id,
+            'external_number' => $externalPerson->external_number,
+            'name' => $externalPerson->name,
+            'front_title' => $externalPerson->front_title,
+            'back_title' => $externalPerson->back_title,
+            'display_name_with_title' => $externalPerson->display_name_with_title,
+            'formal_name' => $externalPerson->display_name_with_title,
+            'email' => $externalPerson->email,
+            'phone' => $externalPerson->phone,
+            'institution_name' => $externalPerson->institution_name,
+            'institution_type' => $externalPerson->institution_type,
+            'position_title' => $externalPerson->position_title,
+            'profession' => $externalPerson->profession,
+            'address' => $externalPerson->address,
+            'status' => $externalPerson->status,
+            'user' => $externalPerson->relationLoaded('user') && $externalPerson->user
+                ? $this->userSummary($externalPerson->user)
                 : null,
         ];
     }

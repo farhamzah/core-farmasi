@@ -29,6 +29,8 @@ Route::prefix('v1')->middleware('throttle:' . config('core_api.default_rate_limi
     });
 
     Route::prefix('internal')->group(function () {
+        Route::get('apps/{app_code}/users', [InternalAppAccessController::class, 'index'])
+            ->middleware('auth.core-api-client:read:app-access');
         Route::get('apps/{app_code}/users/{user}/access', [InternalAppAccessController::class, 'show'])
             ->middleware('auth.core-api-client:read:app-access');
         Route::post('apps/tu-farmasi/portal-auth/verify', [TuPortalAuthVerificationController::class, 'verify'])

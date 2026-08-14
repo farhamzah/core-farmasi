@@ -186,13 +186,13 @@ class CoreApplicationSeeder extends Seeder
                 ['role_slug' => 'auditor', 'role_name' => 'Auditor', 'description' => 'Akses audit/read-only untuk data dan dokumen OBE.'],
             ],
             'kppspa-farmasi' => [
-                ['role_slug' => 'admin-kppspa', 'role_name' => 'Admin KPPSPA', 'description' => 'Admin aplikasi KPPSPA Farmasi.'],
-                ['role_slug' => 'koordinator-kppspa', 'role_name' => 'Koordinator KPPSPA', 'description' => 'Koordinator layanan dan proses akademik/profesi KPPSPA.'],
-                ['role_slug' => 'dosen', 'role_name' => 'Dosen', 'description' => 'Dosen yang terlibat dalam layanan KPPSPA.'],
-                ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa', 'description' => 'Mahasiswa/peserta profesi yang memakai layanan KPPSPA.'],
-                ['role_slug' => 'pembimbing', 'role_name' => 'Pembimbing', 'description' => 'Pembimbing kegiatan akademik/profesi KPPSPA.'],
+                ['role_slug' => 'mahasiswa', 'role_name' => 'Mahasiswa', 'description' => 'Mahasiswa/peserta KPPSPA.'],
+                ['role_slug' => 'koordinator-kp', 'role_name' => 'Koordinator KP', 'description' => 'Koordinator program, wahana, tempat praktik, pembimbing, penguji, dan nilai KPPSPA.'],
+                ['role_slug' => 'pembimbing-dalam', 'role_name' => 'Pembimbing Dalam', 'description' => 'Dosen pembimbing internal.'],
+                ['role_slug' => 'pembimbing-lapangan', 'role_name' => 'Pembimbing Lapangan', 'description' => 'Pembimbing dari tempat praktik.'],
                 ['role_slug' => 'penguji', 'role_name' => 'Penguji', 'description' => 'Penguji kegiatan akademik/profesi KPPSPA.'],
-                ['role_slug' => 'viewer', 'role_name' => 'Viewer', 'description' => 'Akses baca dashboard dan laporan terbatas.'],
+                ['role_slug' => 'penguji-luar', 'role_name' => 'Penguji Luar', 'description' => 'Penguji eksternal kegiatan akademik/profesi KPPSPA.'],
+                ['role_slug' => 'admin-kp', 'role_name' => 'Admin KP', 'description' => 'Admin aplikasi KPPSPA Farmasi.'],
             ],
             'helpdesk-farmasi' => [
                 ['role_slug' => 'requester', 'role_name' => 'Requester', 'description' => 'Pengguna yang membuat atau memantau tiket helpdesk.'],
@@ -223,7 +223,7 @@ class CoreApplicationSeeder extends Seeder
                 );
             }
 
-            if (in_array($appCode, ['lab-farmasi', 'tu-farmasi'], true)) {
+            if (in_array($appCode, ['lab-farmasi', 'tu-farmasi', 'kppspa-farmasi'], true)) {
                 CoreApplicationRole::query()
                     ->where('app_code', $appCode)
                     ->whereNotIn('role_slug', collect($appRoles)->pluck('role_slug')->all())

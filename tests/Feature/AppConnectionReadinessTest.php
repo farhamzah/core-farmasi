@@ -44,6 +44,33 @@ class AppConnectionReadinessTest extends TestCase
         }
     }
 
+    public function test_kppspa_active_role_catalog_matches_kp_farmasi(): void
+    {
+        $this->seed(CoreApplicationSeeder::class);
+
+        $kpRoles = CoreApplicationRole::query()
+            ->where('app_code', 'kp-farmasi')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->pluck('role_slug')
+            ->all();
+
+        $kppspaRoles = CoreApplicationRole::query()
+            ->where('app_code', 'kppspa-farmasi')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->pluck('role_slug')
+            ->all();
+
+        $this->assertSame($kpRoles, $kppspaRoles);
+        $this->assertSame([], CoreApplicationRole::query()
+            ->where('app_code', 'kppspa-farmasi')
+            ->where('is_active', true)
+            ->whereIn('role_slug', ['admin-kppspa', 'koordinator-kppspa', 'dosen', 'pembimbing', 'viewer'])
+            ->pluck('role_slug')
+            ->all());
+    }
+
     public function test_readiness_command_works_for_future_consumers_without_secret_output(): void
     {
         $this->seed(CoreApplicationSeeder::class);

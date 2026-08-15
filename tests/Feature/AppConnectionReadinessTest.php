@@ -71,6 +71,20 @@ class AppConnectionReadinessTest extends TestCase
             ->all());
     }
 
+    public function test_dosen_farmasi_active_role_catalog_uses_dosen_portal_roles(): void
+    {
+        $this->seed(CoreApplicationSeeder::class);
+
+        $roles = CoreApplicationRole::query()
+            ->where('app_code', 'dosen-farmasi')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->pluck('role_slug')
+            ->all();
+
+        $this->assertSame(['dosen', 'admin-dosen'], $roles);
+    }
+
     public function test_readiness_command_works_for_future_consumers_without_secret_output(): void
     {
         $this->seed(CoreApplicationSeeder::class);
@@ -153,6 +167,7 @@ class AppConnectionReadinessTest extends TestCase
             'lab_applications' => CoreApplication::where('app_code', 'lab-farmasi')->count(),
             'obe_applications' => CoreApplication::where('app_code', 'obe-farmasi')->count(),
             'kppspa_applications' => CoreApplication::where('app_code', 'kppspa-farmasi')->count(),
+            'dosen_applications' => CoreApplication::where('app_code', 'dosen-farmasi')->count(),
             'helpdesk_applications' => CoreApplication::where('app_code', 'helpdesk-farmasi')->count(),
             'ta_roles' => CoreApplicationRole::where('app_code', 'ta-farmasi')->count(),
             'tu_required_roles' => CoreApplicationRole::where('app_code', 'tu-farmasi')
@@ -169,6 +184,9 @@ class AppConnectionReadinessTest extends TestCase
                 ->count(),
             'kppspa_required_roles' => CoreApplicationRole::where('app_code', 'kppspa-farmasi')
                 ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('kppspa-farmasi'))
+                ->count(),
+            'dosen_required_roles' => CoreApplicationRole::where('app_code', 'dosen-farmasi')
+                ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('dosen-farmasi'))
                 ->count(),
             'helpdesk_required_roles' => CoreApplicationRole::where('app_code', 'helpdesk-farmasi')
                 ->whereIn('role_slug', app(AppConnectionReadinessService::class)->requiredRoleSlugs('helpdesk-farmasi'))
@@ -190,6 +208,7 @@ class AppConnectionReadinessTest extends TestCase
             'kp-farmasi' => 'KP Farmasi',
             'obe-farmasi' => 'OBE Farmasi',
             'kppspa-farmasi' => 'KPPSPA Farmasi',
+            'dosen-farmasi' => 'Dosen Farmasi',
             'helpdesk-farmasi' => 'Helpdesk Farmasi',
         ];
     }

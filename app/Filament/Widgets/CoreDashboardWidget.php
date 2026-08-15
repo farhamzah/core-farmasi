@@ -45,7 +45,7 @@ class CoreDashboardWidget extends Widget
             ->whereIn('status', [AccountRequest::STATUS_PENDING, AccountRequest::STATUS_IN_REVIEW])
             ->count();
 
-        $appCodes = ['kp-farmasi', 'tu-farmasi', 'ta-farmasi', 'lab-farmasi', 'obe-farmasi'];
+        $appCodes = ['kp-farmasi', 'tu-farmasi', 'ta-farmasi', 'lab-farmasi', 'obe-farmasi', 'dosen-farmasi'];
         $applications = CoreApplication::query()
             ->whereIn('app_code', $appCodes)
             ->get()

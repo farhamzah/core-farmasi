@@ -299,6 +299,14 @@ class AppConnectionReadinessService
                     'admin-kp',
                 ],
             ],
+            'dosen-farmasi' => [
+                'name' => 'Dosen Farmasi',
+                'abilities' => $standardReadAbilities,
+                'roles' => [
+                    'dosen',
+                    'admin-dosen',
+                ],
+            ],
             'helpdesk-farmasi' => [
                 'name' => 'Helpdesk Farmasi',
                 'abilities' => $standardReadAbilities,

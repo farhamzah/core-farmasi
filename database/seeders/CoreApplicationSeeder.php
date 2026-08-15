@@ -104,6 +104,20 @@ class CoreApplicationSeeder extends Seeder
                 'notes' => 'KPPSPA registry readiness. Uses Core account identity and app access. No SSO, no token URL, no auto-login, and no automatic mass user access grant.',
             ],
             [
+                'app_code' => 'dosen-farmasi',
+                'name' => 'Dosen Farmasi',
+                'description' => 'Portal dosen Farmasi untuk portofolio, aktivitas dosen, dashboard, agenda, dan integrasi layanan akademik.',
+                'base_url' => env('DOSEN_FARMASI_BASE_URL', 'https://dosen.safaubp.com'),
+                'admin_url' => env('DOSEN_FARMASI_ADMIN_URL', 'https://dosen.safaubp.com/admin'),
+                'icon' => 'academic-cap',
+                'color' => '#0f766e',
+                'is_public_visible' => false,
+                'requires_login' => true,
+                'is_sensitive' => false,
+                'sort_order' => 69,
+                'notes' => 'Dosen Farmasi registry readiness. Uses Core account identity and app access. No SSO, no token URL, no auto-login, and no automatic mass user access grant.',
+            ],
+            [
                 'app_code' => 'helpdesk-farmasi',
                 'name' => 'Helpdesk Farmasi',
                 'description' => 'Aplikasi helpdesk Farmasi untuk tiket, komentar, status, kategori, SLA, lampiran, dan operasional dukungan.',
@@ -194,6 +208,10 @@ class CoreApplicationSeeder extends Seeder
                 ['role_slug' => 'penguji-luar', 'role_name' => 'Penguji Luar', 'description' => 'Penguji eksternal kegiatan akademik/profesi KPPSPA.'],
                 ['role_slug' => 'admin-kp', 'role_name' => 'Admin KP', 'description' => 'Admin aplikasi KPPSPA Farmasi.'],
             ],
+            'dosen-farmasi' => [
+                ['role_slug' => 'dosen', 'role_name' => 'Dosen', 'description' => 'Akses dosen ke Portal Dosen Farmasi.'],
+                ['role_slug' => 'admin-dosen', 'role_name' => 'Admin Dosen', 'description' => 'Admin aplikasi Dosen Farmasi.'],
+            ],
             'helpdesk-farmasi' => [
                 ['role_slug' => 'requester', 'role_name' => 'Requester', 'description' => 'Pengguna yang membuat atau memantau tiket helpdesk.'],
                 ['role_slug' => 'agent', 'role_name' => 'Agent', 'description' => 'Petugas helpdesk yang menangani tiket.'],
@@ -223,7 +241,7 @@ class CoreApplicationSeeder extends Seeder
                 );
             }
 
-            if (in_array($appCode, ['lab-farmasi', 'tu-farmasi', 'kppspa-farmasi'], true)) {
+            if (in_array($appCode, ['lab-farmasi', 'tu-farmasi', 'kppspa-farmasi', 'dosen-farmasi'], true)) {
                 CoreApplicationRole::query()
                     ->where('app_code', $appCode)
                     ->whereNotIn('role_slug', collect($appRoles)->pluck('role_slug')->all())

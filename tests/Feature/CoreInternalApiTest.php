@@ -106,48 +106,48 @@ class CoreInternalApiTest extends TestCase
         $department = Department::create(['code' => 'FAR', 'name' => 'Farmasi', 'active' => true]);
         $studyProgram = StudyProgram::create([
             'department_id' => $department->id,
-            'code' => 'PSPA',
+            'code' => 'PKPA',
             'name' => 'Profesi Apoteker',
             'active' => true,
         ]);
         $studentUser = User::factory()->create([
-            'name' => 'Mahasiswa KPPSPA',
+            'name' => 'Mahasiswa MY PKPA',
             'email' => 'student-kppspa@example.test',
             'active' => true,
         ]);
         Student::create([
             'user_id' => $studentUser->id,
-            'student_number' => 'PSPA001',
-            'student_class' => 'PSPA-A',
-            'name' => 'Mahasiswa KPPSPA',
+            'student_number' => 'PKPA001',
+            'student_class' => 'PKPA-A',
+            'name' => 'Mahasiswa MY PKPA',
             'email' => 'student-kppspa@example.test',
             'study_program_id' => $studyProgram->id,
             'status' => 'active',
             'active' => true,
         ]);
         $lecturerUser = User::factory()->create([
-            'name' => 'Dosen KPPSPA',
+            'name' => 'Dosen MY PKPA',
             'email' => 'lecturer-kppspa@example.test',
             'active' => true,
         ]);
         Lecturer::create([
             'user_id' => $lecturerUser->id,
             'lecturer_number' => 'DOS001',
-            'name' => 'Dosen KPPSPA',
+            'name' => 'Dosen MY PKPA',
             'email' => 'lecturer-kppspa@example.test',
             'department_id' => $department->id,
             'study_program_id' => $studyProgram->id,
             'active' => true,
         ]);
         $fieldUser = User::factory()->create([
-            'name' => 'Preseptor KPPSPA',
+            'name' => 'Preseptor MY PKPA',
             'email' => 'field-kppspa@example.test',
             'active' => true,
         ]);
         ExternalPerson::create([
             'user_id' => $fieldUser->id,
             'external_number' => 'EXT001',
-            'name' => 'Preseptor KPPSPA',
+            'name' => 'Preseptor MY PKPA',
             'email' => 'field-kppspa@example.test',
             'phone' => '08123456789',
             'institution_name' => 'Apotek Sehat',
@@ -175,7 +175,7 @@ class CoreInternalApiTest extends TestCase
 
         $rows = collect($response->json('data'));
 
-        $this->assertSame('PSPA001', data_get($rows->firstWhere('user.email', 'student-kppspa@example.test'), 'profiles.student.student_number'));
+        $this->assertSame('PKPA001', data_get($rows->firstWhere('user.email', 'student-kppspa@example.test'), 'profiles.student.student_number'));
         $this->assertSame('DOS001', data_get($rows->firstWhere('user.email', 'lecturer-kppspa@example.test'), 'profiles.lecturer.lecturer_number'));
         $this->assertSame('Apotek Sehat', data_get($rows->firstWhere('user.email', 'field-kppspa@example.test'), 'profiles.external_person.institution_name'));
 

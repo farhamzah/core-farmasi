@@ -11,13 +11,13 @@ use Illuminate\Console\Command;
 class IssueKppspaApiClientCommand extends Command
 {
     protected $signature = 'core:issue-kppspa-api-client
-        {--apply : Create or rotate the KPPSPA API client}
-        {--name=KPPSPA Farmasi Staging Client : Name for a newly created API client}
-        {--rotate-existing : Rotate an existing active KPPSPA API client instead of creating}
-        {--force-rotate : Allow rotating multiple active KPPSPA API clients}
-        {--show-env-template : Show KPPSPA staging env template without real secrets}';
+        {--apply : Create or rotate the MY PKPA API client}
+        {--name=MY PKPA Staging Client : Name for a newly created API client}
+        {--rotate-existing : Rotate an existing active MY PKPA API client instead of creating}
+        {--force-rotate : Allow rotating multiple active MY PKPA API clients}
+        {--show-env-template : Show MY PKPA staging env template without real secrets}';
 
-    protected $description = 'Dry-run or safely issue KPPSPA Farmasi app-client credentials';
+    protected $description = 'Dry-run or safely issue MY PKPA app-client credentials';
 
     public function handle(
         CoreApiClientCredentialService $credentials,
@@ -32,7 +32,7 @@ class IssueKppspaApiClientCommand extends Command
             ->orderBy('id')
             ->get();
 
-        $this->line('KPPSPA API client issuance');
+        $this->line('MY PKPA API client issuance');
         $this->table(
             ['Metric', 'Value'],
             [
@@ -50,7 +50,7 @@ class IssueKppspaApiClientCommand extends Command
         }
 
         if (! $application || ! $application->is_active) {
-            $this->error('Cannot issue KPPSPA API client because kppspa-farmasi application is missing or inactive.');
+            $this->error('Cannot issue MY PKPA API client because kppspa-farmasi application is missing or inactive.');
 
             return self::FAILURE;
         }
@@ -63,7 +63,7 @@ class IssueKppspaApiClientCommand extends Command
         }
 
         if ($activeClients->isNotEmpty() && ! $this->option('rotate-existing')) {
-            $this->warn('Active KPPSPA API client already exists. No duplicate client was created.');
+            $this->warn('Active MY PKPA API client already exists. No duplicate client was created.');
             $this->line('Existing client id: '.$activeClients->first()->client_id);
             $this->line('Use --rotate-existing to rotate the existing client secret.');
 
@@ -79,10 +79,10 @@ class IssueKppspaApiClientCommand extends Command
             'name' => (string) $this->option('name'),
             'abilities' => $requiredAbilities,
             'is_active' => true,
-            'notes' => 'Created by core:issue-kppspa-api-client for KPPSPA staging read-only integration.',
+            'notes' => 'Created by core:issue-kppspa-api-client for MY PKPA staging read-only integration.',
         ]);
 
-        $this->info('KPPSPA API client created. Copy the secret now; it will not be shown again.');
+        $this->info('MY PKPA API client created. Copy the secret now; it will not be shown again.');
         $this->line('Client ID: '.$client->client_id);
         $this->line('Client Secret (shown once): '.$plainSecret);
         $this->warn('Store this secret in an approved secret manager or staging env. Do not commit it, paste it into reports, or put it in a URL.');
@@ -94,13 +94,13 @@ class IssueKppspaApiClientCommand extends Command
     protected function rotateExisting(CoreApiClientCredentialService $credentials, $activeClients): int
     {
         if ($activeClients->isEmpty()) {
-            $this->error('No active KPPSPA API client exists to rotate.');
+            $this->error('No active MY PKPA API client exists to rotate.');
 
             return self::FAILURE;
         }
 
         if ($activeClients->count() > 1 && ! $this->option('force-rotate')) {
-            $this->error('Multiple active KPPSPA API clients exist. Re-run with --force-rotate to rotate all active clients.');
+            $this->error('Multiple active MY PKPA API clients exist. Re-run with --force-rotate to rotate all active clients.');
 
             return self::FAILURE;
         }
@@ -108,19 +108,19 @@ class IssueKppspaApiClientCommand extends Command
         foreach ($activeClients as $client) {
             $plainSecret = $credentials->rotateSecret($client);
 
-            $this->info('KPPSPA API client rotated. Copy the secret now; it will not be shown again.');
+            $this->info('MY PKPA API client rotated. Copy the secret now; it will not be shown again.');
             $this->line('Client ID: '.$client->client_id);
             $this->line('Client Secret (shown once): '.$plainSecret);
         }
 
-        $this->warn('Store rotated secret values securely and clear KPPSPA config cache before smoke testing.');
+        $this->warn('Store rotated secret values securely and clear MY PKPA config cache before smoke testing.');
 
         return self::SUCCESS;
     }
 
     protected function showEnvTemplate(?string $clientId = null): void
     {
-        $this->line('KPPSPA staging env template (placeholders only):');
+        $this->line('MY PKPA staging env template (placeholders only):');
         $this->line('KP_AUTH_MODE=core_http');
         $this->line('CORE_FARMASI_ENABLED=true');
         $this->line('CORE_FARMASI_URL=https://core.safaubp.com');

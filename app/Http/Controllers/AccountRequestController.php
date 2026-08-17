@@ -97,7 +97,7 @@ class AccountRequestController extends Controller
             'core-farmasi' => 'Core Farmasi - Profil dan akun pusat',
             'helpdesk-farmasi' => 'Helpdesk Farmasi - Bantuan layanan',
             'kp-farmasi' => 'KP Farmasi - Kerja praktek S1 Farmasi',
-            'kppspa-farmasi' => 'KPPSPA - Kerja praktek prodi apoteker',
+            'kppspa-farmasi' => 'MY PKPA - Praktik Kerja Profesi Apoteker',
             'lab-farmasi' => 'Lab Farmasi - Praktikum dan laboratorium',
             'obe-farmasi' => 'OBE Farmasi - Kurikulum dan capaian pembelajaran',
             'safa-ubp' => 'SAFA UBP - Portal satu akses Farmasi',

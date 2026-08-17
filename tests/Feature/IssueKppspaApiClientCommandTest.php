@@ -111,8 +111,8 @@ class IssueKppspaApiClientCommandTest extends TestCase
     {
         return CoreApplication::create(array_merge([
             'app_code' => 'kppspa-farmasi',
-            'name' => 'KPPSPA Farmasi',
-            'description' => 'Aplikasi KPPSPA Farmasi.',
+            'name' => 'MY PKPA',
+            'description' => 'Aplikasi MY PKPA.',
             'is_active' => true,
             'is_public_visible' => false,
             'requires_login' => true,

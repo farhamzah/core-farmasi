@@ -146,13 +146,13 @@ class CoreAccountRequestTest extends TestCase
     public function test_guest_can_view_account_request_form_when_enabled(): void
     {
         config(['core_account.public_account_request_enabled' => true]);
-        $this->createActiveApplication('kppspa-farmasi', 'KPPSPA Farmasi', 'Kerja praktek prodi apoteker');
+        $this->createActiveApplication('kppspa-farmasi', 'MY PKPA', 'Praktik Kerja Profesi Apoteker');
 
         $this->get('/account-request')
             ->assertOk()
             ->assertSee('Permohonan Akun')
             ->assertSee('Pilih Jenis Akun')
-            ->assertSee('KPPSPA - Kerja praktek prodi apoteker')
+            ->assertSee('MY PKPA - Praktik Kerja Profesi Apoteker')
             ->assertSee('Mahasiswa')
             ->assertSee('Dosen')
             ->assertSee('Tendik / Staf')

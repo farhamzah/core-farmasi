@@ -278,7 +278,7 @@
                             @error('requested_app_code')
                                 <span class="text-xs font-semibold text-red-600">{{ $message }}</span>
                             @else
-                                <span class="text-xs leading-5 text-slate-500">Contoh: KPPSPA - Kerja praktek prodi apoteker, KP Farmasi, TA Farmasi, atau Lab Farmasi.</span>
+                                <span class="text-xs leading-5 text-slate-500">Contoh: MY PKPA - Praktik Kerja Profesi Apoteker, KP Farmasi, TA Farmasi, atau Lab Farmasi.</span>
                             @enderror
                         </label>
 
@@ -287,7 +287,7 @@
                             <select name="requested_role" data-requested-role class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                                 <option value="">Pilih aplikasi dulu atau kosongkan dulu</option>
                             </select>
-                            <span class="text-xs leading-5 text-slate-500">Contoh: KP Pembimbing Lapangan, KP Penguji, TA Pembimbing Luar, atau TA Penguji Luar. Jika belum yakin, pilih aplikasi saja dan jelaskan di catatan.</span>
+                            <span class="text-xs leading-5 text-slate-500">Contoh: PKPA Pembimbing Lapangan, PKPA Penguji, TA Pembimbing Luar, atau TA Penguji Luar. Jika belum yakin, pilih aplikasi saja dan jelaskan di catatan.</span>
                         </label>
 
                         <label class="grid gap-2 md:col-span-2">
@@ -297,7 +297,7 @@
                     </div>
 
                     <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-                        Setelah disetujui, cek email terdaftar. Jika tidak ada di Inbox, cek Spam, Promotions, atau Updates. Gunakan tombol Buat Password Core, login ke Profile Portal, lengkapi profil, lalu buka aplikasi sesuai akses yang diberikan Admin Core.
+                        Setelah disetujui, cek email terdaftar. Jika tidak ada di Inbox, cek Spam, Promotions, atau Updates. Gunakan tombol Buat Password Core, login ke Profile Portal, lengkapi profil, lalu buka MY PKPA atau aplikasi lain sesuai akses yang diberikan Admin Core.
                     </div>
 
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">

@@ -287,7 +287,7 @@ class AppConnectionReadinessService
                 ],
             ],
             'kppspa-farmasi' => [
-                'name' => 'KPPSPA Farmasi',
+                'name' => 'MY PKPA',
                 'abilities' => $standardReadAbilities,
                 'roles' => [
                     'mahasiswa',

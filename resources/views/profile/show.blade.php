@@ -99,7 +99,7 @@
                                     </span>
                                 </div>
                                 <p class="mt-5 max-w-3xl text-sm leading-7 text-slate-600">
-                                    Data resmi dikelola terpusat oleh Admin Core. Kontak pribadi bisa diperbarui mandiri, sementara identitas akademik/kepegawaian, role, app access, dan jabatan tetap terkunci.
+                                    Data resmi dikelola terpusat oleh Admin Core dan dipakai oleh MY PKPA serta aplikasi Farmasi lain. Kontak pribadi bisa diperbarui mandiri, sementara identitas akademik/kepegawaian, role, app access, dan jabatan tetap terkunci.
                                 </p>
                             </div>
                         </div>
@@ -153,7 +153,7 @@
 
         @if (! $completion['is_complete'])
             <div class="rounded-2xl border border-amber-200 bg-white px-5 py-4 text-sm font-semibold text-amber-900 shadow-sm">
-                Profil Anda belum lengkap. Lengkapi telepon dan alamat agar layanan Farmasi dapat memakai kontak terbaru.
+                Profil Anda belum lengkap. Lengkapi telepon dan alamat agar MY PKPA dan layanan Farmasi lain dapat memakai kontak terbaru.
                 <a href="{{ route('profile.edit') }}" class="ml-1 font-black text-amber-950 underline underline-offset-4">Lengkapi profil</a>
             </div>
         @endif

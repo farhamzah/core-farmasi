@@ -102,7 +102,7 @@
                         <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Core Farmasi UBP</p>
                         <h1 class="mt-3 text-3xl font-black tracking-normal text-slate-950 sm:text-4xl">Edit Profil Aman</h1>
                         <p class="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
-                            Ubah biodata pendukung dan kontak yang boleh dikelola mandiri. Nama, NIM, NIDN, dan NIDK tetap dikunci agar identitas utama tidak berubah tanpa verifikasi Admin Core.
+                            Ubah biodata pendukung dan kontak yang boleh dikelola mandiri. Data ini dipakai oleh MY PKPA dan aplikasi Farmasi lain yang membaca Core. Nama, NIM, NIDN, dan NIDK tetap dikunci agar identitas utama tidak berubah tanpa verifikasi Admin Core.
                         </p>
                     </div>
                     <div class="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1">
@@ -193,7 +193,7 @@
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div>
                                         <h3 class="text-lg font-black text-slate-950">Foto Profil</h3>
-                                        <p class="mt-1 text-xs leading-6 text-slate-600">Dipakai sebagai foto identitas umum untuk aplikasi Farmasi yang membaca Core.</p>
+                                        <p class="mt-1 text-xs leading-6 text-slate-600">Dipakai sebagai foto identitas umum untuk MY PKPA dan aplikasi Farmasi lain yang membaca Core.</p>
                                     </div>
                                     <span class="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">JPG / PNG / WebP</span>
                                 </div>

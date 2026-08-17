@@ -207,7 +207,7 @@ class AppConnectionReadinessTest extends TestCase
             'lab-farmasi' => 'Lab Farmasi',
             'kp-farmasi' => 'KP Farmasi',
             'obe-farmasi' => 'OBE Farmasi',
-            'kppspa-farmasi' => 'KPPSPA Farmasi',
+            'kppspa-farmasi' => 'MY PKPA',
             'dosen-farmasi' => 'Dosen Farmasi',
             'helpdesk-farmasi' => 'Helpdesk Farmasi',
         ];

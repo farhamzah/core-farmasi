@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountRequestController;
+use App\Http\Controllers\Admin\MasterDataReportController;
 use App\Http\Controllers\ProfileAuthController;
 use App\Http\Controllers\ProfilePasswordResetController;
 use App\Http\Controllers\ProfilePortalController;
@@ -27,6 +28,10 @@ Route::redirect('/profil-saya/login', '/profile/login')->name('profile.login.loc
 Route::redirect('/profil-saya/lupa-password', '/profile/forgot-password')->name('profile.password.request.local');
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('/admin/reports/{type}', [MasterDataReportController::class, 'show'])->name('admin.reports.show');
+    Route::get('/admin/reports/{type}/excel', [MasterDataReportController::class, 'excel'])->name('admin.reports.excel');
+    Route::get('/admin/reports/{type}/pdf', [MasterDataReportController::class, 'pdf'])->name('admin.reports.pdf');
+
     Route::post('/profile/logout', [ProfileAuthController::class, 'logout'])->name('profile.logout');
     Route::get('/profile', [ProfilePortalController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfilePortalController::class, 'edit'])->name('profile.edit');

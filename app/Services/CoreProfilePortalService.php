@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CoreProfilePortalService
 {
@@ -64,6 +65,12 @@ class CoreProfilePortalService
         $editableFields = $this->editableFieldsFor($user);
         $updated = [];
 
+        if (array_key_exists('email', $data)) {
+            $data['email'] = filled($data['email'])
+                ? Str::lower(trim((string) $data['email']))
+                : null;
+        }
+
         foreach (['student', 'lecturer', 'employee', 'externalPerson'] as $relation) {
             $profile = $user->{$relation};
 
@@ -115,6 +122,23 @@ class CoreProfilePortalService
             if ($user->isDirty()) {
                 $user->save();
                 $updated = array_values(array_unique([...$updated, ...array_keys($userChanges)]));
+            }
+        }
+
+        if (array_key_exists('email', $data)) {
+            foreach (['student', 'lecturer', 'employee', 'externalPerson'] as $relation) {
+                $profile = $user->{$relation};
+
+                if (! $profile || ! Schema::hasColumn($profile->getTable(), 'email')) {
+                    continue;
+                }
+
+                $profile->email = $data['email'];
+
+                if ($profile->isDirty('email')) {
+                    $profile->save();
+                    $updated = array_values(array_unique([...$updated, 'email']));
+                }
             }
         }
 
@@ -172,10 +196,10 @@ class CoreProfilePortalService
     public function editableFieldsFor(User $user): array
     {
         $profileFields = [
-            'student' => $user->student ? $this->existingColumns(Student::class, ['email', 'student_class', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
-            'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['email', 'front_title', 'back_title', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
-            'employee' => $user->employee ? $this->existingColumns(Employee::class, ['email', 'phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
-            'externalPerson' => $user->externalPerson ? $this->existingColumns(ExternalPerson::class, ['email', 'front_title', 'back_title', 'phone', 'address', 'institution_name', 'institution_type', 'position_title', 'profession', 'notes']) : [],
+            'student' => $user->student ? $this->existingColumns(Student::class, ['student_class', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
+            'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['front_title', 'back_title', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
+            'employee' => $user->employee ? $this->existingColumns(Employee::class, ['phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
+            'externalPerson' => $user->externalPerson ? $this->existingColumns(ExternalPerson::class, ['front_title', 'back_title', 'phone', 'address', 'institution_name', 'institution_type', 'position_title', 'profession', 'notes']) : [],
         ];
 
         $hasEditableLinkedProfile = collect(['student', 'lecturer', 'employee', 'externalPerson'])
@@ -183,7 +207,9 @@ class CoreProfilePortalService
 
         return [
             ...$profileFields,
-            'user' => $hasEditableLinkedProfile ? [] : $this->existingColumns(User::class, ['phone', 'address', 'alternate_email']),
+            'user' => $hasEditableLinkedProfile
+                ? $this->existingColumns(User::class, ['email', 'alternate_email'])
+                : $this->existingColumns(User::class, ['email', 'phone', 'address', 'alternate_email']),
         ];
     }
 

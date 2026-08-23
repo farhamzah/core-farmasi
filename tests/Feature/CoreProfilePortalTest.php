@@ -1076,6 +1076,78 @@ class CoreProfilePortalTest extends TestCase
         $this->assertSame('Alamat Lain', $otherEmployee->address);
     }
 
+    public function test_user_can_update_canonical_email_from_profile_portal(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => false,
+            'email' => 'old-email@example.test',
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'email' => 'new-email@example.test',
+        ])->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('new-email@example.test', $user->email);
+    }
+
+    public function test_profile_portal_rejects_duplicate_user_email(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'must_change_password' => false,
+            'email' => 'first@example.test',
+        ]);
+
+        User::factory()->create([
+            'active' => true,
+            'must_change_password' => false,
+            'email' => 'second@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->from('/profile/edit')
+            ->put('/profile', [
+                'email' => 'second@example.test',
+            ])
+            ->assertRedirect('/profile/edit')
+            ->assertSessionHasErrors('email');
+
+        $user->refresh();
+
+        $this->assertSame('first@example.test', $user->email);
+    }
+
+    public function test_profile_portal_syncs_student_email_when_user_email_changes(): void
+    {
+        [$user, $department, $studyProgram] = $this->createAcademicUser([
+            'email' => 'student-user-old@example.test',
+        ]);
+
+        $student = Student::create([
+            'user_id' => $user->id,
+            'study_program_id' => $studyProgram->id,
+            'student_number' => '2341624820999',
+            'name' => 'Mahasiswa Sinkron',
+            'email' => 'student-profile-old@example.test',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->put('/profile', [
+            'email' => 'student-updated@example.test',
+            'phone' => '081234567899',
+        ])->assertRedirect('/profile');
+
+        $user->refresh();
+        $student->refresh();
+
+        $this->assertSame('student-updated@example.test', $user->email);
+        $this->assertSame('student-updated@example.test', $student->email);
+        $this->assertSame('081234567899', $student->phone);
+    }
+
     /**
      * @return array{0: User, 1: Department, 2: StudyProgram}
      */

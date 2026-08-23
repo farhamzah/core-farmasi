@@ -63,7 +63,7 @@
             'user' => ['title' => 'Akun Core Sementara', 'subtitle' => 'Kontak dasar disimpan di akun Core sampai profil resmi ditautkan oleh Admin Core.'],
         ];
         $fieldLabels = [
-            'email' => 'Email Profil',
+            'email' => 'Email Login Core',
             'student_class' => 'Kelas Mahasiswa',
             'phone' => 'Telepon',
             'address' => 'Alamat',

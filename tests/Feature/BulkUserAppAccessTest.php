@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\BulkUserAppAccess;
+use App\Filament\Resources\UserAppAccessResource\Pages\ListUserAppAccesses;
 use App\Models\CoreApplication;
 use App\Models\CoreApplicationRole;
 use App\Models\Department;
@@ -194,6 +195,74 @@ class BulkUserAppAccessTest extends TestCase
             ->assertSet('previewResult.counts.planned_insert', 1);
 
         $this->assertSame(0, UserAppAccess::count());
+    }
+
+    public function test_user_app_access_table_bulk_action_can_deactivate_selected_accesses(): void
+    {
+        $admin = $this->createCoreAdmin();
+        $first = User::factory()->create(['active' => true]);
+        $second = User::factory()->create(['active' => true]);
+
+        $firstAccess = UserAppAccess::create([
+            'user_id' => $first->id,
+            'app_code' => 'tu-farmasi',
+            'role_slug' => 'admin-tu',
+            'is_active' => true,
+            'activated_at' => now()->subDay(),
+        ]);
+
+        $secondAccess = UserAppAccess::create([
+            'user_id' => $second->id,
+            'app_code' => 'tu-farmasi',
+            'role_slug' => 'admin-tu',
+            'is_active' => true,
+            'activated_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ListUserAppAccesses::class)
+            ->callTableBulkAction('deactivateSelected', [$firstAccess, $secondAccess]);
+
+        $this->assertFalse($firstAccess->fresh()->is_active);
+        $this->assertFalse($secondAccess->fresh()->is_active);
+        $this->assertNotNull($firstAccess->fresh()->deactivated_at);
+        $this->assertNotNull($secondAccess->fresh()->deactivated_at);
+    }
+
+    public function test_user_app_access_table_bulk_action_can_reactivate_selected_accesses(): void
+    {
+        $admin = $this->createCoreAdmin();
+        $first = User::factory()->create(['active' => true]);
+        $second = User::factory()->create(['active' => true]);
+
+        $firstAccess = UserAppAccess::create([
+            'user_id' => $first->id,
+            'app_code' => 'tu-farmasi',
+            'role_slug' => 'admin-tu',
+            'is_active' => false,
+            'activated_at' => now()->subWeek(),
+            'deactivated_at' => now()->subDay(),
+        ]);
+
+        $secondAccess = UserAppAccess::create([
+            'user_id' => $second->id,
+            'app_code' => 'tu-farmasi',
+            'role_slug' => 'admin-tu',
+            'is_active' => false,
+            'activated_at' => now()->subWeek(),
+            'deactivated_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ListUserAppAccesses::class)
+            ->callTableBulkAction('reactivateSelected', [$firstAccess, $secondAccess]);
+
+        $this->assertTrue($firstAccess->fresh()->is_active);
+        $this->assertTrue($secondAccess->fresh()->is_active);
+        $this->assertNull($firstAccess->fresh()->deactivated_at);
+        $this->assertNull($secondAccess->fresh()->deactivated_at);
     }
 
     private function createApplicationRole(string $appCode, string $roleSlug): CoreApplicationRole

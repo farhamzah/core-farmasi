@@ -8,6 +8,8 @@ use App\Models\CoreApplicationRole;
 use App\Models\User;
 use App\Models\UserAppAccess;
 use BackedEnum;
+use Filament\Actions\BulkAction;
+use Filament\Notifications\Notification;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -18,6 +20,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class UserAppAccessResource extends Resource
@@ -30,9 +33,9 @@ class UserAppAccessResource extends Resource
 
     protected static ?int $navigationSort = 30;
 
-    protected static ?string $modelLabel = 'User App Access';
+    protected static ?string $modelLabel = 'Akses Aplikasi User';
 
-    protected static ?string $pluralModelLabel = 'User App Accesses';
+    protected static ?string $pluralModelLabel = 'Akses Aplikasi User';
 
     public static function form(Schema $schema): Schema
     {
@@ -61,6 +64,8 @@ class UserAppAccessResource extends Resource
                             ->live()
                             ->afterStateUpdated(fn ($set): mixed => $set('role_slug', null))
                             ->searchable()
+                            ->native(false)
+                            ->preload()
                             ->required()
                             ->helperText('Role aplikasi akan difilter sesuai aplikasi ini.'),
                         Forms\Components\Toggle::make('is_active')
@@ -77,6 +82,8 @@ class UserAppAccessResource extends Resource
                             ->label('Role Aplikasi')
                             ->options(fn ($get): array => self::roleOptions($get('app_code')))
                             ->searchable()
+                            ->native(false)
+                            ->preload()
                             ->required()
                             ->helperText('Jika belum ada pilihan, pilih aplikasi dulu atau cek catalog Role Aplikasi.'),
                     ])
@@ -112,31 +119,177 @@ class UserAppAccessResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->description('Cari berdasarkan user, email, identitas, aplikasi, atau role. Setelah ketemu, centang beberapa baris lalu nonaktifkan, aktifkan ulang, atau hapus sekaligus dari bulk action di bawah.')
             ->columns([
-                TextColumn::make('user.name')->label('User')->searchable(),
-                TextColumn::make('user.email')->label('Email')->searchable()->toggleable(),
-                TextColumn::make('application.name')->label('Aplikasi')->searchable(),
-                TextColumn::make('app_code')->sortable()->searchable()->badge()->color('info'),
-                TextColumn::make('role_slug')->sortable()->searchable()->badge()->color('primary'),
-                TextColumn::make('application_role_name')->label('Nama Role'),
-                BooleanColumn::make('is_active')->label('Active'),
-                TextColumn::make('activated_at')->dateTime('d M Y H:i')->sortable(),
-                TextColumn::make('deactivated_at')->dateTime('d M Y H:i')->sortable(),
+                TextColumn::make('user.name')
+                    ->label('User')
+                    ->searchable()
+                    ->description(fn (UserAppAccess $record): ?string => collect([
+                        $record->user?->email,
+                        $record->user?->identity_number,
+                    ])->filter()->implode(' • '))
+                    ->sortable()
+                    ->wrap(),
+                TextColumn::make('user.email')
+                    ->label('Email')
+                    ->searchable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->wrap(),
+                TextColumn::make('user.identity_type')
+                    ->label('Jenis Akun')
+                    ->badge()
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('application.name')
+                    ->label('Aplikasi')
+                    ->searchable()
+                    ->description(fn (UserAppAccess $record): ?string => $record->app_code)
+                    ->badge()
+                    ->sortable()
+                    ->color('info'),
+                TextColumn::make('app_code')
+                    ->label('Kode App')
+                    ->badge()
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('application_role_name')
+                    ->label('Role aplikasi')
+                    ->description(fn (UserAppAccess $record): ?string => $record->role_slug)
+                    ->badge()
+                    ->color('primary')
+                    ->wrap(),
+                TextColumn::make('role_slug')
+                    ->label('Slug Role')
+                    ->badge()
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('user.identity_number')
+                    ->label('Identitas')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                BooleanColumn::make('is_active')->label('Aktif'),
+                TextColumn::make('activated_at')
+                    ->label('Mulai aktif')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+                TextColumn::make('deactivated_at')
+                    ->label('Nonaktif pada')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->placeholder('-'),
             ])
             ->filters([
                 SelectFilter::make('app_code')
                     ->label('Aplikasi')
-                    ->options(fn (): array => self::applicationOptions()),
+                    ->options(fn (): array => self::applicationOptions())
+                    ->searchable()
+                    ->preload()
+                    ->native(false)
+                    ->placeholder('Semua aplikasi'),
                 SelectFilter::make('role_slug')
                     ->label('Role Aplikasi')
-                    ->options(fn (): array => self::allRoleOptions()),
-                TernaryFilter::make('is_active')->label('Active'),
+                    ->options(fn (): array => self::allRoleOptions())
+                    ->searchable()
+                    ->preload()
+                    ->native(false)
+                    ->placeholder('Semua role'),
+                SelectFilter::make('identity_type')
+                    ->label('Jenis akun')
+                    ->options([
+                        'student' => 'Mahasiswa',
+                        'lecturer' => 'Dosen',
+                        'employee' => 'Tendik / Staff',
+                        'external' => 'Mitra Eksternal',
+                        'admin' => 'Admin',
+                        'system' => 'System',
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query->when(
+                        filled($data['value'] ?? null),
+                        fn (Builder $innerQuery): Builder => $innerQuery->whereHas(
+                            'user',
+                            fn (Builder $userQuery): Builder => $userQuery->where('identity_type', $data['value'])
+                        ),
+                    ))
+                    ->placeholder('Semua jenis akun'),
+                TernaryFilter::make('is_active')->label('Status akses'),
             ])
+            ->filtersFormColumns(3)
+            ->defaultSort('activated_at', 'desc')
+            ->searchPlaceholder('Cari user, email, identitas, aplikasi, atau role...')
+            ->persistSearchInSession()
+            ->persistFiltersInSession()
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
+            ->striped()
+            ->emptyStateIcon('heroicon-o-shield-check')
+            ->emptyStateHeading('Belum ada akses aplikasi yang cocok')
+            ->emptyStateDescription('Coba ganti tab, hapus filter, atau buat akses baru jika user memang belum terdaftar ke aplikasi.')
+            ->recordAction(Tables\Actions\EditAction::class)
             ->actions([
                 \Filament\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                \Filament\Actions\DeleteBulkAction::make(),
+                BulkAction::make('deactivateSelected')
+                    ->label('Nonaktifkan akses terpilih')
+                    ->icon('heroicon-o-no-symbol')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion()
+                    ->modalHeading('Nonaktifkan akses terpilih')
+                    ->modalDescription('Akses aplikasi yang dipilih akan dinonaktifkan tanpa menghapus riwayatnya. Cocok untuk revoke sementara atau penonaktifan terarah.')
+                    ->modalSubmitActionLabel('Ya, nonaktifkan')
+                    ->action(function ($records): void {
+                        $count = 0;
+
+                        foreach ($records as $record) {
+                            $record->forceFill([
+                                'is_active' => false,
+                                'deactivated_at' => $record->deactivated_at ?? now(),
+                            ])->save();
+
+                            $count++;
+                        }
+
+                        Notification::make()
+                            ->success()
+                            ->title('Akses berhasil dinonaktifkan')
+                            ->body("{$count} akses aplikasi berhasil dinonaktifkan.")
+                            ->send();
+                    }),
+                BulkAction::make('reactivateSelected')
+                    ->label('Aktifkan ulang akses terpilih')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion()
+                    ->modalHeading('Aktifkan ulang akses terpilih')
+                    ->modalDescription('Akses yang dipilih akan diaktifkan kembali dan tanggal nonaktifnya dikosongkan.')
+                    ->modalSubmitActionLabel('Ya, aktifkan ulang')
+                    ->action(function ($records): void {
+                        $count = 0;
+
+                        foreach ($records as $record) {
+                            $record->forceFill([
+                                'is_active' => true,
+                                'activated_at' => $record->activated_at ?? now(),
+                                'deactivated_at' => null,
+                            ])->save();
+
+                            $count++;
+                        }
+
+                        Notification::make()
+                            ->success()
+                            ->title('Akses berhasil diaktifkan ulang')
+                            ->body("{$count} akses aplikasi berhasil diaktifkan ulang.")
+                            ->send();
+                    }),
+                \Filament\Actions\DeleteBulkAction::make()
+                    ->label('Hapus akses terpilih')
+                    ->modalHeading('Hapus akses terpilih')
+                    ->modalDescription('Akses aplikasi yang dipilih akan dihapus permanen. Gunakan ini jika akses memang tidak diperlukan lagi, bukan hanya dinonaktifkan sementara.')
+                    ->modalSubmitActionLabel('Ya, hapus akses'),
             ]);
     }
 

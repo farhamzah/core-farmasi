@@ -37,15 +37,21 @@ class EmployeeResource extends Resource
             ->schema([
                 Section::make('Identitas Staff')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Name')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('employee_number')
-                            ->label('Employee Number')
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(100)
-                            ->helperText('Nomor pegawai/internal bila tersedia.'),
+                Forms\Components\TextInput::make('name')
+                    ->label('Name')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('front_title')
+                    ->label('Gelar Depan')
+                    ->maxLength(100),
+                Forms\Components\TextInput::make('back_title')
+                    ->label('Gelar Belakang')
+                    ->maxLength(100),
+                Forms\Components\TextInput::make('employee_number')
+                    ->label('Employee Number')
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(100)
+                    ->helperText('Nomor pegawai/internal bila tersedia.'),
                         Forms\Components\TextInput::make('national_id_number')
                             ->label('National ID Number')
                             ->maxLength(100),

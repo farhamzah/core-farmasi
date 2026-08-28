@@ -652,6 +652,9 @@ class CoreProfilePortalTest extends TestCase
         $this->assertTrue(Schema::hasColumn('users', 'alternate_email'));
         $this->assertTrue(Schema::hasColumn('users', 'profile_photo_path'));
         $this->assertTrue(Schema::hasColumn('employees', 'birth_place'));
+        $this->assertTrue(Schema::hasColumn('employees', 'front_title'));
+        $this->assertTrue(Schema::hasColumn('employees', 'back_title'));
+        $this->assertTrue(Schema::hasColumn('employees', 'title_updated_at'));
         $this->assertTrue(Schema::hasColumn('external_people', 'front_title'));
         $this->assertTrue(Schema::hasColumn('external_people', 'back_title'));
         $this->assertTrue(Schema::hasColumn('external_people', 'title_updated_at'));
@@ -1031,9 +1034,70 @@ class CoreProfilePortalTest extends TestCase
             ->get('/profile/edit')
             ->assertOk()
             ->assertSee('Profil Tendik / Staf / Laboran')
+            ->assertSee('Gelar Depan')
+            ->assertSee('Gelar Belakang')
             ->assertSee('Jenis Tendik / Staf')
             ->assertSee('Jabatan / Posisi')
             ->assertDontSee('Profil Dosen');
+    }
+
+    public function test_employee_can_update_title_without_changing_base_name(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'email' => 'employee-title@example.test',
+        ]);
+
+        $employee = Employee::create([
+            'user_id' => $user->id,
+            'employee_number' => 'EMP-TITLE-001',
+            'name' => 'Tendik Gelar',
+            'email' => 'employee-title@example.test',
+            'staff_type' => 'laboran',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($user)->put('/profile', [
+            'email' => 'employee-title-new@example.test',
+            'front_title' => 'apt.',
+            'back_title' => 'M.Tr.Kes.',
+            'phone' => '081234567891',
+            'address' => 'Jl. Tendik Aman',
+            'birth_place' => 'Karawang',
+            'birth_date' => '1992-01-10',
+            'gender' => 'female',
+            'national_id_number' => '3215000000000011',
+            'staff_type' => 'laboran',
+            'position_title' => 'Laboran Senior',
+            'notes' => 'Catatan tendik bergelar.',
+        ]);
+
+        $response->assertRedirect('/profile');
+
+        $employee->refresh();
+
+        $this->assertSame('Tendik Gelar', $employee->name);
+        $this->assertSame('apt.', $employee->front_title);
+        $this->assertSame('M.Tr.Kes.', $employee->back_title);
+        $this->assertSame('employee-title-new@example.test', $employee->email);
+        $this->assertSame('081234567891', $employee->phone);
+        $this->assertSame('Jl. Tendik Aman', $employee->address);
+        $this->assertSame('Karawang', $employee->birth_place);
+        $this->assertSame('1992-01-10', $employee->birth_date?->toDateString());
+        $this->assertSame('female', $employee->gender);
+        $this->assertSame('3215000000000011', $employee->national_id_number);
+        $this->assertSame('laboran', $employee->staff_type);
+        $this->assertSame('Laboran Senior', $employee->position_title);
+        $this->assertSame('Catatan tendik bergelar.', $employee->notes);
+        $this->assertSame('apt. Tendik Gelar, M.Tr.Kes.', $employee->display_name_with_title);
+        $this->assertNotNull($employee->title_updated_at);
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertSee('apt. Tendik Gelar, M.Tr.Kes.')
+            ->assertSee('Nama Resmi Bergelar')
+            ->assertSee('Gelar tendik tersedia jika ada');
     }
 
     public function test_profile_update_does_not_change_another_users_profile(): void

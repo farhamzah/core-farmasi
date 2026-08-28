@@ -92,11 +92,11 @@ class CoreProfilePortalService
                 continue;
             }
 
-            if (($profile instanceof Lecturer || $profile instanceof ExternalPerson)
-                && array_intersect(['front_title', 'back_title'], array_keys($changes))
-                && Schema::hasColumn($profile->getTable(), 'title_updated_at')) {
-                $changes['title_updated_at'] = now();
-            }
+        if (($profile instanceof Lecturer || $profile instanceof Employee || $profile instanceof ExternalPerson)
+            && array_intersect(['front_title', 'back_title'], array_keys($changes))
+            && Schema::hasColumn($profile->getTable(), 'title_updated_at')) {
+            $changes['title_updated_at'] = now();
+        }
 
             $profile->fill($changes);
 
@@ -198,7 +198,7 @@ class CoreProfilePortalService
         $profileFields = [
             'student' => $user->student ? $this->existingColumns(Student::class, ['student_class', 'phone', 'address', 'birth_place', 'birth_date', 'enrolled_at']) : [],
             'lecturer' => $user->lecturer ? $this->existingColumns(Lecturer::class, ['front_title', 'back_title', 'phone', 'address', 'birth_place', 'birth_date', 'national_id_number', 'nip', 'nuptk', 'notes']) : [],
-            'employee' => $user->employee ? $this->existingColumns(Employee::class, ['phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
+            'employee' => $user->employee ? $this->existingColumns(Employee::class, ['front_title', 'back_title', 'phone', 'address', 'birth_place', 'birth_date', 'gender', 'national_id_number', 'staff_type', 'position_title', 'notes']) : [],
             'externalPerson' => $user->externalPerson ? $this->existingColumns(ExternalPerson::class, ['front_title', 'back_title', 'phone', 'address', 'institution_name', 'institution_type', 'position_title', 'profession', 'notes']) : [],
         ];
 
@@ -312,6 +312,11 @@ class CoreProfilePortalService
                 $this->completionItem('employee_number', 'Nomor pegawai tersedia', filled($employee->employee_number)),
                 $this->completionItem('employee_staff_type', 'Jenis tendik/staf tersedia', filled($employee->staff_type)),
                 $this->completionItem('employee_position', 'Jabatan/posisi tersedia', filled($employee->position_title)),
+                $this->completionItem(
+                    'employee_title',
+                    'Gelar tendik tersedia jika ada',
+                    filled($this->valueIfColumnExists($employee, 'front_title')) || filled($this->valueIfColumnExists($employee, 'back_title'))
+                ),
                 $this->completionItem('employee_national_id', 'NIK / No. KTP tersedia', filled($employee->national_id_number)),
                 $this->completionItem('employee_birth_place', 'Tempat lahir tersedia', filled($this->valueIfColumnExists($employee, 'birth_place'))),
                 $this->completionItem('employee_birth_date', 'Tanggal lahir tersedia', filled($employee->birth_date)),
@@ -487,10 +492,17 @@ class CoreProfilePortalService
             return null;
         }
 
+        $displayName = app(CorePersonNameFormatter::class)
+            ->formatWithTitle($employee->front_title, $employee->name, $employee->back_title);
+
         return [
             'type' => 'employee',
             'label' => 'Tendik / Staf / Laboran',
-            'name' => $employee->name,
+            'name' => $displayName,
+            'name_without_title' => $employee->name,
+            'display_name_with_title' => $displayName,
+            'front_title' => $this->valueIfColumnExists($employee, 'front_title'),
+            'back_title' => $this->valueIfColumnExists($employee, 'back_title'),
             'identifier_label' => 'Nomor Pegawai',
             'identifier' => $employee->employee_number,
             'email' => $employee->email,
@@ -508,7 +520,10 @@ class CoreProfilePortalService
             ],
             'profile_sections' => [
                 'Kepegawaian' => [
+                    'Nama Resmi Bergelar' => $displayName,
                     'Nomor Pegawai' => $employee->employee_number,
+                    'Gelar Depan' => $this->valueIfColumnExists($employee, 'front_title'),
+                    'Gelar Belakang' => $this->valueIfColumnExists($employee, 'back_title'),
                     'Jenis Staf' => $employee->staff_type,
                     'Jabatan/Posisi' => $employee->position_title,
                     'NIK / No. KTP' => $this->maskIdentifier($employee->national_id_number),

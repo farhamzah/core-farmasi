@@ -16,6 +16,9 @@ class Employee extends Model
         'employee_number',
         'national_id_number',
         'name',
+        'front_title',
+        'back_title',
+        'title_updated_at',
         'staff_type',
         'department_id',
         'study_program_id',
@@ -32,6 +35,7 @@ class Employee extends Model
 
     protected $casts = [
         'birth_date' => 'date',
+        'title_updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
 
@@ -39,6 +43,17 @@ class Employee extends Model
     {
         $this->attributes['name'] = app(\App\Services\CorePersonNameFormatter::class)
             ->normalizePersonName($value);
+    }
+
+    public function getDisplayNameWithTitleAttribute(): string
+    {
+        return app(\App\Services\CorePersonNameFormatter::class)
+            ->formatWithTitle($this->front_title, $this->name, $this->back_title);
+    }
+
+    public function getFormalNameAttribute(): string
+    {
+        return $this->display_name_with_title;
     }
 
     public function user(): BelongsTo

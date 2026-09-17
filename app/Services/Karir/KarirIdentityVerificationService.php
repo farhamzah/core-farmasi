@@ -48,6 +48,14 @@ class KarirIdentityVerificationService
 
         $source = $this->eligibility->source($user);
 
+        if ($source === null && $roles->intersect([
+            'admin-karir',
+            'petugas-karir',
+            'viewer-karir',
+        ])->isNotEmpty()) {
+            $source = 'core_operational_role';
+        }
+
         if ($roles->isEmpty() || $source === null) {
             return null;
         }

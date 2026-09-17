@@ -184,6 +184,27 @@ class KarirIdentityContractTest extends TestCase
         $this->assertSame($tokenBefore, $user->fresh()->api_token);
     }
 
+    public function test_operational_admin_can_verify_without_student_or_alumni_grant(): void
+    {
+        $user = User::factory()->create(['password' => 'Valid-password-91', 'active' => true]);
+        UserAppAccess::create([
+            'user_id' => $user->id,
+            'app_code' => 'karir-farmasi',
+            'role_slug' => 'admin-karir',
+            'is_active' => true,
+            'activated_at' => now(),
+        ]);
+
+        $response = $this->postJson($this->verifyEndpoint(), [
+            'identifier' => $user->email,
+            'password' => 'Valid-password-91',
+        ], $this->headers())->assertOk();
+
+        $response->assertJsonPath('principal.eligibility_source', 'core_operational_role')
+            ->assertJsonPath('principal.roles.0.slug', 'admin-karir')
+            ->assertJsonPath('principal.program_ids', []);
+    }
+
     public function test_verify_status_semantics_fail_closed(): void
     {
         $user = User::factory()->create(['password' => 'Valid-password-91', 'active' => true]);

@@ -118,6 +118,20 @@ class CoreApplicationSeeder extends Seeder
                 'notes' => 'Dosen Farmasi registry readiness. Uses Core account identity and app access. No SSO, no token URL, no auto-login, and no automatic mass user access grant.',
             ],
             [
+                'app_code' => 'karir-farmasi',
+                'name' => 'Alumni Farmasi',
+                'description' => 'Portal alumni, karier, CV, portofolio, lowongan, event, dan tracer Farmasi UBP.',
+                'base_url' => env('KARIR_FARMASI_BASE_URL', 'https://alumni.safaubp.com'),
+                'admin_url' => env('KARIR_FARMASI_ADMIN_URL', 'https://alumni.safaubp.com'),
+                'icon' => 'briefcase',
+                'color' => '#0f766e',
+                'is_public_visible' => false,
+                'requires_login' => true,
+                'is_sensitive' => false,
+                'sort_order' => 71,
+                'notes' => 'Nama publik Alumni Farmasi. App code karir-farmasi dipertahankan sebagai identifier integrasi; data profesional tetap berada di aplikasi Alumni Farmasi.',
+            ],
+            [
                 'app_code' => 'helpdesk-farmasi',
                 'name' => 'Helpdesk Farmasi',
                 'description' => 'Aplikasi helpdesk Farmasi untuk tiket, komentar, status, kategori, SLA, lampiran, dan operasional dukungan.',
@@ -212,6 +226,12 @@ class CoreApplicationSeeder extends Seeder
                 ['role_slug' => 'dosen', 'role_name' => 'Dosen', 'description' => 'Akses dosen ke Portal Dosen Farmasi.'],
                 ['role_slug' => 'admin-dosen', 'role_name' => 'Admin Dosen', 'description' => 'Admin aplikasi Dosen Farmasi.'],
             ],
+            'karir-farmasi' => [
+                ['role_slug' => 'kandidat-karir', 'role_name' => 'Kandidat Karir', 'description' => 'Alumni/kandidat yang telah disetujui untuk memakai Karir.'],
+                ['role_slug' => 'admin-karir', 'role_name' => 'Admin Karir', 'description' => 'Admin operasional aplikasi Karir.'],
+                ['role_slug' => 'petugas-karir', 'role_name' => 'Petugas Karir', 'description' => 'Petugas layanan karier dan alumni.'],
+                ['role_slug' => 'viewer-karir', 'role_name' => 'Viewer Karir', 'description' => 'Akses baca terbatas aplikasi Karir.'],
+            ],
             'helpdesk-farmasi' => [
                 ['role_slug' => 'requester', 'role_name' => 'Requester', 'description' => 'Pengguna yang membuat atau memantau tiket helpdesk.'],
                 ['role_slug' => 'agent', 'role_name' => 'Agent', 'description' => 'Petugas helpdesk yang menangani tiket.'],
@@ -241,7 +261,7 @@ class CoreApplicationSeeder extends Seeder
                 );
             }
 
-            if (in_array($appCode, ['lab-farmasi', 'tu-farmasi', 'kppspa-farmasi', 'dosen-farmasi'], true)) {
+            if (in_array($appCode, ['lab-farmasi', 'tu-farmasi', 'kppspa-farmasi', 'dosen-farmasi', 'karir-farmasi'], true)) {
                 CoreApplicationRole::query()
                     ->where('app_code', $appCode)
                     ->whereNotIn('role_slug', collect($appRoles)->pluck('role_slug')->all())

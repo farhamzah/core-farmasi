@@ -41,6 +41,11 @@ class StudyProgram extends Model
         return $this->hasMany(Student::class);
     }
 
+    public function alumni(): HasMany
+    {
+        return $this->hasMany(Alumni::class);
+    }
+
     public function lecturers(): HasMany
     {
         return $this->hasMany(Lecturer::class);
@@ -65,6 +70,10 @@ class StudyProgram extends Model
 
         if ($this->students()->exists()) {
             $blockers['students'] = 'Program studi masih dipakai oleh data mahasiswa.';
+        }
+
+        if ($this->alumni()->exists()) {
+            $blockers['alumni'] = 'Program studi masih dipakai oleh data alumni.';
         }
 
         if ($this->lecturers()->exists()) {

@@ -2,20 +2,22 @@
 
 namespace App\Models;
 
+use App\Services\CorePersonNameFormatter;
+use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
     /**
@@ -78,13 +80,18 @@ class User extends Authenticatable implements FilamentUser
 
     public function setNameAttribute(?string $value): void
     {
-        $this->attributes['name'] = app(\App\Services\CorePersonNameFormatter::class)
+        $this->attributes['name'] = app(CorePersonNameFormatter::class)
             ->normalizePersonName($value);
     }
 
     public function student(): HasOne
     {
         return $this->hasOne(Student::class);
+    }
+
+    public function alumni(): HasOne
+    {
+        return $this->hasOne(Alumni::class);
     }
 
     public function lecturer(): HasOne

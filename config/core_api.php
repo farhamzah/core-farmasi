@@ -33,6 +33,14 @@ return [
         'read:app-access' => 'Read app access',
         'read:leadership' => 'Read leadership',
         'verify:tu-portal-auth' => 'Verify TU portal password login without issuing tokens or sessions',
+        'verify:karir-identity' => 'Verify Karir credentials and entitlement without issuing a token or session',
+        'create:karir-alumni-registration' => 'Create a pending Karir alumni registration',
+        'read:karir-person' => 'Read one minimal person record for Karir',
+        'read:karir-study-program' => 'Read one minimal study program record for Karir',
+        'read:karir-alumni-registrations' => 'Read paginated Karir alumni registrations for review',
+        'read:karir-alumni-registration-status' => 'Read one minimum Karir registration status',
+        'approve:karir-alumni-registration' => 'Approve one Karir alumni registration as an authorized actor',
+        'reject:karir-alumni-registration' => 'Reject one Karir alumni registration as an authorized actor',
     ],
 
     'response_fields' => [

@@ -33,7 +33,7 @@ class CoreDashboardWidget extends Widget
 
     protected static bool $isLazy = false;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected string $view = 'filament.widgets.core-dashboard-widget';
 
@@ -45,7 +45,7 @@ class CoreDashboardWidget extends Widget
             ->whereIn('status', [AccountRequest::STATUS_PENDING, AccountRequest::STATUS_IN_REVIEW])
             ->count();
 
-        $appCodes = ['kp-farmasi', 'tu-farmasi', 'ta-farmasi', 'lab-farmasi', 'obe-farmasi', 'dosen-farmasi'];
+        $appCodes = ['kp-farmasi', 'tu-farmasi', 'ta-farmasi', 'lab-farmasi', 'obe-farmasi', 'dosen-farmasi', 'karir-farmasi'];
         $applications = CoreApplication::query()
             ->whereIn('app_code', $appCodes)
             ->get()
@@ -157,7 +157,7 @@ class CoreDashboardWidget extends Widget
                 ],
                 [
                     'label' => 'Kelola aplikasi',
-                    'description' => 'Pastikan KP, TU, TA, Lab, dan OBE terdaftar serta aktif di registry Core.',
+                    'description' => 'Pastikan aplikasi akademik dan Alumni Farmasi terdaftar serta aktif di registry Core.',
                     'url' => CoreApplicationResource::getUrl('index'),
                 ],
             ],

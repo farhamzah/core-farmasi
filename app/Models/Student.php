@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\CorePersonNameFormatter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
@@ -36,7 +38,7 @@ class Student extends Model
 
     public function setNameAttribute(?string $value): void
     {
-        $this->attributes['name'] = app(\App\Services\CorePersonNameFormatter::class)
+        $this->attributes['name'] = app(CorePersonNameFormatter::class)
             ->normalizePersonName($value);
     }
 
@@ -55,5 +57,10 @@ class Student extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function alumni(): HasOne
+    {
+        return $this->hasOne(Alumni::class);
     }
 }

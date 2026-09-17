@@ -45,6 +45,10 @@ class AuthenticateCoreApiClient
             return $this->reject($request, 403, $ability, $startedAt, 'missing_ability', 'App client does not have the required ability.');
         }
 
+        if ($client->app_code === 'karir-farmasi' && in_array('*', $client->abilities ?: [], true)) {
+            return $this->reject($request, 403, $ability, $startedAt, 'wildcard_forbidden', 'Karir clients require explicit abilities.');
+        }
+
         $client->markUsed();
 
         $request->attributes->set('core_api_client', $client);
@@ -119,9 +123,9 @@ class AuthenticateCoreApiClient
     {
         $identity = filled($clientId) && filled($appCode)
             ? "{$clientId}:{$appCode}"
-            : 'ip:' . $request->ip();
+            : 'ip:'.$request->ip();
 
-        return 'core-api-client:' . sha1($identity);
+        return 'core-api-client:'.sha1($identity);
     }
 
     protected function durationMs(float $startedAt): int

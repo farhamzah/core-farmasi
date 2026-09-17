@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\CareerAlumniRegistration;
 use App\Models\CoreApiClient;
+use App\Models\CoreApplication;
+use App\Models\CoreApplicationRole;
 use App\Models\User;
 use App\Models\UserAppAccess;
 use App\Services\CoreApiClientCredentialService;
+use App\Services\Karir\KarirAlumniApprovalService;
 use App\Services\Karir\KarirAlumniRegistrationService;
 use Database\Seeders\CoreApplicationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -117,6 +120,50 @@ class KarirAlumniOperationalApiTest extends TestCase
         $this->postJson($this->baseUrl().'/'.$registration->reference.'/approve', [
             'approver_core_user_id' => $admin->id,
         ], $this->headers())->assertForbidden();
+    }
+
+    public function test_unavailable_admin_access_cannot_approve_or_reject(): void
+    {
+        $registration = $this->registration();
+        $admin = $this->adminKarir();
+        $access = $admin->appAccesses()->firstOrFail();
+
+        foreach (['future', 'expired', 'inactive_role', 'inactive_app'] as $condition) {
+            $access->update(['activated_at' => now()->subDay(), 'deactivated_at' => null]);
+            CoreApplicationRole::where('app_code', 'karir-farmasi')->where('role_slug', 'admin-karir')->update(['is_active' => true]);
+            CoreApplication::where('app_code', 'karir-farmasi')->update(['is_active' => true]);
+            match ($condition) {
+                'future' => $access->update(['activated_at' => now()->addDay()]),
+                'expired' => $access->update(['deactivated_at' => now()->subMinute()]),
+                'inactive_role' => CoreApplicationRole::where('app_code', 'karir-farmasi')->where('role_slug', 'admin-karir')->update(['is_active' => false]),
+                'inactive_app' => CoreApplication::where('app_code', 'karir-farmasi')->update(['is_active' => false]),
+            };
+            foreach (['approve', 'reject'] as $decision) {
+                $response = $this->postJson($this->baseUrl().'/'.$registration->reference.'/'.$decision, [
+                    'approver_core_user_id' => $admin->id, 'reason' => 'Review test only.',
+                ], $this->headers());
+                $this->assertContains($response->status(), [401, 403]);
+            }
+            $this->assertFalse(app(KarirAlumniApprovalService::class)->canDecide($admin));
+        }
+        $this->assertSame('pending', $registration->fresh()->status);
+    }
+
+    public function test_rejecting_a_new_claim_preserves_existing_candidate_access(): void
+    {
+        $user = User::factory()->create(['active' => true, 'email' => 'operational@example.test']);
+        $access = UserAppAccess::create([
+            'user_id' => $user->id, 'app_code' => 'karir-farmasi', 'role_slug' => 'kandidat-karir',
+            'is_active' => true, 'activated_at' => now()->subDay(),
+        ]);
+        $registration = $this->registration();
+        $this->postJson($this->baseUrl().'/'.$registration->reference.'/reject', [
+            'approver_core_user_id' => $this->adminKarir()->id, 'reason' => 'Duplicate claim rejected.',
+        ], $this->headers())->assertOk();
+
+        $this->assertTrue($access->fresh()->is_active);
+        $this->assertNull($access->fresh()->deactivated_at);
+        $this->assertSame('rejected', $registration->fresh()->status);
     }
 
     private function registration(array $overrides = []): CareerAlumniRegistration

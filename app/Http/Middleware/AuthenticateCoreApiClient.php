@@ -41,6 +41,10 @@ class AuthenticateCoreApiClient
             return $this->reject($request, 401, $ability, $startedAt, 'invalid_client', 'Invalid app client credentials.');
         }
 
+        if ($request->is('api/v1/internal/apps/karir-farmasi/*') && $client->app_code !== 'karir-farmasi') {
+            return $this->reject($request, 403, $ability, $startedAt, 'wrong_application', 'A dedicated Karir client is required.');
+        }
+
         if (! $client->canUseAbility($ability)) {
             return $this->reject($request, 403, $ability, $startedAt, 'missing_ability', 'App client does not have the required ability.');
         }

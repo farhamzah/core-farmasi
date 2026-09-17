@@ -7,6 +7,7 @@ use App\Models\CareerAlumniRegistration;
 use App\Models\User;
 use App\Services\Karir\KarirAlumniApprovalService;
 use App\Services\Karir\KarirAlumniRejectionService;
+use App\Services\Karir\KarirIdentityVerificationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -92,11 +93,8 @@ class KarirAlumniReviewController extends Controller
     private function operationalApprover(int $userId): User
     {
         $user = User::findOrFail($userId);
-        $hasAccess = $user->active && $user->appAccesses()
-            ->where('app_code', 'karir-farmasi')
-            ->where('role_slug', 'admin-karir')
-            ->where('is_active', true)
-            ->exists();
+        $hasAccess = app(KarirIdentityVerificationService::class)
+            ->activeRoleSlugs($user)->contains('admin-karir');
 
         if (! $hasAccess) {
             throw new AuthorizationException('An active admin-karir access is required.');

@@ -5,7 +5,6 @@ namespace App\Services\Karir;
 use App\Models\CareerAlumniRegistration;
 use App\Models\User;
 use App\Models\UserActivityLog;
-use App\Models\UserAppAccess;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -29,14 +28,6 @@ class KarirAlumniRejectionService
 
             if ($registration->status === CareerAlumniRegistration::STATUS_APPROVED) {
                 throw ValidationException::withMessages(['registration' => 'Approved registration cannot be rejected by this operation.']);
-            }
-
-            if ($registration->matched_user_id) {
-                UserAppAccess::query()
-                    ->where('user_id', $registration->matched_user_id)
-                    ->where('app_code', 'karir-farmasi')
-                    ->where('role_slug', 'kandidat-karir')
-                    ->update(['is_active' => false, 'deactivated_at' => now()]);
             }
 
             $registration->forceFill([

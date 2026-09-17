@@ -140,11 +140,8 @@ class KarirAlumniApprovalService
             return false;
         }
 
-        $isKarirAdmin = $user->appAccesses()
-            ->where('app_code', 'karir-farmasi')
-            ->where('role_slug', 'admin-karir')
-            ->where('is_active', true)
-            ->exists();
+        $isKarirAdmin = app(KarirIdentityVerificationService::class)
+            ->activeRoleSlugs($user)->contains('admin-karir');
 
         return $isKarirAdmin || $user->roles()
             ->whereIn('name', ['super-admin', 'admin-core'])

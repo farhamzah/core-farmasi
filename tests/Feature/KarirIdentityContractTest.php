@@ -7,6 +7,7 @@ use App\Models\CareerAlumniGrant;
 use App\Models\CareerAlumniRegistration;
 use App\Models\CoreApiClient;
 use App\Models\CoreApplication;
+use App\Models\CoreApplicationRole;
 use App\Models\Department;
 use App\Models\Role;
 use App\Models\Student;
@@ -224,6 +225,40 @@ class KarirIdentityContractTest extends TestCase
         $study = $this->getJson("/api/v1/internal/apps/karir-farmasi/directory/study-programs/{$program->id}", $this->headers())->assertOk();
         $this->assertSame(['id', 'code', 'name'], array_keys($study->json('data')));
         $this->getJson('/api/v1/internal/apps/karir-farmasi/directory/people', $this->headers())->assertNotFound();
+    }
+
+    public function test_other_application_client_cannot_call_karir_endpoints(): void
+    {
+        [$client, $secret] = app(CoreApiClientCredentialService::class)->createClient([
+            'app_code' => 'tu-farmasi', 'name' => 'Other application', 'abilities' => ['*'],
+        ]);
+        $headers = ['X-Core-App-Code' => 'tu-farmasi', 'X-Core-Client-Id' => $client->client_id, 'X-Core-Client-Secret' => $secret];
+        $user = User::factory()->create();
+
+        $this->getJson("/api/v1/internal/apps/karir-farmasi/directory/people/{$user->id}", $headers)->assertForbidden();
+        $this->postJson($this->registrationEndpoint(), $this->registrationPayload(), $headers)->assertForbidden();
+        $this->assertDatabaseCount('career_alumni_registrations', 0);
+    }
+
+    public function test_verification_respects_access_dates_and_inactive_role_catalog(): void
+    {
+        $user = User::factory()->create(['password' => 'Valid-password-91', 'active' => true]);
+        CareerAlumniGrant::create([
+            'user_id' => $user->id, 'career_scope' => 'farmasi', 'eligibility_source' => 'alumni_admin_approval',
+            'is_active' => true, 'approved_at' => now(),
+        ]);
+        $this->giveCandidateAccess($user);
+        $access = $user->appAccesses()->firstOrFail();
+        $payload = ['identifier' => $user->email, 'password' => 'Valid-password-91'];
+
+        $access->update(['activated_at' => now()->addDay()]);
+        $this->postJson($this->verifyEndpoint(), $payload, $this->headers())->assertForbidden();
+        $access->update(['activated_at' => now()->subDay(), 'deactivated_at' => now()->subMinute()]);
+        $this->postJson($this->verifyEndpoint(), $payload, $this->headers())->assertForbidden();
+        $access->update(['activated_at' => null, 'deactivated_at' => now()->addDay()]);
+        $this->postJson($this->verifyEndpoint(), $payload, $this->headers())->assertOk();
+        CoreApplicationRole::where('app_code', 'karir-farmasi')->where('role_slug', 'kandidat-karir')->update(['is_active' => false]);
+        $this->postJson($this->verifyEndpoint(), $payload, $this->headers())->assertForbidden();
     }
 
     private function coreAdmin(): User

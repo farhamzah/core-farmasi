@@ -16,7 +16,7 @@ The review fixes close three issues: cross-application clients reaching Karir en
 
 Local verification used SQLite in memory, not production data:
 
-- Final full Core regression, including secure client issuance: 395 tests, 2,397 assertions.
+- Final full Core regression, including the isolated Karir seeder and secure client issuance: 396 tests, 2,405 assertions.
 - Final Alumni and client issuance tests: 26 tests, 128 assertions.
 - Forward migrations and seeder idempotency are exercised by these tests. Production MySQL migrations have NOT been executed by the assistant.
 - Production Core health responded with `{"status":"ok"}`. SSH authentication was refused, so backup, production IDs, deployment and client provisioning remain operator steps.
@@ -92,14 +92,14 @@ runuser -u www-data -- php artisan migrate --force \
   --path=database/migrations/2026_09_11_000001_create_karir_identity_tables.php \
   --path=database/migrations/2026_09_11_000002_add_operational_review_fields_to_career_alumni_registrations.php \
   --path=database/migrations/2026_09_17_062706_create_alumnis_table.php
-runuser -u www-data -- php artisan db:seed --class=CoreApplicationSeeder --force
+runuser -u www-data -- php artisan db:seed --class=KarirApplicationSeeder --force
 runuser -u www-data -- php artisan optimize:clear
 php artisan route:list --path=api/v1/internal/apps/karir-farmasi
 php artisan tinker --execute='dump(App\Models\StudyProgram::query()->orderBy("id")->get(["id", "code", "name", "active"])->toArray());'
 BASH
 ```
 
-MySQL DDL is not fully transactional. If any migration fails, stop and inspect migration status; do not retry with table deletion. Seeder uses the existing global catalog behavior and may reapply seeded settings for other applications, so review any production catalog customizations beforehand.
+MySQL DDL is not fully transactional. If any migration fails, stop and inspect migration status; do not retry with table deletion. The production deployment uses the dedicated Karir seeder so existing application catalog rows are not reapplied.
 
 ## 3. Match the actual production program IDs and codes
 

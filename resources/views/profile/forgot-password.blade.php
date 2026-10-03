@@ -18,7 +18,7 @@
             </div>
             <h1 class="mt-6 max-w-3xl text-5xl font-black leading-tight tracking-normal text-slate-950">Pulihkan akses akun Core</h1>
             <p class="mt-5 max-w-2xl text-base leading-8 text-slate-600">
-                Masukkan email, username, NIM, NIDN/NIP, NUPTK, atau nomor pegawai. Jika cocok dengan akun aktif, Core akan mengirim link reset ke email terdaftar.
+                Masukkan email, username, nomor HP/WhatsApp, NIM, NIDN/NIP, NUPTK, atau nomor pegawai. Jika cocok dengan akun aktif, Core akan mengirim link reset ke email terdaftar.
             </p>
         </section>
 
@@ -67,7 +67,7 @@
                     @csrf
 
                     <div>
-                        <label for="login" class="text-sm font-bold text-slate-800">Email / Username / Nomor Identitas</label>
+                        <label for="login" class="text-sm font-bold text-slate-800">Email / Username / Nomor HP / Nomor Identitas</label>
                         <input
                             id="login"
                             name="login"

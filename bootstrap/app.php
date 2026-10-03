@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Foundation\Application;
 use App\Console\Commands\AppConnectionReadinessCommand;
 use App\Console\Commands\CoreManualQaAccountsCommand;
 use App\Console\Commands\GrantTuApiClientAbilityCommand;
@@ -10,13 +9,15 @@ use App\Console\Commands\IssueTuApiClientCommand;
 use App\Console\Commands\LabAccessDryRunCommand;
 use App\Console\Commands\LabAppReadinessCommand;
 use App\Console\Commands\ProvisionMasterProfileUsersCommand;
+use App\Console\Commands\ProvisionPkpaPbfPreceptors2026Command;
 use App\Console\Commands\PruneCoreApiRequestLogsCommand;
 use App\Console\Commands\ReconcileProfileUserLinksCommand;
 use App\Console\Commands\RollbackKpImportCommand;
 use App\Console\Commands\SetupTuAppAccessCommand;
 use App\Console\Commands\TuConnectionReadinessCommand;
-use App\Http\Middleware\AuthenticateCoreApiClient;
 use App\Http\Middleware\AuthenticateApiToken;
+use App\Http\Middleware\AuthenticateCoreApiClient;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         LabAccessDryRunCommand::class,
         LabAppReadinessCommand::class,
         ProvisionMasterProfileUsersCommand::class,
+        ProvisionPkpaPbfPreceptors2026Command::class,
         PruneCoreApiRequestLogsCommand::class,
         ReconcileProfileUserLinksCommand::class,
         RollbackKpImportCommand::class,

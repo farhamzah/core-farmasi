@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Tests\TestCase;
 
 class CoreProfilePortalTest extends TestCase
@@ -47,6 +48,7 @@ class CoreProfilePortalTest extends TestCase
     public function test_guest_can_request_profile_password_reset_link_without_account_enumeration(): void
     {
         Mail::fake();
+        config(['app.url' => 'https://core.test.invalid']);
 
         $user = User::factory()->create([
             'active' => true,
@@ -64,7 +66,7 @@ class CoreProfilePortalTest extends TestCase
 
         Mail::assertSent(ProfilePasswordResetLinkMail::class, function (ProfilePasswordResetLinkMail $mail) use ($user): bool {
             return $mail->hasTo($user->email)
-                && str_contains($mail->resetUrl, '/profile/reset-password/');
+                && str_starts_with($mail->resetUrl, 'https://core.test.invalid/profile/reset-password/');
         });
 
         $this->assertDatabaseHas('user_activity_logs', [
@@ -80,6 +82,63 @@ class CoreProfilePortalTest extends TestCase
             ->assertSessionHas('status');
 
         Mail::assertSent(ProfilePasswordResetLinkMail::class, 1);
+    }
+
+    public function test_profile_password_reset_request_accepts_phone_identifier(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create([
+            'active' => true,
+            'email' => 'phone-reset@example.test',
+            'phone' => '081234567890',
+        ]);
+
+        $this->post('/profile/forgot-password', [
+            'login' => '081234567890',
+        ])->assertSessionHas('status');
+
+        Mail::assertSent(ProfilePasswordResetLinkMail::class, fn (ProfilePasswordResetLinkMail $mail): bool =>
+            $mail->hasTo($user->email));
+    }
+
+    public function test_ambiguous_phone_identifier_does_not_send_reset_email(): void
+    {
+        Mail::fake();
+
+        User::factory()->count(2)->create([
+            'active' => true,
+            'phone' => '081200000099',
+        ]);
+
+        $this->post('/profile/forgot-password', [
+            'login' => '081200000099',
+        ])->assertSessionHas('status');
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_failed_password_reset_email_is_audited_and_token_is_removed(): void
+    {
+        $user = User::factory()->create([
+            'active' => true,
+            'email' => 'mail-failure@example.test',
+        ]);
+
+        Mail::shouldReceive('to')->once()->with($user->email)->andReturnSelf();
+        Mail::shouldReceive('send')->once()->andThrow(new RuntimeException('Synthetic SMTP failure'));
+
+        $this->post('/profile/forgot-password', [
+            'login' => $user->email,
+        ])->assertSessionHas('status');
+
+        $this->assertDatabaseHas('user_activity_logs', [
+            'user_id' => $user->id,
+            'action' => 'profile.password_reset_email_failed',
+        ]);
+        $this->assertDatabaseMissing('password_reset_tokens', [
+            'email' => $user->email,
+        ]);
     }
 
     public function test_guest_can_reset_profile_password_from_email_token(): void

@@ -33,6 +33,7 @@ return [
         'read:app-access' => 'Read app access',
         'read:leadership' => 'Read leadership',
         'verify:tu-portal-auth' => 'Verify TU portal password login without issuing tokens or sessions',
+        'verify:karir-identity' => 'Verify Karir credentials and entitlement without issuing a token or session',
     ],
 
     'response_fields' => [

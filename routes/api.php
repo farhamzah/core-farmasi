@@ -5,14 +5,15 @@ use App\Http\Controllers\Api\EmployeesController;
 use App\Http\Controllers\Api\InternalAppAccessController;
 use App\Http\Controllers\Api\InternalDirectoryController;
 use App\Http\Controllers\Api\InternalLeadershipController;
+use App\Http\Controllers\Api\KarirIdentityVerificationController;
 use App\Http\Controllers\Api\LecturersController;
-use App\Http\Controllers\Api\StudyProgramsController;
 use App\Http\Controllers\Api\StudentsController;
+use App\Http\Controllers\Api\StudyProgramsController;
 use App\Http\Controllers\Api\TuPortalAuthVerificationController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->middleware('throttle:' . config('core_api.default_rate_limit', '60,1'))->group(function () {
+Route::prefix('v1')->middleware('throttle:'.config('core_api.default_rate_limit', '60,1'))->group(function () {
     Route::get('health', fn () => response()->json(['status' => 'ok']));
     Route::post('auth/login', [AuthController::class, 'login']);
 
@@ -35,6 +36,8 @@ Route::prefix('v1')->middleware('throttle:' . config('core_api.default_rate_limi
             ->middleware('auth.core-api-client:read:app-access');
         Route::post('apps/tu-farmasi/portal-auth/verify', [TuPortalAuthVerificationController::class, 'verify'])
             ->middleware('auth.core-api-client:verify:tu-portal-auth');
+        Route::post('apps/karir-farmasi/identity/verify', [KarirIdentityVerificationController::class, 'verify'])
+            ->middleware('auth.core-api-client:verify:karir-identity');
         Route::get('leadership/current', [InternalLeadershipController::class, 'current'])
             ->middleware('auth.core-api-client:read:leadership');
         Route::prefix('directory')->group(function () {

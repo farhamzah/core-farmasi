@@ -374,6 +374,47 @@ class CoreApiClientCredentialTest extends TestCase
         $this->actingAs($user)->get('/admin/core-api-request-logs')->assertForbidden();
     }
 
+    public function test_verified_secret_cache_skips_rehash_but_rechecks_revocation_application_ip_and_abilities(): void
+    {
+        $application = $this->application('ta-farmasi');
+        [$client, $secret] = $this->client('ta-farmasi', ['read:app-access']);
+        $service = app(CoreApiClientCredentialService::class);
+        $this->assertNotNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi'));
+        Hash::shouldReceive('check')->never();
+        $this->assertNotNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi'));
+        $this->assertNull($service->validate($client->client_id, $secret, 'ta-farmasi', 'write:denied'));
+        $client->update(['allowed_ips' => ['127.0.0.1']]);
+        $this->assertNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi', '192.0.2.1'));
+        $client->update(['revoked_at' => now()]);
+        $this->assertNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi'));
+        $client->update(['revoked_at' => null]);
+        $application->update(['is_active' => false]);
+        $this->assertNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi'));
+    }
+
+    public function test_cached_credentials_do_not_accept_wrong_secret_or_old_secret_after_rotation(): void
+    {
+        $this->application('ta-farmasi');
+        [$client, $secret] = $this->client('ta-farmasi', ['read:app-access']);
+        $service = app(CoreApiClientCredentialService::class);
+        $this->assertNotNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi'));
+        $this->assertNull($service->validateCredentials($client->client_id, 'wrong-secret', 'ta-farmasi'));
+        $client->update(['secret_hash' => $service->hashSecret('replacement-secret')]);
+        $this->assertNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi'));
+        $this->assertNotNull($service->validateCredentials($client->client_id, 'replacement-secret', 'ta-farmasi'));
+    }
+
+    public function test_verified_secret_expires_after_ten_minutes(): void
+    {
+        $this->application('ta-farmasi');
+        [$client, $secret] = $this->client('ta-farmasi', ['read:app-access']);
+        $service = app(CoreApiClientCredentialService::class);
+        $this->assertNotNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi'));
+        $this->travel(601)->seconds();
+        Hash::shouldReceive('check')->once()->with($secret, $client->secret_hash)->andReturnTrue();
+        $this->assertNotNull($service->validateCredentials($client->client_id, $secret, 'ta-farmasi'));
+    }
+
     private function application(string $appCode): CoreApplication
     {
         return CoreApplication::create([

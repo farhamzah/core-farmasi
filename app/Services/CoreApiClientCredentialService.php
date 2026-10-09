@@ -110,8 +110,12 @@ class CoreApiClientCredentialService
             return null;
         }
 
-        if (! Hash::check($plainSecret, $client->secret_hash)) {
-            return null;
+        $verifiedKey = 'core_api_client_verified:'.$client->id.':'.hash_hmac('sha256', $plainSecret, $client->secret_hash);
+        if (! \Illuminate\Support\Facades\Cache::get($verifiedKey)) {
+            if (! Hash::check($plainSecret, $client->secret_hash)) {
+                return null;
+            }
+            \Illuminate\Support\Facades\Cache::put($verifiedKey, true, 600);
         }
 
         $allowedIps = $client->allowed_ips ?: [];

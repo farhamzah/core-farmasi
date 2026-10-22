@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        \App\Console\Commands\ImportPkpaPuskesmasPreceptors2026Command::class,
         AppConnectionReadinessCommand::class,
         CoreManualQaAccountsCommand::class,
         GrantTuApiClientAbilityCommand::class,

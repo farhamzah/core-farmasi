@@ -35,6 +35,19 @@ class ImportPkpaPuskesmasPreceptors2026Test extends TestCase
         $this->assertSame($before, $user->fresh()->getRawOriginal());
     }
 
+    public function test_known_institution_typo_is_corrected_without_duplicate_profile(): void
+    {
+        $sites = json_decode(file_get_contents(database_path('data/pkpa_puskesmas_preceptors_2026.json')), true)['sites'];
+        $site = collect($sites)->firstWhere('key', 'tegalsari');
+        $profile = ExternalPerson::create(['external_number' => $site['external_number'], 'name' => $site['preceptor'], 'phone' => $site['phone'], 'institution_name' => 'Puskesmas Tegalsari', 'status' => 'active']);
+        $this->artisan('core:import-pkpa-puskesmas-preceptors-2026')->assertSuccessful();
+        $this->assertSame('Puskesmas Tegalsari', $profile->fresh()->institution_name);
+        $this->artisan('core:import-pkpa-puskesmas-preceptors-2026', ['--apply' => true])->assertSuccessful();
+        $this->assertSame('Puskesmas Telagasari', $profile->fresh()->institution_name);
+        $this->assertSame(29, ExternalPerson::count());
+        $this->assertSame(0, User::count());
+    }
+
     public function test_phone_conflict_blocks_entire_import(): void
     {
         $site = json_decode(file_get_contents(database_path('data/pkpa_puskesmas_preceptors_2026.json')), true)['sites'][0];

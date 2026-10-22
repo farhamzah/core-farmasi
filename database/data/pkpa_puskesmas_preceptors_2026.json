@@ -67,7 +67,8 @@
     },
     {
       "key": "tegalsari",
-      "name": "Puskesmas Tegalsari",
+      "name": "Puskesmas Telagasari",
+      "institution_aliases": ["Puskesmas Tegalsari"],
       "preceptor": "Teja Kusuma Wardani",
       "front_title": "apt.",
       "back_title": "S.Farm.",

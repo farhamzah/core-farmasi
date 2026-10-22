@@ -23,14 +23,15 @@ class ImportPkpaPuskesmasPreceptors2026Command extends Command
             return collect($roster['sites'])->map(function ($site) use ($people) {
                 $key = fn ($value) => strtolower(preg_replace('/[^a-z0-9]/i', '', Str::ascii((string) $value)));
                 $phone = fn ($value) => preg_replace('/\D/', '', preg_replace('/^\+?62/', '0', (string) $value));
+                $institutions = collect([$site['name'], ...($site['institution_aliases'] ?? [])])->map($key);
                 $matches = $people->filter(fn ($p) => $p->external_number === $site['external_number']
                     || $phone($p->phone) === $phone($site['phone'])
-                    || ($key($p->name) === $key($site['preceptor']) && $key($p->institution_name) === $key($site['name'])));
+                    || ($key($p->name) === $key($site['preceptor']) && $institutions->contains($key($p->institution_name))));
                 $person = $matches->count() === 1 ? $matches->first() : null;
                 $conflict = $matches->count() > 1 || ($person && (
                     $key($person->name) !== $key($site['preceptor'])
                     || (filled($person->phone) && $phone($person->phone) !== $phone($site['phone']))
-                    || (filled($person->institution_name) && $key($person->institution_name) !== $key($site['name']))
+                    || (filled($person->institution_name) && ! $institutions->contains($key($person->institution_name)))
                 ));
 
                 return $site + ['person' => $person, 'conflict' => $conflict];
@@ -70,7 +71,7 @@ class ImportPkpaPuskesmasPreceptors2026Command extends Command
                         'front_title' => $person->front_title ?: $row['front_title'],
                         'back_title' => $person->back_title ?: $row['back_title'],
                         'phone' => $person->phone ?: $row['phone'],
-                        'institution_name' => $person->institution_name ?: $row['name'],
+                        'institution_name' => $row['name'],
                         'institution_type' => $person->institution_type ?: 'Puskesmas',
                         'position_title' => $person->position_title ?: 'Preseptor PKPA',
                         'profession' => $person->profession ?: 'Apoteker',

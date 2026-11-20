@@ -30,7 +30,7 @@ Route::prefix('v1')->middleware('throttle:'.config('core_api.default_rate_limit'
 
     });
 
-    Route::prefix('internal')->group(function () {
+    Route::prefix('internal')->withoutMiddleware('throttle:'.config('core_api.default_rate_limit', '60,1'))->group(function () {
         Route::get('apps/{app_code}/users', [InternalAppAccessController::class, 'index'])
             ->middleware('auth.core-api-client:read:app-access');
         Route::get('apps/{app_code}/users/{user}/access', [InternalAppAccessController::class, 'show'])

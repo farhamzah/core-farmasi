@@ -6,7 +6,9 @@ return [
     'login_max_failed_attempts_per_minute' => (int) env('CORE_API_LOGIN_MAX_FAILED_ATTEMPTS_PER_MINUTE', 5),
     'default_client_rate_limit' => (int) env('CORE_API_CLIENT_RATE_LIMIT', 120),
     'client_rate_window_seconds' => (int) env('CORE_API_CLIENT_RATE_WINDOW', 60),
-    'per_app_rate_limits' => [],
+    'per_app_rate_limits' => [
+        'ta-farmasi' => (int) env('CORE_API_TA_CLIENT_RATE_LIMIT', 600),
+    ],
     'per_ability_rate_limits' => [],
     'audit_logs' => [
         'enabled' => (bool) env('CORE_API_LOG_ENABLED', true),

@@ -76,11 +76,18 @@ class AuthenticateCoreApiClient
             $errorMessage,
         );
 
-        return response()->json(['message' => match ($statusCode) {
+        $response = response()->json(['message' => match ($statusCode) {
             403 => 'Forbidden',
             429 => 'Too Many Requests',
             default => 'Unauthorized',
         }], $statusCode);
+
+        if ($statusCode === 429) {
+            $key = $this->rateLimitKey($request, $request->header('X-Core-Client-Id'), $request->header('X-Core-App-Code'));
+            $response->headers->set('Retry-After', (string) max(1, RateLimiter::availableIn($key)));
+        }
+
+        return $response;
     }
 
     protected function isRateLimited(Request $request, ?string $ability, ?string $clientId, ?string $appCode): bool

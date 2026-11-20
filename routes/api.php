@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('throttle:'.config('core_api.default_rate_limit', '60,1'))->group(function () {
     Route::get('health', fn () => response()->json(['status' => 'ok']));
-    Route::post('auth/login', [AuthController::class, 'login']);
+    Route::post('auth/login', [AuthController::class, 'login'])
+        ->middleware('throttle:core-api-login');
 
     Route::middleware(['auth.api'])->group(function () {
         Route::get('auth/validate-token', [AuthController::class, 'validateToken']);
